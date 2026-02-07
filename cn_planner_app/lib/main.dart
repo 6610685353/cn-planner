@@ -14,9 +14,23 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(scaffoldBackgroundColor: bg, fontFamily: 'OpenSans'),
+      theme: ThemeData(
+        useMaterial3: true,
+        scaffoldBackgroundColor: bg,
+        fontFamily: 'OpenSans',
+
+        appBarTheme: const AppBarTheme(
+          backgroundColor: bg,
+          titleTextStyle: TextStyle(
+            fontFamily: 'OpenSans',
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+      ),
       initialRoute: AppRoutes.login,
-      routes: AppRoutes.routes, // 👈 เพื่อดูงานตัวเอง
+      routes: AppRoutes.routes,
     );
   }
 }
