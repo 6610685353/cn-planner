@@ -1,0 +1,14 @@
+{
+    "user": {
+        "1": { "username": "A", "year": 2, "enrolled": ["CN201"], "pass": [{"code":"CN101", "grade": "B+"}, {"code": "MA111", "grade": "A"}] },
+        "2": { "username": "B", "year": 1, "enrolled": ["MA111"], "pass": []}
+    },
+    "subject": [
+        {"code": "MA111" ,"Instructor": "Prof.Z", "credits": 3.0, "require": null, "enrollable": false},
+        {"code": "CN101" ,"Instructor": "Prof.W", "credits": 3.0, "require": null, "enrollable": false},
+        {"code": "CN201" ,"Instructor": "Prof.T", "credits": 4.0, "require": ["CN101"], "enrollable": true}
+    ],
+    "time_table": [
+        {"code": "CN201", "day": "wed" , "start": "13:30", "stop": "17:30"}
+    ]
+}
