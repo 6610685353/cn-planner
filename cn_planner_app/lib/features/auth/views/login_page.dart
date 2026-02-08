@@ -1,5 +1,8 @@
-import 'package:cn_planner_app/route.dart';
 import 'package:flutter/material.dart';
+import 'package:cn_planner_app/route.dart';
+import '../../../core/constants/app_colors.dart';
+import '../controllers/login_controller.dart';
+import '../widgets/login_text_field.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -8,19 +11,12 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-const Color cnYellow = Color(0xFFFFC207);
-const Color cnBorder = Color(0xFFE2E2E2);
-const Color cnTextGrey = Color(0xFF727272);
-const Color cnRed = Color(0xFFAE0000);
-
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _controller = LoginController();
 
   @override
   void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -30,7 +26,6 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
-          // ทำให้เลื่อนได้เมื่อคีย์บอร์ดเปิด
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -38,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 20),
-                // --- Header Section ---
+                // --- ส่วน Icon และ Header ---
                 const Icon(
                   Icons.account_circle_rounded,
                   size: 130,
@@ -51,25 +46,28 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const Text(
                   "Sign in to your planner account",
-                  style: TextStyle(color: cnRed, fontSize: 15),
+                  style: TextStyle(
+                    color: AppColors.errorRed,
+                    fontSize: 15,
+                  ), // ใช้สี errorRed
                 ),
 
                 const SizedBox(height: 40),
 
-                // --- Form Section ---
+                // --- ส่วนฟอร์มกรอกข้อมูล ---
                 _buildInputLabel("Email / Username"),
-                _buildTextField(
-                  controller: _usernameController,
+                LoginTextField(
+                  controller: _controller.usernameController,
                   hintText: "Enter your email or username",
                 ),
 
                 const SizedBox(height: 20),
 
                 _buildInputLabel("Password"),
-                _buildTextField(
-                  controller: _passwordController,
-                  obscureText: true,
+                LoginTextField(
+                  controller: _controller.passwordController,
                   hintText: "Enter your password",
+                  obscureText: true,
                 ),
 
                 // Forgot Password
@@ -86,11 +84,12 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 20),
 
-                // --- Action Section ---
+                // --- ปุ่ม Sign in ---
                 _buildSignInButton(),
 
                 const SizedBox(height: 20),
 
+                // --- ส่วนย้ายไปหน้าสมัครสมาชิก ---
                 _buildSignUpRedirect(),
                 const SizedBox(height: 20),
               ],
@@ -100,8 +99,6 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
-  // --- Reusable Widgets ---
 
   Widget _buildInputLabel(String label) {
     return Align(
@@ -116,64 +113,31 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    bool obscureText = false,
-    String? hintText,
-  }) {
+  Widget _buildSignInButton() {
     return Container(
+      width: double.infinity,
+      height: 54,
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.accentYellow.withOpacity(0.3),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: cnBorder, width: 2),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: cnYellow, width: 2),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSignInButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
       child: ElevatedButton(
-        onPressed: () {
-          // Logic สำหรับ Login
-        },
+        onPressed: _controller.handleLogin,
         style: ElevatedButton.styleFrom(
-          backgroundColor: cnYellow,
+          backgroundColor: AppColors.accentYellow,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Text(
               'Sign in',
               style: TextStyle(
@@ -196,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         const Text(
           "Don't have an account?",
-          style: TextStyle(fontSize: 14, color: cnTextGrey),
+          style: TextStyle(fontSize: 14, color: AppColors.textGrey),
         ),
         TextButton(
           onPressed: () => Navigator.pushNamed(context, AppRoutes.register),

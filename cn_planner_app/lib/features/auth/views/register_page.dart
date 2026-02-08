@@ -1,5 +1,8 @@
-import 'package:cn_planner_app/route.dart';
 import 'package:flutter/material.dart';
+import 'package:cn_planner_app/route.dart';
+import '../../../core/constants/app_colors.dart';
+import '../controllers/register_controller.dart';
+import '../widgets/register_text_field.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -8,36 +11,21 @@ class RegisterPage extends StatefulWidget {
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
-const Color cnYellow = Color(0xFFE5AD00);
-const Color cnLightYellow = Color(0xFFFFC207);
-const Color cnGrey = Color(0xFFE2E2E2);
-const Color cnTextGrey = Color.fromARGB(255, 160, 160, 160);
-const Color cn_bg = Color(0xFFF8F9FA);
-
 class _RegisterPageState extends State<RegisterPage> {
-  final TextEditingController _fullnameController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmpasswordController =
-      TextEditingController();
-
-  int? selectedYear;
+  final _controller = RegisterController();
 
   @override
   void dispose() {
-    _fullnameController.dispose();
-    _usernameController.dispose();
-    _passwordController.dispose();
-    _confirmpasswordController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: cn_bg,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: cn_bg,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
@@ -52,8 +40,8 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         ),
       ),
-
       body: SingleChildScrollView(
+        // ทำให้เลื่อนได้
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
         child: Column(
@@ -65,44 +53,50 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const Text(
               "Enter your detail to tailor your study plan.",
-              style: TextStyle(fontSize: 14, color: cnTextGrey),
+              style: TextStyle(fontSize: 14, color: AppColors.textGrey),
             ),
             const SizedBox(height: 10),
 
             _buildLabel("Full Name"),
-            _buildCustomTextField(
-              controller: _fullnameController,
+            RegisterTextField(
+              controller: _controller.fullnameController,
               hintText: "Enter your full name",
             ),
 
             _buildLabel("Username"),
-            _buildCustomTextField(
-              controller: _usernameController,
+            RegisterTextField(
+              controller: _controller.usernameController,
               hintText: "Enter your username",
             ),
 
+            _buildLabel("Email"), // เพิ่มช่อง Email ตามคำสั่ง
+            RegisterTextField(
+              controller: _controller.emailController,
+              hintText: "Enter your email",
+            ),
+
             _buildLabel("Password"),
-            _buildCustomTextField(
-              controller: _passwordController,
-              obscureText: true,
+            RegisterTextField(
+              controller: _controller.passwordController,
               hintText: "Enter your password",
+              obscureText: true,
             ),
 
             _buildLabel("Confirm password"),
-            _buildCustomTextField(
-              controller: _confirmpasswordController,
-              obscureText: true,
+            RegisterTextField(
+              controller: _controller.confirmPasswordController,
               hintText: "Confirm your password",
+              obscureText: true,
             ),
 
             _buildLabel("Academic Year"),
-
             _buildYearSelector(),
 
             const SizedBox(height: 14),
             _buildSubmitButton(),
             const SizedBox(height: 20),
 
+            // ส่วนท้าย Already have an account? (เหมือนต้นฉบับ)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -111,14 +105,12 @@ class _RegisterPageState extends State<RegisterPage> {
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
                 GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRoutes.login);
-                  },
-                  child: Text(
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.login),
+                  child: const Text(
                     "Log in",
                     style: TextStyle(
                       fontSize: 12,
-                      color: cnYellow,
+                      color: AppColors.primaryYellow,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -139,53 +131,8 @@ class _RegisterPageState extends State<RegisterPage> {
         text,
         style: const TextStyle(
           fontSize: 14,
-          color: cnYellow,
+          color: AppColors.primaryYellow,
           fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCustomTextField({
-    required TextEditingController controller,
-    bool obscureText = false,
-    String? hintText,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: cnGrey, width: 1.5),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: cnLightYellow, width: 2),
-          ),
         ),
       ),
     );
@@ -195,26 +142,25 @@ class _RegisterPageState extends State<RegisterPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _yearSelectButton(1, 'Y1', 'FRESHMAN'),
-        _yearSelectButton(2, 'Y2', 'SOPHOMORE'),
-        _yearSelectButton(3, 'Y3', 'JUNIOR'),
-        _yearSelectButton(4, 'Y4', 'SENIOR'),
+        _yearBtn(1, 'Y1', 'FRESHMAN'),
+        _yearBtn(2, 'Y2', 'SOPHOMORE'),
+        _yearBtn(3, 'Y3', 'JUNIOR'),
+        _yearBtn(4, 'Y4', 'SENIOR'),
       ],
     );
   }
 
-  Widget _yearSelectButton(int year, String code, String label) {
-    final bool isSelected = selectedYear == year;
-
+  Widget _yearBtn(int year, String code, String label) {
+    final bool isSelected = _controller.selectedYear == year;
     return InkWell(
-      onTap: () => setState(() => selectedYear = year),
+      onTap: () => setState(() => _controller.selectedYear = year),
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 80,
-        height: 80,
+        height: 80, // ขนาดเดิม
         decoration: BoxDecoration(
-          color: isSelected ? cnLightYellow : Colors.white,
+          color: isSelected ? AppColors.accentYellow : Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -224,7 +170,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ],
           border: Border.all(
-            color: isSelected ? cnLightYellow : cnGrey,
+            color: isSelected ? AppColors.accentYellow : AppColors.borderGrey,
             width: 1.5,
           ),
         ),
@@ -233,11 +179,7 @@ class _RegisterPageState extends State<RegisterPage> {
           children: [
             Text(
               code,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                // color: isSelected ? Colors.white : Colors.black87,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 4),
             Text(
@@ -245,7 +187,6 @@ class _RegisterPageState extends State<RegisterPage> {
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                // color: isSelected ? Colors.white : Colors.black54,
               ),
             ),
           ],
@@ -262,20 +203,16 @@ class _RegisterPageState extends State<RegisterPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: cnLightYellow.withOpacity(0.3),
+            color: AppColors.accentYellow.withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
         ],
       ),
       child: ElevatedButton(
-        onPressed: () {
-          // TODO: Implement Registration Logic
-          print("Fullname: ${_fullnameController.text}");
-          print("Year: $selectedYear");
-        },
+        onPressed: _controller.handleRegister,
         style: ElevatedButton.styleFrom(
-          backgroundColor: cnLightYellow,
+          backgroundColor: AppColors.accentYellow,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
