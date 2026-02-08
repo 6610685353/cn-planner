@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'features/auth/login_page.dart';
-import 'features/auth/register_page.dart';
-// import 'features/profile/profile_page.dart';
-// import 'features/profile/setting_page.dart';
+import 'features/auth/views/login_page.dart';
+import 'features/auth/views/register_page.dart';
+// import 'features/profile/views.profile_page.dart';
+// import 'features/profile/views/setting_page.dart';
 
 class AppRoutes {
   static const login = '/login';
