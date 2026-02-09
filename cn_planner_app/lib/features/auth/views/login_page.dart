@@ -127,7 +127,8 @@ class _LoginPageState extends State<LoginPage> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: _controller.handleLogin,
+        // onPressed: _controller.handleLogin,
+        onPressed: () => Navigator.pushNamed(context, AppRoutes.profile),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.accentYellow,
           elevation: 0,
