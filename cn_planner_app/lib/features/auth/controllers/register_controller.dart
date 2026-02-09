@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class RegisterController {
   final fullnameController = TextEditingController();
   final usernameController = TextEditingController();
-  final emailController = TextEditingController(); // ช่อง Email ที่เพิ่มใหม่
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
