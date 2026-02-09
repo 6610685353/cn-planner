@@ -81,7 +81,6 @@ class _RegisterPageState extends State<RegisterPage> {
             _buildSubmitButton(),
             const SizedBox(height: 20),
 
-            // ส่วนท้าย Already have an account? (เหมือนต้นฉบับ)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

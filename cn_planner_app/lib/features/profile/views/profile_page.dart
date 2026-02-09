@@ -27,7 +27,7 @@ class ProfilePage extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 10.0),
                 child: IconButton(
                   onPressed: () =>
-                      Navigator.pushNamed(context, AppRoutes.login),
+                      Navigator.pushNamed(context, AppRoutes.setting),
                   icon: const Icon(
                     Icons.settings,
                     size: 30,
