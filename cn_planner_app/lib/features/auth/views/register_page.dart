@@ -3,6 +3,7 @@ import 'package:cn_planner_app/route.dart';
 import '../../../core/constants/app_colors.dart';
 import '../controllers/register_controller.dart';
 import '../widgets/register_text_field.dart';
+import 'package:cn_planner_app/core/widgets/top_bar.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -24,24 +25,8 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
-          icon: const Icon(Icons.arrow_back, size: 30, color: Colors.black),
-        ),
-        title: const Text(
-          "Create Account",
-          style: TextStyle(
-            fontFamily: 'OpenSans',
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-      ),
+      appBar: TopBar(header: "Create your account", route: AppRoutes.login),
       body: SingleChildScrollView(
-        // ทำให้เลื่อนได้
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
         child: Column(
