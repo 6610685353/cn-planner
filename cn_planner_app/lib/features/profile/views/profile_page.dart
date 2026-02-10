@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../widgets/profile_image.dart';
 import '../widgets/profile_info.dart';
 import '../widgets/gpa_dashboard.dart';
+import 'package:cn_planner_app/core/widgets/bottom_nav_bar.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -116,6 +117,7 @@ class ProfilePage extends StatelessWidget {
           ),
         ],
       ),
+      bottomNavigationBar: BottomNavBar(currentIndex: 3),
     );
   }
 
