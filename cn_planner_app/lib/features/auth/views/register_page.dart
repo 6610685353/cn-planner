@@ -42,10 +42,16 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 10),
 
-            _buildLabel("Full Name"),
+            _buildLabel("First Name"),
             RegisterTextField(
-              controller: _controller.fullnameController,
-              hintText: "Enter your full name",
+              controller: _controller.firstnameController,
+              hintText: "Enter your first name",
+            ),
+
+            _buildLabel("Last Name"),
+            RegisterTextField(
+              controller: _controller.lastnameController,
+              hintText: "Enter your last name",
             ),
 
             _buildLabel("Username"),
@@ -54,7 +60,7 @@ class _RegisterPageState extends State<RegisterPage> {
               hintText: "Enter your username",
             ),
 
-            _buildLabel("Email"), // เพิ่มช่อง Email ตามคำสั่ง
+            _buildLabel("Email"),
             RegisterTextField(
               controller: _controller.emailController,
               hintText: "Enter your email",
