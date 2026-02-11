@@ -1,5 +1,9 @@
+import 'package:cn_planner_app/core/constants/app_colors.dart';
 import 'package:cn_planner_app/core/widgets/bottom_nav_bar.dart';
+import 'package:cn_planner_app/features/home/widgets/academic_progress.dart';
+import 'package:cn_planner_app/features/home/widgets/welcome_banner.dart';
 import 'package:flutter/material.dart';
+import 'package:cn_planner_app/route.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -7,38 +11,33 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          WelcomeBanner(
+            fname: "Somchai",
+            route: AppRoutes.main, //แก้ด้วย
+          ),
 
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Home Page',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Column(
+                children: [
+                  AcademicProgresss(
+                    creditEarned: 100,
+                    totalCredit: 146,
+                    route: AppRoutes.main,
+                  ),
+
+                  // สามารถเพิ่ม Widget อื่นๆ ต่อท้ายได้ที่นี่
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
-
-            const SizedBox(height: 20),
-
-            Text(
-              'Welcome to CN-Planner',
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
-            ),
-
-            const SizedBox(height: 30),
-
-            ElevatedButton(
-              onPressed: () {
-                debugPrint('Demo button pressed!');
-              },
-              child: const Text('Demo button'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
