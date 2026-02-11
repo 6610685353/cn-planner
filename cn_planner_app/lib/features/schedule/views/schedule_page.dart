@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:cn_planner_app/core/widgets/bottom_nav_bar.dart';
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+class SchedulePage extends StatelessWidget {
+  const SchedulePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Profile Page',
+              'Schedule Page',
               style: TextStyle(
-                color: Colors.lightGreen.shade900,
+                color: Colors.deepOrange.shade800,
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
@@ -24,9 +24,9 @@ class ProfilePage extends StatelessWidget {
             SizedBox(height: 20),
 
             Text(
-              'this is a demo of Profile Page',
+              'This is demo of Schedule Page',
               style: TextStyle(
-                color: const Color.fromARGB(255, 45, 74, 11),
+                color: const Color.fromARGB(255, 134, 56, 29),
                 fontSize: 16,
               ),
             ),
@@ -35,9 +35,9 @@ class ProfilePage extends StatelessWidget {
 
             ElevatedButton(
               onPressed: () {
-                debugPrint('you pressed the button');
+                debugPrint('You pressed the button!');
               },
-              child: Text('Profile demo Button'),
+              child: Text('Schedule demo Button'),
             ),
           ],
         ),

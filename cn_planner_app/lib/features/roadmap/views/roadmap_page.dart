@@ -1,7 +1,8 @@
+import 'package:cn_planner_app/core/widgets/bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 
-class SchedulePage extends StatelessWidget {
-  const SchedulePage({super.key});
+class RoadMapPage extends StatelessWidget {
+  const RoadMapPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -12,31 +13,31 @@ class SchedulePage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Schedule Page',
+              'Roadmap Page',
               style: TextStyle(
-                color: Colors.deepOrange.shade800,
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
+                color: Colors.deepPurple.shade700,
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             Text(
-              'This is demo of Schedule Page',
+              'This is a demo of Roadmap Page',
               style: TextStyle(
-                color: const Color.fromARGB(255, 134, 56, 29),
                 fontSize: 16,
+                color: const Color.fromARGB(255, 65, 57, 101),
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             ElevatedButton(
               onPressed: () {
                 debugPrint('You pressed the button!');
               },
-              child: Text('Schedule demo Button'),
+              child: Text('Roadmap demo button'),
             ),
           ],
         ),

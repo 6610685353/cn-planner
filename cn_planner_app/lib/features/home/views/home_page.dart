@@ -40,7 +40,6 @@ class HomePage extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavBar(currentIndex: 0),
     );
   }
 }

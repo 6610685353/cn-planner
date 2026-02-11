@@ -117,7 +117,6 @@ class ProfilePage extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavBar(currentIndex: 3),
     );
   }
 

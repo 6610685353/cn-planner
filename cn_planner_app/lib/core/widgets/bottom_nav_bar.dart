@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:cn_planner_app/route.dart';
 import '../constants/app_colors.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
+  final Function(int) onTap; // รับฟังก์ชันมาจากตัวแม่
 
-  const BottomNavBar({super.key, required this.currentIndex});
+  const BottomNavBar({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,35 +25,11 @@ class BottomNavBar extends StatelessWidget {
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
-        onTap: (index) {
-          if (index == currentIndex) {
-            return;
-          }
-          ;
-          switch (index) {
-            case 0:
-              Navigator.pushReplacementNamed(
-                context,
-                AppRoutes.home,
-              ); // หรือหน้า Home
-              break;
-            // case 1:
-            //   Navigator.pushReplacementNamed(context, AppRoutes.roadmap);
-            //   break;
-            // case 2:
-            //   Navigator.pushReplacementNamed(context, AppRoutes.schedule);
-            //   break;
-            case 3:
-              Navigator.pushReplacementNamed(context, AppRoutes.profile);
-              break;
-          }
-        },
+        onTap: onTap,
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         selectedItemColor: AppColors.errorRed,
-        unselectedItemColor: AppColors.textDarkGrey,
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
+        unselectedItemColor: AppColors.textGrey,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
