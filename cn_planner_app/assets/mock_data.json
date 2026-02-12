@@ -1,0 +1,50 @@
+{
+    "user": {
+        "1": {
+            "username": "A", 
+            "year": 2, 
+            "enrolled": ["CN201", "MA112"], 
+            "pass": [{"code":"CN101", "grade": "3.5"}, {"code": "MA111", "grade": "4"}]
+        },
+        "2": {
+            "username": "B",
+             "year": 1, 
+             "enrolled": ["MA111"], 
+             "pass": []
+        }
+    },
+    "subject": {
+        "MA111": {
+            "subject name": "Fundamentals of Calculus",
+            "instructor": "Prof.Z", 
+            "credits": 3.0, 
+            "require": null, 
+            "enrollable": false
+        },
+        "CN101": {
+            "subject name": "Introduction to Computer Programming",
+            "instructor": "Prof.W", 
+            "credits": 3.0, 
+            "require": null, 
+            "enrollable": false
+        },
+        "CN201": {
+            "subject name": "Object-Oriented Programming",
+            "instructor": "Prof.T", 
+            "credits": 4.0, 
+            "require": ["CN101"], 
+            "enrollable": true
+        },
+        "MA112": {
+            "subject name": "Analytic Geometry and Applied Calculus",
+            "instructor": "Prof.G",
+            "credits": 3.0,
+            "require": ["MA111"],
+            "enrollable": true
+        }
+    },
+    "time_table": {
+        "CN201": {"day": ["wed"], "start": "13:30", "end": "17:30", "section": "800001", "room": "ENGR301"},
+        "MA112": {"day": ["tue","thu"], "start": "8:00", "end": "9:30", "section": "720001", "room": "SC1001"}
+    }
+}
