@@ -1,3 +1,4 @@
+import 'package:cn_planner_app/core/models/class_session.dart';
 import 'package:cn_planner_app/features/main_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'features/auth/views/login_page.dart';
