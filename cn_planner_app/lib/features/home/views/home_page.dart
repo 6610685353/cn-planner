@@ -3,6 +3,8 @@ import 'package:cn_planner_app/core/widgets/bottom_nav_bar.dart';
 import 'package:cn_planner_app/features/home/widgets/academic_progress.dart';
 import 'package:cn_planner_app/features/home/widgets/home_feature.dart';
 import 'package:cn_planner_app/features/home/widgets/welcome_banner.dart';
+import 'package:cn_planner_app/features/home/widgets/gpa_banner.dart';
+import 'package:cn_planner_app/features/home/widgets/schedule_card.dart';
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/route.dart';
 
@@ -18,7 +20,7 @@ class HomePage extends StatelessWidget {
         slivers: [
           WelcomeBanner(
             fname: "Somchai",
-            route: AppRoutes.main, //แก้ด้วย
+            route: AppRoutes.notification, //แก้ด้วย
           ),
 
           SliverToBoxAdapter(
@@ -56,6 +58,38 @@ class HomePage extends StatelessWidget {
                   SizedBox(height: 12),
 
                   scheduleTitle(context, AppRoutes.main),
+
+                  SizedBox(height: 10),
+
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: const [
+                        ScheduleCard(
+                          status: "ONGOING",
+                          subjectCode: "TU100",
+                          subjectName: "Civic Education",
+                          time: "9:30 - 11.00",
+                          location: "SC3-201",
+                          isOngoing: true,
+                        ),
+                        ScheduleCard(
+                          status: "NEXT",
+                          subjectCode: "CN101",
+                          subjectName: "Introduction to Computer",
+                          time: "13:30 - 16:30",
+                          location: "SC3-201",
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 15),
+
+                  GpaBanner(gpa: 4.00),
+
+                  SizedBox(height: 15),
                 ],
               ),
             ),
