@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/widgets/bottom_nav_bar.dart';
 import 'home/views/home_page.dart';
 import 'roadmap/views/roadmap_page.dart'; // Import หน้าของคุณ
-import 'schedule/views/schedule_page.dart'; // Import หน้าของคุณ
+import 'schedule/views/schedule_screen.dart'; // Import หน้าของคุณ
 import 'profile/views/profile_page.dart'; // Import หน้าของคุณ
 
 class MainWrapper extends StatefulWidget {
@@ -19,7 +19,7 @@ class _MainWrapperState extends State<MainWrapper> {
   final List<Widget> _pages = const [
     HomePage(),
     RoadMapPage(), // เปลี่ยนเป็น RoadmapPage()
-    SchedulePage(), // เปลี่ยนเป็น SchedulePage()
+    ScheduleScreen(), // เปลี่ยนเป็น SchedulePage()
     ProfilePage(),
   ];
 
