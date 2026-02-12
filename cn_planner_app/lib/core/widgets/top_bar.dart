@@ -3,9 +3,9 @@ import '../constants/app_colors.dart';
 
 class TopBar extends StatelessWidget implements PreferredSizeWidget {
   final String? header;
-  final String route;
+  final String? route;
 
-  const TopBar({super.key, this.header, required this.route});
+  const TopBar({super.key, this.header, this.route});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -17,7 +17,13 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       automaticallyImplyLeading: false, // ป้องกันปุ่มซ้อน
       leading: IconButton(
-        onPressed: () => Navigator.pushNamed(context, route),
+        onPressed: () {
+          if (route != null) {
+            Navigator.pushNamed(context, route!);
+          } else {
+            Navigator.pop(context);
+          }
+        },
         icon: const Icon(Icons.arrow_back, size: 30, color: Colors.black),
       ),
       title: (header != null && header!.isNotEmpty)
