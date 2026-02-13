@@ -74,7 +74,9 @@ class _LoginPageState extends State<LoginPage> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(context, AppRoutes.forgotPassword);
+                    },
                     child: const Text(
                       'Forgot password?',
                       style: TextStyle(fontSize: 12, color: Colors.black87),
@@ -128,7 +130,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
       child: ElevatedButton(
         // onPressed: _controller.handleLogin,
-        onPressed: () => Navigator.pushNamed(context, AppRoutes.main),
+        onPressed: () => _controller.handleLogin(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.accentYellow,
           elevation: 0,

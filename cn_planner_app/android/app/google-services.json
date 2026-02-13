@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "572696535462",
+    "project_id": "cn-planner-app",
+    "storage_bucket": "cn-planner-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:572696535462:android:caab8e324379a4d3d4af67",
+        "android_client_info": {
+          "package_name": "com.example.cn_planner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0dqWq-dn4SHJ3jIl9wmDBuI34fM0U65o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

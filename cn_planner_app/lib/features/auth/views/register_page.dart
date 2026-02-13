@@ -200,7 +200,8 @@ class _RegisterPageState extends State<RegisterPage> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: _controller.handleRegister,
+        // แก้ไขบรรทัดนี้: ใช้ arrow function เพื่อส่ง context เข้าไปใน Controller
+        onPressed: () => _controller.handleRegister(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.accentYellow,
           shape: RoundedRectangleBorder(

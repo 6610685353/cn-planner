@@ -5,6 +5,7 @@ class FeatureMenu extends StatelessWidget {
   final Icon icon;
   final String title;
   final String subtitle;
+  final String route;
   final VoidCallback? onTap;
 
   const FeatureMenu({
@@ -12,6 +13,7 @@ class FeatureMenu extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.route,
     this.onTap,
   });
 
@@ -78,7 +80,7 @@ class FeatureMenu extends StatelessWidget {
 
                 IconButton(
                   onPressed: () {
-                    // to roadmap
+                    Navigator.pushNamed(context, route);
                   },
                   icon: Icon(
                     Icons.arrow_forward_ios,
