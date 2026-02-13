@@ -1,5 +1,6 @@
 import 'package:cn_planner_app/core/models/class_session.dart';
 import 'package:cn_planner_app/features/main_wrapper.dart';
+import 'package:cn_planner_app/features/manage/views/manage_course_page.dart';
 import 'package:flutter/material.dart';
 import 'features/auth/views/login_page.dart';
 import 'features/auth/views/register_page.dart';
@@ -23,6 +24,7 @@ class AppRoutes {
   static const setting = '/setting';
   static const notification = '/notification';
   static const forgotPassword = '/forgot-password';
+  static const manage = '/manage';
   static const main = 'main';
 
   static final routes = {
@@ -37,5 +39,6 @@ class AppRoutes {
     edit_profile: (context) => EditProfilePage(),
     setting: (context) => const SettingPage(),
     notification: (context) => const NotificationsPage(),
+    manage: (context) => const ManageCoursePage(),
   };
 }
