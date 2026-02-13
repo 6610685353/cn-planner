@@ -76,10 +76,10 @@ class _ScheduleScreenState extends State<SchedulePage> {
         backgroundColor: AppColors.background,
         elevation: 0,
         automaticallyImplyLeading: false,
-        // leading: IconButton(
-        //   icon: const Icon(Icons.arrow_back, color: Colors.black),
-        //   onPressed: () => Navigator.maybePop(context),
-        // ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.maybePop(context),
+        ),
         title: const Text(
           'CLASS',
           style: TextStyle(
