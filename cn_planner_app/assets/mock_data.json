@@ -42,9 +42,34 @@
             "require": ["MA111"],
             "enrollable": true
         }
+        ,
+        "CN202": {
+            "subject name": "Data Structure and Algorithm I",
+            "instructor": "Prof.T",
+            "credits": 3.0,
+            "require": ["CN201"],
+            "enrollable": false
+        }
     },
     "time_table": {
         "CN201": {"day": ["wed"], "start": "13:30", "end": "17:30", "section": "800001", "room": "ENGR301"},
         "MA112": {"day": ["tue","thu"], "start": "8:00", "end": "9:30", "section": "720001", "room": "SC1001"}
+    },
+    "year_course": {
+        "1-1": {
+            "year": 1,
+            "sem": 1,
+            "courses": ["MA111","CN101"]
+        },
+        "1-2": {
+            "year": 1,
+            "sem": 2,
+            "courses": ["MA112","CN201"]
+        },
+        "2-1": {
+            "year": 2,
+            "sem": 1,
+            "courses": ["CN202"]
+        }
     }
 }
