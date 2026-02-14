@@ -24,15 +24,8 @@ class ManageCoursePage extends StatelessWidget {
           SearchBox(),
           Expanded(
             child: ListView(
-              children: [
-                YearCourseBox(),
-                YearCourseBox(),
-                YearCourseBox(),
-                YearCourseBox(),
-                YearCourseBox(),
-                YearCourseBox(),
-                YearCourseBox(),
-                YearCourseBox(),
+              children: [ //4 year courses
+
               ],
             ))
         ],
