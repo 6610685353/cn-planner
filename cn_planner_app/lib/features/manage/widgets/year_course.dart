@@ -2,11 +2,13 @@ import 'package:cn_planner_app/features/manage/widgets/subject_box.dart';
 import 'package:flutter/material.dart';
 
 class YearCourseBox extends StatefulWidget {
-  final Map<String, dynamic> allCourse; //contain all course in specific year
+  final Map<String, dynamic> yearCourse; //contain all course in specific year
+  final Map<String, dynamic> subject;
 
   const YearCourseBox({
     super.key,
-    required this.allCourse,
+    required this.yearCourse,
+    required this.subject,
   });
 
   @override
@@ -23,7 +25,7 @@ class _YearCourseBox extends State<YearCourseBox> {
       child: Column(
         children: [
           ListTile(
-            title: const Text('Course Details'),
+            title: Text("Year ${widget.yearCourse['year'].toString()} Sem ${widget.yearCourse['sem'].toString()}"),
             subtitle: Text('Progress Bar: %'),
             trailing: IconButton(
               icon: Icon(_isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down),
@@ -36,13 +38,19 @@ class _YearCourseBox extends State<YearCourseBox> {
           ),
           // ถ้า _isExpanded เป็น true จะแสดงข้อมูลข้างล่างนี้
           if (_isExpanded) 
-            for (var item in widget.allCourse['subject']) //Show all Subject in this year
-              SubjectBox(
-                title: item['title'], 
-                subtitle: "Subject full title", 
-                trailingChar: "B", 
-                initialValue: false, 
-                onChanged: (val) {})
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              child: Column(
+                children: (widget.yearCourse['courses'] as List).map((course) {
+                  return SubjectBox(
+                    title: course, 
+                    subtitle: widget.subject[course]["subject name"], 
+                    trailingChar: "A", 
+                    initialValue: false, 
+                    onChanged: (val) {});
+                }).toList(),
+              ),
+            )
         ],
       ),
     );
