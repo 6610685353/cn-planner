@@ -45,9 +45,9 @@ class _YearCourseBox extends State<YearCourseBox> {
                   return SubjectBox(
                     title: course, 
                     subtitle: widget.subject[course]["subject name"], 
-                    trailingChar: "A", 
-                    initialValue: false, 
-                    onChanged: (val) {});
+                    credits: widget.subject[course]["credits"],
+                    grade: "A", 
+                    );
                 }).toList(),
               ),
             )
