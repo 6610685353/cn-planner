@@ -1,6 +1,7 @@
 import 'package:cn_planner_app/core/constants/app_colors.dart';
 import 'package:cn_planner_app/features/manage/widgets/search_box.dart';
 import 'package:cn_planner_app/features/manage/widgets/year_course.dart';
+import 'package:cn_planner_app/services/data_fetch.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
@@ -13,40 +14,18 @@ class ManageCoursePage extends StatefulWidget {
 }
 
 class _ManageCoursePage extends State<ManageCoursePage> {
-  Map<String, dynamic> _data = {}; 
-  bool _isLoading = true;
+  // Map<String, dynamic> _data = {}; 
+  late Future<Map<String, dynamic>> _dataFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadJsonData();
+    _dataFuture = DataFetch().getAllCourse();
   }
 
-  Future<void> _loadJsonData() async {
-    final String response = await rootBundle.loadString('assets/mock_data.json');
-    final data = await json.decode(response);
-
-    setState(() {
-      _data = data;
-      _isLoading = false; 
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    // List<Map<String, dynamic>> allSem = [];
-
-    // _data['year_course'].forEach((yearKey, sems) {
-    //   sems.forEach((semKey, course){
-    //     allSem.add({
-    //       "year"
-    //     })
-    //   });
-    // });
 
     return Scaffold(
       appBar: AppBar(
@@ -59,26 +38,26 @@ class _ManageCoursePage extends State<ManageCoursePage> {
         ),
         title: const Text('Manage Course')
       ),
-      body: Column(
-        children: [
-          SearchBox(),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _data['year_course'].length,
-              itemBuilder: (context, index) {
-                String key = _data['year_course'].keys.elementAt(index);
-                dynamic value = _data['year_course'][key];
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _dataFuture, 
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-                return YearCourseBox(yearCourse: value, subject: _data['subject'],);
-              }
-            )
-          )
-        ],
-      )
-      // body: Center(
-      //   child: Text("Output: ${_data['year_course']['1']}")
-      // )
-      ,
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (snapshot.hasData) {
+            final dataMap = snapshot.data!;
+
+            return Text(dataMap.toString());
+          }
+          return const Center(child: Text("No data found"));
+        }
+      ),
+      
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton(
