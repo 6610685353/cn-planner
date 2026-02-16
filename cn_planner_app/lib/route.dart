@@ -11,6 +11,7 @@ import 'features/profile/views/profile_page.dart';
 import 'features/profile/views/edit_profile_page.dart';
 import 'features/profile/views/setting_page.dart';
 import 'features/notification/views/notifications_page.dart';
+import 'features/gpa_calculator/presentation/gpa_calculator_page.dart';
 
 class AppRoutes {
   static const login = '/login';
@@ -24,6 +25,7 @@ class AppRoutes {
   static const notification = '/notification';
   static const forgotPassword = '/forgot-password';
   static const main = 'main';
+  static const gpa = '/gpa';
 
   static final routes = {
     login: (context) => const LoginPage(),
@@ -37,5 +39,6 @@ class AppRoutes {
     edit_profile: (context) => EditProfilePage(),
     setting: (context) => const SettingPage(),
     notification: (context) => const NotificationsPage(),
+    gpa: (context) => const GPACalculatorPage(),
   };
 }
