@@ -2,13 +2,17 @@ import 'package:cn_planner_app/features/manage/widgets/subject_box.dart';
 import 'package:flutter/material.dart';
 
 class YearCourseBox extends StatefulWidget {
-  final Map<String, dynamic> yearCourse; //contain all course in specific year
-  final Map<String, dynamic> subject;
+  final int year;
+  final String semester;
+  final List<dynamic> courseSubject;
+  final Map<String, dynamic> subjectData;
 
   const YearCourseBox({
     super.key,
-    required this.yearCourse,
-    required this.subject,
+    required this.year,
+    required this.semester,
+    required this.courseSubject,
+    required this.subjectData,
   });
 
   @override
@@ -25,7 +29,7 @@ class _YearCourseBox extends State<YearCourseBox> {
       child: Column(
         children: [
           ListTile(
-            title: Text("Year ${widget.yearCourse['year'].toString()} Sem ${widget.yearCourse['sem'].toString()}"),
+            title: Text("Year ${widget.year} Sem ${widget.semester}"),
             subtitle: Text('Progress Bar: %'),
             trailing: IconButton(
               icon: Icon(_isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down),
@@ -36,21 +40,26 @@ class _YearCourseBox extends State<YearCourseBox> {
               },
             ),
           ),
-          // ถ้า _isExpanded เป็น true จะแสดงข้อมูลข้างล่างนี้
           if (_isExpanded) 
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              padding: const EdgeInsets.symmetric(horizontal: 10.0 ,vertical: 10.0),
               child: Column(
-                children: (widget.yearCourse['courses'] as List).map((course) {
+                children: widget.courseSubject.map((course) {
                   return SubjectBox(
                     title: course, 
-                    subtitle: widget.subject[course]["subject name"], 
-                    credits: widget.subject[course]["credits"],
+                    subtitle: widget.subjectData[course]['subjectName'], 
+                    credits: widget.subjectData[course]['credits'],
                     grade: "A", 
                     );
                 }).toList(),
               ),
             )
+
+          // if (_isExpanded)
+          //   Padding(
+          //     padding: const EdgeInsets.symmetric(horizontal: 10.0),
+          //     child: Text(widget.courseSubject.toString())
+          //   )
         ],
       ),
     );
