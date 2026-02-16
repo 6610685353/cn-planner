@@ -34,9 +34,9 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
-/cn_planner_app/linux/**
-/cn_planner_app/macos/**
-/cn_planner_app/windows/**
+linux/
+macos/
+windows/
 
 # Symbolication related
 app.*.symbols
