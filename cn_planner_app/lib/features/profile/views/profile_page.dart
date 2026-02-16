@@ -110,7 +110,7 @@ class ProfilePage extends StatelessWidget {
                     icon: buildIcon(Icons.emoji_events_outlined),
                     title: "Credit Breakdown",
                     subtitle: "View overall detail",
-                    route: AppRoutes.schedule,
+                    route: AppRoutes.creditBreakdown,
                   ),
                   const SizedBox(height: 40),
                 ],
