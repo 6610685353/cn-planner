@@ -11,6 +11,7 @@ import 'features/profile/views/profile_page.dart';
 import 'features/profile/views/edit_profile_page.dart';
 import 'features/profile/views/setting_page.dart';
 import 'features/notification/views/notifications_page.dart';
+import 'features/credit_breakdown/views/credit_page.dart';
 
 class AppRoutes {
   static const login = '/login';
@@ -23,6 +24,7 @@ class AppRoutes {
   static const setting = '/setting';
   static const notification = '/notification';
   static const forgotPassword = '/forgot-password';
+  static const creditBreakdown = '/credit_breakdown';
   static const main = 'main';
 
   static final routes = {
@@ -37,5 +39,6 @@ class AppRoutes {
     edit_profile: (context) => EditProfilePage(),
     setting: (context) => const SettingPage(),
     notification: (context) => const NotificationsPage(),
+    creditBreakdown: (context) => const CreditBreakdownPage(),
   };
 }

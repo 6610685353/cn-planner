@@ -1,18 +1,15 @@
-import 'package:cn_planner_app/core/constants/app_colors.dart';
-import 'package:cn_planner_app/core/widgets/top_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/core/models/class_session.dart';
-import 'package:cn_planner_app/route.dart';
 
-class DailySchedulePage extends StatefulWidget {
+class DailyScheduleScreen extends StatefulWidget {
   final List<ClassSession> allClasses;
-  const DailySchedulePage({super.key, required this.allClasses});
+  const DailyScheduleScreen({super.key, required this.allClasses});
 
   @override
-  State<DailySchedulePage> createState() => _DailyScheduleScreenState();
+  State<DailyScheduleScreen> createState() => _DailyScheduleScreenState();
 }
 
-class _DailyScheduleScreenState extends State<DailySchedulePage> {
+class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
   DateTime _selectedDate = DateTime.now();
 
   @override
@@ -58,8 +55,16 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
     final isOngoing = ongoingClass != null;
 
     return Scaffold(
-      backgroundColor: AppColors.background, // พื้นหลังหลัก
-      appBar: TopBar(header: "Day Schedule"),
+      backgroundColor: Colors.white, // พื้นหลังหลัก
+      appBar: AppBar(
+        title: const Text(
+          'Daily Schedule',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: const BackButton(color: Colors.black),
+      ),
       body: Column(
         children: [
           // --- Date Selector (โค้ดเดิม) ---
