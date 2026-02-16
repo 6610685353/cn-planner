@@ -17,4 +17,17 @@ class DataFetch {
       throw Exception('Error fetching data, Error message: $e');
     }
   }
+
+  Future<Map<String, dynamic>> getAllSubject() async {
+    try {
+      final List<dynamic> response = await Supabase.instance.client.from('Subjects').select();
+
+      return {
+        for (var item in response)
+          item['subjectCode']: item
+      };
+    } catch (e) {
+      throw Exception('Error fetching data, Error message: $e');
+    }
+  }
 }

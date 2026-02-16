@@ -15,17 +15,56 @@ class ManageCoursePage extends StatefulWidget {
 
 class _ManageCoursePage extends State<ManageCoursePage> {
   // Map<String, dynamic> _data = {}; 
-  late Future<Map<String, dynamic>> _dataFuture;
+  Map<String, dynamic> _dataCourse = {};
+  Map<String, dynamic> _dataSubject = {};
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _dataFuture = DataFetch().getAllCourse();
+    _loadData();
   }
 
+  Future<void> _loadData() async {
+    try {
+      final dataCourseF = await DataFetch().getAllCourse();
+      final dataSubjectF = await DataFetch().getAllSubject();
+
+      if (!mounted) return;
+
+      setState(() {
+        _dataCourse = dataCourseF;
+        _dataSubject = dataSubjectF;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if(!mounted) return;
+
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return const Center(child: Text('Error'));
+    }
+
+    if (_dataCourse.isEmpty) {
+      return const Center(child: Text("Course not found."));
+    }
+
+    if (_dataSubject.isEmpty) {
+      return const Center(child: Text("Subject not found."));
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -38,24 +77,15 @@ class _ManageCoursePage extends State<ManageCoursePage> {
         ),
         title: const Text('Manage Course')
       ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _dataFuture, 
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-
-          if (snapshot.hasData) {
-            final dataMap = snapshot.data!;
-
-            return Text(dataMap.toString());
-          }
-          return const Center(child: Text("No data found"));
-        }
+      body: Column(
+        children: _dataCourse.entries.map((entry) {
+          return YearCourseBox(
+            year: entry.value['year'], 
+            semester: entry.value['sem'],
+            courseSubject: entry.value['courses'],
+            subjectData: _dataSubject,
+          );
+        }).toList(),
       ),
       
       bottomNavigationBar: Padding(
