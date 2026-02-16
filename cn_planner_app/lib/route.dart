@@ -1,6 +1,4 @@
-import 'package:cn_planner_app/core/models/class_session.dart';
 import 'package:cn_planner_app/features/main_wrapper.dart';
-import 'package:flutter/material.dart';
 import 'features/auth/views/login_page.dart';
 import 'features/auth/views/register_page.dart';
 import 'features/auth/views/forgot_password_page.dart';
@@ -20,7 +18,7 @@ class AppRoutes {
   static const roadmap = '/roadmap';
   static const schedule = '/schedule';
   static const profile = '/profile';
-  static const edit_profile = '/edit_profile';
+  static const editProfile = '/edit_profile';
   static const setting = '/setting';
   static const notification = '/notification';
   static const forgotPassword = '/forgot-password';
@@ -35,8 +33,8 @@ class AppRoutes {
     home: (context) => const HomePage(),
     roadmap: (context) => const RoadMapPage(),
     schedule: (context) => const SchedulePage(),
-    profile: (context) => ProfilePage(),
-    edit_profile: (context) => EditProfilePage(),
+    profile: (context) => const ProfilePage(),
+    editProfile: (context) => const EditProfilePage(),
     setting: (context) => const SettingPage(),
     notification: (context) => const NotificationsPage(),
     gpa: (context) => const GPACalculatorPage(),

@@ -684,7 +684,6 @@ import 'package:cn_planner_app/core/constants/app_colors.dart';
 import 'package:cn_planner_app/core/widgets/top_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/core/models/class_session.dart';
-import 'package:cn_planner_app/route.dart';
 
 class DailySchedulePage extends StatefulWidget {
   final List<ClassSession> allClasses;
@@ -958,7 +957,7 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -1001,9 +1000,8 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
                 Text(
                   "${session.start} - ${session.stop}",
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
                     fontSize: 13,
-                    color: badgeTextColor.withOpacity(0.8),
+                    color: badgeTextColor.withValues(alpha: 0.8),
                   ),
                 ),
               ],
@@ -1194,7 +1192,7 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
                     border: Border.all(color: Colors.white, width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.amber.withOpacity(0.3),
+                        color: Colors.amber.withValues(alpha: 0.3),
                         blurRadius: 4,
                       ),
                     ],
@@ -1213,7 +1211,7 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
