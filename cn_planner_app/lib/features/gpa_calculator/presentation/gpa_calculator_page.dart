@@ -370,7 +370,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                         0xFFF5F5F5,
                       ), // Light background
                     ).copyWith(
-                      side: MaterialStateProperty.all(
+                      side: WidgetStateProperty.all(
                         const BorderSide(color: Colors.grey, width: 1),
                       ),
                     ),
@@ -507,7 +507,7 @@ class _StatCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -552,13 +552,12 @@ class _SwipeToReveal extends StatefulWidget {
   final Widget child;
   final Widget action;
   final VoidCallback onAction;
-  final double actionWidth;
+  final double actionWidth = 80.0;
 
   const _SwipeToReveal({
     required this.child,
     required this.action,
     required this.onAction,
-    this.actionWidth = 80.0,
   });
 
   @override
@@ -589,8 +588,9 @@ class _SwipeToRevealState extends State<_SwipeToReveal>
     setState(() {
       _dragExtent += details.primaryDelta!;
       if (_dragExtent > 0) _dragExtent = 0; // Prevent swipe right
-      if (_dragExtent < -widget.actionWidth * 1.5)
+      if (_dragExtent < -widget.actionWidth * 1.5) {
         _dragExtent = -widget.actionWidth * 1.5; // Limit overscroll
+      }
     });
   }
 
@@ -699,7 +699,7 @@ class _CourseCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

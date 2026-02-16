@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import ตัวใหม่ที่เพิ่งลง
 
@@ -37,7 +38,7 @@ class AuthService {
       }
       return user;
     } catch (e) {
-      print("Error during registration: $e");
+      debugPrint("Error during registration: $e");
       rethrow; // ส่ง Error กลับไปให้ Controller จัดการ
     }
   }

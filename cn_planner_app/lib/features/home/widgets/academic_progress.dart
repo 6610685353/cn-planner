@@ -27,7 +27,7 @@ class AcademicProgresss extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -96,7 +96,9 @@ class AcademicProgresss extends StatelessWidget {
                     child: CircularProgressIndicator(
                       value: progress,
                       strokeWidth: 10,
-                      backgroundColor: AppColors.borderGrey.withOpacity(0.3),
+                      backgroundColor: AppColors.borderGrey.withValues(
+                        alpha: 0.3,
+                      ),
                       valueColor: const AlwaysStoppedAnimation<Color>(
                         AppColors.accentYellow,
                       ),

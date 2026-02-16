@@ -38,20 +38,20 @@ class EditProfileState extends State<EditProfilePage> {
                     children: [
                       EditProfileImage(),
                       const SizedBox(height: 10),
-                      BuildText("Change Photo"),
+                      buildText("Change Photo"),
                     ],
                   ),
                 ),
 
                 const SizedBox(height: 30),
 
-                BuildTextAtStart("Username"),
+                buildTextAtStart("Username"),
                 DisabledDisplayField(value: "@somchaitu"),
-                BuildTextAtEnd("Username cannot be changed"),
+                buildTextAtEnd("Username cannot be changed"),
 
                 const SizedBox(height: 8),
 
-                BuildTextAtStart("First Name"),
+                buildTextAtStart("First Name"),
                 const SizedBox(height: 8),
                 EditProfileTextField(
                   controller: _edit.firstnameController,
@@ -60,7 +60,7 @@ class EditProfileState extends State<EditProfilePage> {
 
                 const SizedBox(height: 20),
 
-                BuildTextAtStart("Last Name"),
+                buildTextAtStart("Last Name"),
                 const SizedBox(height: 8),
                 EditProfileTextField(
                   controller: _edit.firstnameController,
@@ -69,7 +69,7 @@ class EditProfileState extends State<EditProfilePage> {
 
                 const SizedBox(height: 100),
 
-                BuildSaveChangeButton(),
+                buildSaveChangeButton(),
               ],
             ),
           ),
@@ -78,14 +78,14 @@ class EditProfileState extends State<EditProfilePage> {
     );
   }
 
-  Widget BuildText(String text) {
+  Widget buildText(String text) {
     return Text(
       text,
       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
     );
   }
 
-  Widget BuildTextAtStart(String text) {
+  Widget buildTextAtStart(String text) {
     return Padding(
       padding: const EdgeInsets.only(left: 4),
       child: Text(
@@ -95,24 +95,22 @@ class EditProfileState extends State<EditProfilePage> {
     );
   }
 
-  Widget BuildTextAtEnd(String text) {
-    return Container(
+  Widget buildTextAtEnd(String text) {
+    return SizedBox(
       width: 352,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Container(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 12, color: AppColors.errorRed),
-            ),
+          Text(
+            text,
+            style: const TextStyle(fontSize: 12, color: AppColors.errorRed),
           ),
         ],
       ),
     );
   }
 
-  Widget BuildSaveChangeButton() {
+  Widget buildSaveChangeButton() {
     return SizedBox(
       width: double.infinity,
       height: 54,
