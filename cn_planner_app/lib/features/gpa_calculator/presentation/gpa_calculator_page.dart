@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import 'package:cn_planner_app/route.dart';
 
 class GPACalculatorPage extends StatefulWidget {
   const GPACalculatorPage({super.key});
@@ -340,7 +341,9 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
               height: 56,
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: _showAddCourseDialog,
+                onPressed: () {
+                  Navigator.pushNamed(context, '/manage');
+                },
                 icon: const Icon(
                   Icons.add_circle_outline,
                   color: Colors.black87,
