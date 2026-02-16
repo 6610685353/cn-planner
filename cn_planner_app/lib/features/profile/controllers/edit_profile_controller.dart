@@ -10,7 +10,7 @@ class EditProfileController {
   }
 
   void handleEditProfile() {
-    print("First Name: ${firstnameController.text}");
-    print("Last Name: ${lastnameController.text}");
+    debugPrint("First Name: ${firstnameController.text}");
+    debugPrint("Last Name: ${lastnameController.text}");
   }
 }

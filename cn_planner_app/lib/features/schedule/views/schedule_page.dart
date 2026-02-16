@@ -5,8 +5,6 @@ import 'schedule_data.dart';
 import '../../../core/widgets/timetable_grid.dart';
 import 'daily_schedule_page.dart';
 import '../../../core/widgets/course_card.dart';
-import 'package:cn_planner_app/features/schedule/views/daily_schedule_page.dart';
-import 'package:cn_planner_app/core/widgets/bottom_nav_bar.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -140,7 +138,7 @@ class _ScheduleScreenState extends State<SchedulePage> {
                       color: AppColors.background,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
