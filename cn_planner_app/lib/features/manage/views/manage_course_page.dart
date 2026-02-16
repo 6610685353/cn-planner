@@ -78,14 +78,23 @@ class _ManageCoursePage extends State<ManageCoursePage> {
         title: const Text('Manage Course')
       ),
       body: Column(
-        children: _dataCourse.entries.map((entry) {
-          return YearCourseBox(
-            year: entry.value['year'], 
-            semester: entry.value['sem'],
-            courseSubject: entry.value['courses'],
-            subjectData: _dataSubject,
-          );
-        }).toList(),
+        children: [
+          SearchBox(),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: _dataCourse.entries.map((entry) {
+                  return YearCourseBox(
+                    year: entry.value['year'], 
+                    semester: entry.value['sem'],
+                    courseSubject: entry.value['courses'],
+                    subjectData: _dataSubject,
+                  );
+                }).toList(),
+              ),
+            ),
+          )
+        ],
       ),
       
       bottomNavigationBar: Padding(
