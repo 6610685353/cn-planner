@@ -1,5 +1,4 @@
 import 'package:cn_planner_app/core/constants/app_colors.dart';
-import 'package:cn_planner_app/core/widgets/bottom_nav_bar.dart';
 import 'package:cn_planner_app/features/home/widgets/academic_progress.dart';
 import 'package:cn_planner_app/features/home/widgets/home_feature.dart';
 import 'package:cn_planner_app/features/home/widgets/welcome_banner.dart';
@@ -49,7 +48,7 @@ class HomePage extends StatelessWidget {
                       HomeFeature(
                         icon: Icons.calculate,
                         name: "GPA Calculator",
-                        route: AppRoutes.main,
+                        route: AppRoutes.gpa,
                         isLeft: false,
                       ),
                     ],

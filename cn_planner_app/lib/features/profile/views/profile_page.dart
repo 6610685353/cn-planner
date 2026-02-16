@@ -6,7 +6,6 @@ import '../../../core/constants/app_colors.dart';
 import '../widgets/profile_image.dart';
 import '../widgets/profile_info.dart';
 import '../widgets/gpa_dashboard.dart';
-import 'package:cn_planner_app/core/widgets/bottom_nav_bar.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -123,7 +122,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Icon buildIcon(IconData IconData) {
-    return Icon(IconData, color: AppColors.textDarkGrey);
+  Icon buildIcon(IconData iconData) {
+    return Icon(iconData, color: AppColors.textDarkGrey);
   }
 }

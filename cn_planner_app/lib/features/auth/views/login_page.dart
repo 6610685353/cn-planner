@@ -122,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: AppColors.accentYellow.withOpacity(0.3),
+            color: AppColors.accentYellow.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
