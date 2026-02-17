@@ -1,17 +1,15 @@
-import 'package:cn_planner_app/core/constants/app_colors.dart';
-import 'package:cn_planner_app/core/widgets/top_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/core/models/class_session.dart';
 
-class DailySchedulePage extends StatefulWidget {
+class DailyScheduleScreen extends StatefulWidget {
   final List<ClassSession> allClasses;
-  const DailySchedulePage({super.key, required this.allClasses});
+  const DailyScheduleScreen({super.key, required this.allClasses});
 
   @override
-  State<DailySchedulePage> createState() => _DailyScheduleScreenState();
+  State<DailyScheduleScreen> createState() => _DailyScheduleScreenState();
 }
 
-class _DailyScheduleScreenState extends State<DailySchedulePage> {
+class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
   DateTime _selectedDate = DateTime.now();
 
   @override
@@ -57,8 +55,16 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
     final isOngoing = ongoingClass != null;
 
     return Scaffold(
-      backgroundColor: AppColors.background, // พื้นหลังหลัก
-      appBar: TopBar(header: "Day Schedule"),
+      backgroundColor: Colors.white, // พื้นหลังหลัก
+      appBar: AppBar(
+        title: const Text(
+          'Daily Schedule',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: const BackButton(color: Colors.black),
+      ),
       body: Column(
         children: [
           // --- Date Selector (โค้ดเดิม) ---
@@ -275,7 +281,7 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -318,8 +324,9 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
                 Text(
                   "${session.start} - ${session.stop}",
                   style: TextStyle(
+                    fontWeight: FontWeight.w600,
                     fontSize: 13,
-                    color: badgeTextColor.withValues(alpha: 0.8),
+                    color: badgeTextColor.withOpacity(0.8),
                   ),
                 ),
               ],
@@ -510,7 +517,7 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
                     border: Border.all(color: Colors.white, width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.amber.withValues(alpha: 0.3),
+                        color: Colors.amber.withOpacity(0.3),
                         blurRadius: 4,
                       ),
                     ],
@@ -529,7 +536,7 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: Colors.black.withOpacity(0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),

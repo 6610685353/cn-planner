@@ -10,6 +10,7 @@ import 'features/profile/views/edit_profile_page.dart';
 import 'features/profile/views/setting_page.dart';
 import 'features/notification/views/notifications_page.dart';
 import 'features/gpa_calculator/presentation/gpa_calculator_page.dart';
+import 'features/credit_breakdown/views/credit_page.dart';
 
 class AppRoutes {
   static const login = '/login';
@@ -22,6 +23,7 @@ class AppRoutes {
   static const setting = '/setting';
   static const notification = '/notification';
   static const forgotPassword = '/forgot-password';
+  static const creditBreakdown = '/credit_breakdown';
   static const main = 'main';
   static const gpa = '/gpa';
 
@@ -38,5 +40,6 @@ class AppRoutes {
     setting: (context) => const SettingPage(),
     notification: (context) => const NotificationsPage(),
     gpa: (context) => const GPACalculatorPage(),
+    creditBreakdown: (context) => const CreditBreakdownPage(),
   };
 }
