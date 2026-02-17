@@ -30,7 +30,7 @@ class HomePage extends StatelessWidget {
                   AcademicProgresss(
                     creditEarned: 100,
                     totalCredit: 146,
-                    route: AppRoutes.main,
+                    route: AppRoutes.creditBreakdown,
                   ),
 
                   const SizedBox(height: 15),
