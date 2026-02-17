@@ -1,4 +1,5 @@
 import 'package:cn_planner_app/features/main_wrapper.dart';
+import 'package:cn_planner_app/features/manage/views/manage_course_page.dart';
 import 'features/auth/views/login_page.dart';
 import 'features/auth/views/register_page.dart';
 import 'features/auth/views/forgot_password_page.dart';
@@ -23,6 +24,7 @@ class AppRoutes {
   static const setting = '/setting';
   static const notification = '/notification';
   static const forgotPassword = '/forgot-password';
+  static const manage = '/manage';
   static const creditBreakdown = '/credit_breakdown';
   static const main = 'main';
   static const gpa = '/gpa';
@@ -39,6 +41,7 @@ class AppRoutes {
     editProfile: (context) => const EditProfilePage(),
     setting: (context) => const SettingPage(),
     notification: (context) => const NotificationsPage(),
+    manage: (context) => const ManageCoursePage(),
     gpa: (context) => const GPACalculatorPage(),
     creditBreakdown: (context) => const CreditBreakdownPage(),
   };
