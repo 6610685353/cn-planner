@@ -1,22 +1,32 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import ตัวใหม่ที่เพิ่งลง
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore =
-      FirebaseFirestore.instance; // สร้างตัวแปรติดต่อฐานข้อมูล
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-  // ฟังก์ชันสมัครสมาชิก + บันทึกข้อมูลลงฐานข้อมูล
+  // --- สมัครสมาชิก + บันทึกข้อมูล 2 ฐานข้อมูล (Firestore & Supabase) ---
   Future<User?> register({
     required String email,
     required String password,
+    required String username,
     required String firstName,
     required String lastName,
     required int year,
   }) async {
     try {
-      // 1. สร้างบัญชีใน Firebase Auth (เก็บแค่ Email/Password)
+      final usernameCheck = await _firestore
+          .collection('users')
+          .where('username', isEqualTo: username.toLowerCase().trim())
+          .get();
+
+      if (usernameCheck.docs.isNotEmpty) {
+        throw FirebaseAuthException(code: 'username-already-in-use');
+      }
+
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -25,39 +35,85 @@ class AuthService {
       User? user = result.user;
 
       if (user != null) {
-        // 2. ถ้าสร้างบัญชีสำเร็จ ให้สร้าง "เอกสาร" ใหม่ในตาราง 'users'
-        // โดยใช้ ID เดียวกับ UID ของ User เพื่อให้ง่ายต่อการค้นหาในอนาคต
+        // บันทึกลง Firestore
         await _firestore.collection('users').doc(user.uid).set({
           'uid': user.uid,
+          'username': username.toLowerCase().trim(),
           'firstName': firstName,
           'lastName': lastName,
           'email': email,
           'year': year,
-          'createdAt': FieldValue.serverTimestamp(), // เก็บเวลาที่สมัครจริง
+          'createdAt': FieldValue.serverTimestamp(),
         });
+
+        // บันทึกลง Supabase ตาราง enrolled
+        await _supabase.from('Enrolled').insert({'uid': user.uid});
+
+        print(
+          "Success: Firebase UID ${user.uid} saved to Supabase table Enrolled",
+        );
       }
       return user;
     } catch (e) {
-      debugPrint("Error during registration: $e");
-      rethrow; // ส่ง Error กลับไปให้ Controller จัดการ
+      debugPrint("Registration Error: $e");
+      rethrow;
     }
   }
 
-  // เข้าสู่ระบบ (เหมือนเดิม)
-  Future<User?> login(String email, String password) async {
-    UserCredential result = await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    return result.user;
-  }
-
-  // เพิ่มเข้าไปในคลาส AuthService
-  Future<void> sendPasswordReset(String email) async {
+  // --- เข้าสู่ระบบ (รองรับทั้ง Email และ Username) ---
+  Future<User?> login(String identifier, String password) async {
     try {
-      await _auth.sendPasswordResetEmail(email: email);
+      String email = identifier.trim();
+      if (!email.contains('@')) {
+        final querySnapshot = await _firestore
+            .collection('users')
+            .where('username', isEqualTo: email.toLowerCase())
+            .limit(1)
+            .get();
+
+        if (querySnapshot.docs.isEmpty) {
+          throw FirebaseAuthException(code: 'user-not-found');
+        }
+        email = querySnapshot.docs.first.get('email');
+      }
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return result.user;
     } catch (e) {
       rethrow;
     }
+  }
+
+  // --- รีเซ็ตรหัสผ่าน (รองรับทั้ง Email และ Username) ---
+  Future<void> sendPasswordReset(String identifier) async {
+    try {
+      String email = identifier.trim();
+
+      // ถ้าไม่มี @ แสดงว่าเป็น Username ต้องไปหา Email ใน Firestore ก่อน
+      if (!email.contains('@')) {
+        final querySnapshot = await _firestore
+            .collection('users')
+            .where('username', isEqualTo: email.toLowerCase())
+            .limit(1)
+            .get();
+
+        if (querySnapshot.docs.isEmpty) {
+          throw FirebaseAuthException(code: 'user-not-found');
+        }
+        email = querySnapshot.docs.first.get('email');
+      }
+
+      await _auth.sendPasswordResetEmail(email: email);
+    } catch (e) {
+      debugPrint("Reset Password Error: $e");
+      rethrow;
+    }
+  }
+
+  // --- ออกจากระบบ ---
+  Future<void> logout() async {
+    await _auth.signOut();
   }
 }
