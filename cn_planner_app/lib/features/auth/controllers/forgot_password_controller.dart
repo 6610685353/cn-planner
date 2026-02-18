@@ -3,39 +3,44 @@ import '../../../services/auth_service.dart';
 import '../../../core/widgets/status_dialog.dart';
 
 class ForgotPasswordController {
-  final emailController = TextEditingController();
+  // เปลี่ยนชื่อจาก emailController เป็น usernameController เพื่อไม่ให้งง
+  final usernameController = TextEditingController();
   final _authService = AuthService();
 
   void dispose() {
-    emailController.dispose();
+    usernameController.dispose();
   }
 
   Future<void> handleResetPassword(BuildContext context) async {
-    String email = emailController.text.trim();
+    // 1. ดึงค่า username จากช่องกรอก
+    String username = usernameController.text.trim();
 
-    if (email.isEmpty) {
-      _showPopup(context, "Error", "Please enter your email address.");
+    if (username.isEmpty) {
+      _showPopup(context, "Error", "Please enter your username.");
       return;
     }
 
     try {
-      await _authService.sendPasswordReset(email);
+      // 2. เรียกฟังก์ชันใหม่ที่เรากำลังจะไปเพิ่มใน AuthService
+      await _authService.sendPasswordReset(username);
 
       if (context.mounted) {
         _showPopup(
           context,
-          "Email Sent",
-          "A password reset link has been sent to $email. Please check your inbox.",
+          "Request Sent",
+          "If the username exists, a password reset link has been sent to the associated email.",
           isError: false,
         );
       }
     } catch (e) {
+      // 3. จัดการ Error กรณีหา username ไม่เจอ
+      String errorMessage = "Could not send reset link. Please try again.";
+      if (e.toString().contains('user-not-found')) {
+        errorMessage = "Username not found. Please check your spelling.";
+      }
+
       if (context.mounted) {
-        _showPopup(
-          context,
-          "Error",
-          "Could not send reset email. Please check if the email is correct.",
-        );
+        _showPopup(context, "Error", errorMessage);
       }
     }
   }
