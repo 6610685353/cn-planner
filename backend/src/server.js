@@ -1,5 +1,5 @@
 const express = require("express");
-const userEnrolledRoutes = require("./src/routes/enrolled_routes");
+const userEnrolledRoutes = require("./routes/enrolled_routes");
 const app = express();
 const PORT = 3000;
 
@@ -15,6 +15,6 @@ app.listen(PORT, () => {
   console.log(`CNplanner server is running on http://localhost:${PORT}`);
 });
 
-const gpaRoutes = require("./src/routes/gpa_routes");
+const gpaRoutes = require("./routes/gpa_routes");
 
 app.use("/api/v1/gpa", gpaRoutes);
