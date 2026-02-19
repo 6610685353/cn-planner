@@ -35,23 +35,26 @@ class HomePage extends StatelessWidget {
 
                   const SizedBox(height: 15),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      HomeFeature(
-                        icon: Icons.edit_square,
-                        name: "Edit Academic",
-                        route: AppRoutes.main,
-                        isLeft: true,
-                      ),
+                  Container(
+                    width: 358,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        HomeFeature(
+                          icon: Icons.edit_square,
+                          name: "Edit Academic",
+                          route: AppRoutes.main,
+                          isLeft: true,
+                        ),
 
-                      HomeFeature(
-                        icon: Icons.calculate,
-                        name: "GPA Calculator",
-                        route: AppRoutes.gpa,
-                        isLeft: false,
-                      ),
-                    ],
+                        HomeFeature(
+                          icon: Icons.calculate,
+                          name: "GPA Calculator",
+                          route: AppRoutes.gpa,
+                          isLeft: false,
+                        ),
+                      ],
+                    ),
                   ),
 
                   SizedBox(height: 12),
