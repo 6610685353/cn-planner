@@ -1,4 +1,3 @@
-//pull data from Supabase
 // mock database
 const mockUsers = [
   {
@@ -62,3 +61,17 @@ exports.replaceEnrollList = async (uid, newEnrollList) => {
 
   return user;
 };
+
+//pull data from Supabase
+
+const supabase = require('../config/supabase');
+
+async function findUser(uid) {
+  const { data, error } = await supabase.from('Enrolled').select('*').eq("uid", uid);
+
+  if(error) throw error;
+
+  return data;
+}
+
+module.exports = { findUser };
