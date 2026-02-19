@@ -14,7 +14,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: err.message });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`CNplanner server is running on http://localhost:${PORT}`);
 });
 
