@@ -45,3 +45,12 @@ exports.updateEnrollList = async (uid, enrollList) => {
 
   return updatedUser;
 };
+
+//////_____________________________________
+const enrolledModel = require('../models/enrolled_model');
+
+async function getUserByUid(uid) {
+  return await enrolledModel.findUser(uid);
+}
+
+module.exports = { getUserByUid };

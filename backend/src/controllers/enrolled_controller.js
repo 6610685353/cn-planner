@@ -56,3 +56,18 @@ exports.updateEnrollList = async (req, res, next) => {
     next(error);
   }
 };
+
+/////________________________________________________________
+
+const enrolledService = require('../services/enrolled_service')
+
+const getUserByUid = async (req, res) => {
+    const { uid } = req.body;
+
+    if (!uid) {
+      return res.status(400).json({ message: "uid is required"});
+    }
+
+    const enrollment = await enrolledService.getUserByUid(uid);
+    res.json(enrollment);
+}

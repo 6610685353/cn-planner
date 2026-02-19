@@ -1,7 +1,10 @@
+require('dotenv').config();
+
 const express = require("express");
-const userEnrolledRoutes = require("./routes/enrolled_routes");
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+const userEnrolledRoutes = require("./src/routes/enrolled_routes");
 
 app.use(express.json());
 
@@ -15,6 +18,6 @@ app.listen(PORT, () => {
   console.log(`CNplanner server is running on http://localhost:${PORT}`);
 });
 
-const gpaRoutes = require("./routes/gpa_routes");
+const gpaRoutes = require("./src/routes/gpa_routes");
 
 app.use("/api/v1/gpa", gpaRoutes);
