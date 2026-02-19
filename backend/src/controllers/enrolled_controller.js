@@ -68,6 +68,7 @@ const getUserByUid = async (req, res) => {
       return res.status(400).json({ message: "uid is required"});
     }
 
+    console.log("req recieved")
     const enrollment = await enrolledService.getUserByUid(uid);
     res.json(enrollment);
 }

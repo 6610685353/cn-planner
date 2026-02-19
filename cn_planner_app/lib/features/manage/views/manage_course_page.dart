@@ -17,6 +17,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
   // Map<String, dynamic> _data = {}; 
   Map<String, dynamic> _dataCourse = {};
   Map<String, dynamic> _dataSubject = {};
+  List<dynamic> _dataEnrolled = [];
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -30,12 +31,15 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     try {
       final dataCourseF = await DataFetch().getAllCourse();
       final dataSubjectF = await DataFetch().getAllSubject();
+      final dataEnrolledF = await DataFetch().fetchEnrolled("");
+      print("after calling API");
 
       if (!mounted) return;
 
       setState(() {
         _dataCourse = dataCourseF;
         _dataSubject = dataSubjectF;
+        _dataEnrolled = dataEnrolledF;
         _isLoading = false;
       });
     } catch (e) {
@@ -55,7 +59,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     }
 
     if (_errorMessage != null) {
-      return const Center(child: Text('Error'));
+      return const Center(child: Text('Error!'));
     }
 
     if (_dataCourse.isEmpty) {
@@ -79,6 +83,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
       ),
       body: Column(
         children: [
+          Text(_dataEnrolled.toString()),
           SearchBox(),
           Expanded(
             child: SingleChildScrollView(
