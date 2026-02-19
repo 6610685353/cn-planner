@@ -57,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
                 // --- ส่วนฟอร์มกรอกข้อมูล ---
                 _buildInputLabel("Email / Username"),
                 LoginTextField(
-                  controller: _controller.usernameController,
+                  controller: _controller.identifierController,
                   hintText: "Enter your email or username",
                 ),
 

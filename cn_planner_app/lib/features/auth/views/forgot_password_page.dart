@@ -51,8 +51,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ),
             const SizedBox(height: 8),
             RegisterTextField(
-              controller: _controller.emailController,
-              hintText: "Enter your registered email",
+              controller: _controller.usernameController,
+              hintText: "Enter your registered username",
             ),
 
             const SizedBox(height: 40),
