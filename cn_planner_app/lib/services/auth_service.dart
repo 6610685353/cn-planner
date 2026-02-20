@@ -116,4 +116,16 @@ class AuthService {
   Future<void> logout() async {
     await _auth.signOut();
   }
+
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    final user = _auth.currentUser;
+
+    if (user == null) return null;
+
+    final doc = await _firestore.collection('users').doc(user.uid).get();
+
+    if (!doc.exists) return null;
+
+    return doc.data();
+  }
 }
