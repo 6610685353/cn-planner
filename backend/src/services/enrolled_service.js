@@ -2,7 +2,7 @@ const enrolledModel = require('../models/enrolled_model');
 
 function arrayToKeyMap(data, keyMap,) {
   return data.reduce((acc, item) => {
-    const key = `${item[keyMap]}`; // รวม id + uid
+    const key = `${item[keyMap]}`;
     acc[key] = item;               
     return acc;
   }, {});
@@ -10,8 +10,8 @@ function arrayToKeyMap(data, keyMap,) {
 
 function arraySumKeyMap(data, keyC1, keyC2) {
   return data.reduce((acc, item) => {
-    const key = `${item[keyC1]}_${item[keyC2]}`; // รวม id + uid
-    acc[key] = item;                      // เก็บ object เดิมทั้งก้อน
+    const key = `${item[keyC1]}_${item[keyC2]}`;
+    acc[key] = item; 
     return acc;
   }, {});
 }
