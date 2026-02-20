@@ -3,6 +3,8 @@ import 'package:cn_planner_app/features/manage/widgets/search_box.dart';
 import 'package:cn_planner_app/features/manage/widgets/year_course.dart';
 import 'package:cn_planner_app/services/data_fetch.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class ManageCoursePage extends StatefulWidget {
   const ManageCoursePage({super.key});
@@ -18,10 +20,20 @@ class _ManageCoursePage extends State<ManageCoursePage> {
   List<dynamic> _dataEnrolled = [];
   bool _isLoading = true;
   String? _errorMessage;
+  String userID = "";
 
   @override
   void initState() {
     super.initState();
+    print("call initState");
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if(user != null) {
+        print(user.uid);
+        userID = user.uid;
+      } else {
+        print("Not login");
+      }
+    });
     _loadData();
   }
 
@@ -29,7 +41,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     try {
       final dataCourseF = await DataFetch().getAllCourse();
       final dataSubjectF = await DataFetch().getAllSubject();
-      final dataEnrolledF = await DataFetch().fetchEnrolled("oNbrytwHuXg9jWBOLu15P2PAOOp1");
+      final dataEnrolledF = await DataFetch().fetchEnrolled(userID);
       print("after calling API");
 
       if (!mounted) return;
