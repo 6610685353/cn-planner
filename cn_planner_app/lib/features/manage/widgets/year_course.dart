@@ -64,7 +64,7 @@ class _YearCourseBox extends State<YearCourseBox> {
                     return SubjectBox(
                       title: course,
                       subtitle: widget.subjectData[course]['subjectName'],
-                      credits: widget.subjectData[course]['credits'],
+                      credits: (widget.subjectData[course]['credits'] as int).toDouble(),
                       grade: "A",
                     );
                 }).toList(),
@@ -72,6 +72,7 @@ class _YearCourseBox extends State<YearCourseBox> {
             )
         ],
       ),
+    )
     );
   }
 }
