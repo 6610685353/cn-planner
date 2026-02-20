@@ -19,10 +19,13 @@ class SettingActionTile extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.all(16),
-        height: 82,
+        // height: 82,
+        height: 60,
+        width: 165,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          // borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(40),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.1),

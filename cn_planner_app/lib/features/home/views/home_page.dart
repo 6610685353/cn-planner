@@ -4,8 +4,13 @@ import 'package:cn_planner_app/features/home/widgets/home_feature.dart';
 import 'package:cn_planner_app/features/home/widgets/welcome_banner.dart';
 import 'package:cn_planner_app/features/home/widgets/gpa_banner.dart';
 import 'package:cn_planner_app/features/home/widgets/schedule_card.dart';
+import 'package:cn_planner_app/features/schedule/views/schedule_data.dart';
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/route.dart';
+
+// Import 2 ตัวนี้เพื่อให้ดึงข้อมูลและย้ายหน้าได้
+import 'package:cn_planner_app/features/schedule/views/schedule_page.dart';
+import 'package:cn_planner_app/features/schedule/views/daily_schedule_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -17,11 +22,7 @@ class HomePage extends StatelessWidget {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          WelcomeBanner(
-            fname: "Somchai",
-            route: AppRoutes.notification, //แก้ด้วย
-          ),
-
+          WelcomeBanner(fname: "Somchai", route: AppRoutes.notification),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -32,34 +33,30 @@ class HomePage extends StatelessWidget {
                     totalCredit: 146,
                     route: AppRoutes.creditBreakdown,
                   ),
-
                   const SizedBox(height: 15),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      HomeFeature(
-                        icon: Icons.edit_square,
-                        name: "Edit Academic",
-                        route: AppRoutes.main,
-                        isLeft: true,
-                      ),
-
-                      HomeFeature(
-                        icon: Icons.calculate,
-                        name: "GPA Calculator",
-                        route: AppRoutes.gpa,
-                        isLeft: false,
-                      ),
-                    ],
+                  SizedBox(
+                    width: 358,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        HomeFeature(
+                          icon: Icons.edit_square,
+                          name: "Edit Academic",
+                          route: AppRoutes.main,
+                          isLeft: true,
+                        ),
+                        HomeFeature(
+                          icon: Icons.calculate,
+                          name: "GPA Calculator",
+                          route: AppRoutes.gpa,
+                          isLeft: false,
+                        ),
+                      ],
+                    ),
                   ),
-
-                  SizedBox(height: 12),
-
+                  const SizedBox(height: 12),
                   scheduleTitle(context, AppRoutes.main),
-
-                  SizedBox(height: 10),
-
+                  const SizedBox(height: 10),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
@@ -83,12 +80,9 @@ class HomePage extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  SizedBox(height: 15),
-
+                  const SizedBox(height: 15),
                   GpaBanner(gpa: 4.00),
-
-                  SizedBox(height: 15),
+                  const SizedBox(height: 15),
                 ],
               ),
             ),
@@ -102,14 +96,40 @@ class HomePage extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
+        const Text(
           "Today's Schedule",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-
         InkWell(
-          onTap: () {
-            Navigator.pushNamed(context, AppRoutes.main);
+          onTap: () async {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) =>
+                  const Center(child: CircularProgressIndicator()),
+            );
+
+            try {
+              final classes = await ScheduleDataService.getUserClasses("1");
+
+              if (context.mounted) {
+                Navigator.pop(context); // ปิด Loading
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        DailySchedulePage(allClasses: classes),
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                Navigator.pop(context); // ปิด Loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to load schedule: $e')),
+                );
+              }
+            }
           },
           borderRadius: BorderRadius.circular(8),
           child: const Padding(
@@ -122,8 +142,7 @@ class HomePage extends StatelessWidget {
                   'View Day Schedule',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors
-                        .primaryYellow, // เปลี่ยนสีให้มองเห็นชัด (เพราะไม่มีพื้นหลังแล้ว)
+                    color: AppColors.primaryYellow,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -131,7 +150,7 @@ class HomePage extends StatelessWidget {
                 Icon(
                   Icons.arrow_right_alt,
                   size: 20,
-                  color: AppColors.primaryYellow, // สีเดียวกับ Text
+                  color: AppColors.primaryYellow,
                 ),
               ],
             ),

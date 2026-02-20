@@ -11,4 +11,6 @@ class AppColors {
   static const Color errorRed = Color(0xFFAE0000); // สีแดงสำหรับ Login
   static const Color lightRed = Color(0xFFF5E5E6);
   static const Color background = Color(0xFFF8F9FA);
+  static const Color primaryBlue = Color(0xFF137CEC);
+  static const Color lightBlue = Color(0xFFE1EDF9);
 }
