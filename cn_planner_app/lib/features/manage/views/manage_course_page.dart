@@ -2,6 +2,7 @@ import 'package:cn_planner_app/core/constants/app_colors.dart';
 import 'package:cn_planner_app/features/manage/widgets/search_box.dart';
 import 'package:cn_planner_app/features/manage/widgets/year_course.dart';
 import 'package:cn_planner_app/services/data_fetch.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
@@ -14,9 +15,9 @@ class ManageCoursePage extends StatefulWidget {
 }
 
 class _ManageCoursePage extends State<ManageCoursePage> {
-  // Map<String, dynamic> _data = {}; 
   Map<String, dynamic> _dataCourse = {};
   Map<String, dynamic> _dataSubject = {};
+  Map<String, dynamic> _filteredCourses = {};
   List<dynamic> _dataEnrolled = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -31,7 +32,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     try {
       final dataCourseF = await DataFetch().getAllCourse();
       final dataSubjectF = await DataFetch().getAllSubject();
-      final dataEnrolledF = await DataFetch().fetchEnrolled("");
+      final dataEnrolledF = await DataFetch().fetchEnrolled("oNbrytwHuXg9jWBOLu15P2PAOOp1");
       print("after calling API");
 
       if (!mounted) return;
@@ -40,6 +41,8 @@ class _ManageCoursePage extends State<ManageCoursePage> {
         _dataCourse = dataCourseF;
         _dataSubject = dataSubjectF;
         _dataEnrolled = dataEnrolledF;
+        _filteredCourses = _dataCourse;
+        
         _isLoading = false;
       });
     } catch (e) {
@@ -50,6 +53,33 @@ class _ManageCoursePage extends State<ManageCoursePage> {
         _isLoading = false;
       });
     }
+  }
+
+  void onSearch(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredCourses = _dataCourse;
+      });
+      return;
+    }
+
+    final Map<String, dynamic> result = {};
+
+    _dataCourse.forEach((category, items) {
+      final courses = (items['courses'] as List<dynamic>);
+
+      final matched = courses.where((c) =>
+        c.toString().toLowerCase().contains(query.toLowerCase())
+      ).toList();
+
+      if (matched.isNotEmpty) {
+        result[category] = {...items, 'courses':matched};
+      }
+    });
+
+    setState(() {
+      _filteredCourses = result;
+    });
   }
 
   @override
@@ -83,11 +113,12 @@ class _ManageCoursePage extends State<ManageCoursePage> {
       ),
       body: Column(
         children: [
-          SearchBox(),
+          // Text(_dataSubject.toString()),
+          SearchBox(onChanged: onSearch),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
-                children: _dataCourse.entries.map((entry) {
+                children: _filteredCourses.entries.map((entry) {
                   return YearCourseBox(
                     year: entry.value['year'], 
                     semester: entry.value['sem'],

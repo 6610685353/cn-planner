@@ -44,22 +44,17 @@ class _YearCourseBox extends State<YearCourseBox> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10.0 ,vertical: 10.0),
               child: Column(
-                children: widget.courseSubject.map((course) {
+                children: 
+                  widget.courseSubject.map((course) {
                   return SubjectBox(
                     title: course, 
                     subtitle: widget.subjectData[course]['subjectName'], 
-                    credits: widget.subjectData[course]['credits'],
+                    credits: (widget.subjectData[course]['credits'] as int).toDouble(),
                     grade: "A", 
                     );
                 }).toList(),
               ),
             )
-
-          // if (_isExpanded)
-          //   Padding(
-          //     padding: const EdgeInsets.symmetric(horizontal: 10.0),
-          //     child: Text(widget.courseSubject.toString())
-          //   )
         ],
       ),
     );
