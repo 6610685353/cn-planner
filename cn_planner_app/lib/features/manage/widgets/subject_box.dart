@@ -6,6 +6,7 @@ class SubjectBox extends StatefulWidget {
   final String subtitle;
   final double credits;
   final String grade;
+  final Function(bool) onChanged;
 
   const SubjectBox({
     super.key,
@@ -13,6 +14,7 @@ class SubjectBox extends StatefulWidget {
     required this.subtitle,
     required this.credits,
     required this.grade,
+    required this.onChanged,
   });
 
   @override
@@ -47,8 +49,9 @@ class _SubjectBoxState extends State<SubjectBox> {
               }),
               onChanged: (bool? value) {
                 setState(() {
-                  _isChecked = value ?? false;
+                  _isChecked = value!;
                 });
+                widget.onChanged(_isChecked);
               },
             ),
           ),
