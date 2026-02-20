@@ -83,7 +83,6 @@ class _ManageCoursePage extends State<ManageCoursePage> {
       ),
       body: Column(
         children: [
-          Text(_dataEnrolled.toString()),
           SearchBox(),
           Expanded(
             child: SingleChildScrollView(
