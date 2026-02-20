@@ -7,13 +7,49 @@ import 'package:cn_planner_app/features/home/widgets/schedule_card.dart';
 import 'package:cn_planner_app/features/schedule/views/schedule_data.dart';
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/route.dart';
+import 'package:cn_planner_app/services/auth_service.dart';
 
 // Import 2 ตัวนี้เพื่อให้ดึงข้อมูลและย้ายหน้าได้
 import 'package:cn_planner_app/features/schedule/views/schedule_page.dart';
 import 'package:cn_planner_app/features/schedule/views/daily_schedule_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final AuthService _authService = AuthService();
+
+  String firstName = "";
+  String lastName = "";
+  String? uid;
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
+
+  Future<void> loadUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) return;
+
+    uid = user.uid;
+
+    final data = await _authService.getUserProfile();
+
+    if (data != null && mounted) {
+      setState(() {
+        firstName = data['firstName'] ?? "";
+        lastName = data['lastName'] ?? "";
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +58,7 @@ class HomePage extends StatelessWidget {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          WelcomeBanner(fname: "Somchai", route: AppRoutes.notification),
+          WelcomeBanner(fname: firstName, route: AppRoutes.notification),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),

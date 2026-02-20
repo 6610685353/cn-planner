@@ -9,6 +9,8 @@ import '../../../core/constants/app_colors.dart';
 import '../widgets/profile_image.dart';
 import '../widgets/profile_info.dart';
 import '../widgets/gpa_dashboard.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cn_planner_app/services/auth_service.dart';
 
 // --- 2. เปลี่ยนจาก StatelessWidget เป็น StatefulWidget ---
 class ProfilePage extends StatefulWidget {
@@ -21,6 +23,38 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   // --- 3. ประกาศ Controller สำหรับเรียกใช้งาน Logic ต่างๆ ---
   final SettingController _settingController = SettingController();
+  final AuthService _authService = AuthService();
+
+  String firstName = "";
+  String lastName = "";
+  String username = "";
+  String? uid;
+  int year = 0; // เพิ่มตัวแปรสำหรับเก็บชั้นปี
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
+
+  Future<void> loadUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) return;
+
+    uid = user.uid;
+
+    final data = await _authService.getUserProfile();
+
+    if (data != null && mounted) {
+      setState(() {
+        firstName = data['firstName'] ?? "";
+        lastName = data['lastName'] ?? "";
+        username = data['username'] ?? ""; // ดึงข้อมูล username จากระบบ
+        year = data['year'] ?? 0; // ดึงข้อมูลชั้นปีจากระบบ
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,10 +93,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 20),
 
                   // --- 4. อัปเดตข้อมูลให้ตรงกับ Profile ของคุณ (Pepper) ---
-                  const ProfileInfo(
-                    name: "Pepper", // ข้อมูลจากระบบ
+                  ProfileInfo(
+                    // ignore: prefer_interpolation_to_compose_strings
+                    name: firstName + " " + lastName, // ข้อมูลจากระบบ
                     subtitle:
-                        "@pepper | Year 3", // สมมติ Username และชั้นปีปัจจุบัน
+                        "@$username | Year $year", // สมมติ Username และชั้นปีปัจจุบัน
                   ),
 
                   const SizedBox(height: 20),
