@@ -1,15 +1,5 @@
 const userEnrolledModel = require("../models/enrolled_model");
 
-exports.getUserByUid = async (uid) => {
-  const user = await userEnrolledModel.findByUid(uid);
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  return user;
-};
-
 exports.addSubjectToUser = async (uid, subject, grade) => {
   const user = await userEnrolledModel.addSubjectToUser(uid, subject, grade);
 
@@ -56,6 +46,13 @@ function arrayToKeyMap(data, keyColumn) {
   }, {});
 }
 
+function arraySumKeyMap(data, keyC1, keyC2) {
+  return data.reduce((acc, item) => {
+    acc[item[keyC1 + "_" + keyC2]] = item;
+    return acc;
+  }, {});
+}
+
 
 async function getUserByUid(uid) {
   return await enrolledModel.findUser(uid);
@@ -66,7 +63,13 @@ async function getAllSubject() {
   
   const mapData = arrayToKeyMap(data, 'subjectCode');
   return mapData;
+}
 
+async function getAllCourse() {
+  const data = enrolledModel.getAllCourse();
+
+  const mapData = arraySumKeyMap(data, 'year', 'sem');
+  return mapData;
 }
 
 module.exports = { 

@@ -62,15 +62,15 @@ exports.updateEnrollList = async (req, res, next) => {
 const enrolledService = require('../services/enrolled_service')
 
 const getUserByUid = async (req, res) => {
-    const { uid } = req.body;
+  const { uid } = req.body;
 
-    if (!uid) {
-      return res.status(400).json({ message: "uid is required"});
-    }
+  if (!uid) {
+    return res.status(400).json({ message: "uid is required"});
+  }
 
-    console.log("req recieved")
-    const enrollment = await enrolledService.getUserByUid(uid);
-    res.json(enrollment);
+  console.log("req recieved")
+  const enrollment = await enrolledService.getUserByUid(uid);
+  res.json(enrollment);
 }
 
 const getAllSubject = async (req, res) => {
@@ -78,7 +78,13 @@ const getAllSubject = async (req, res) => {
   res.json(subjects);
 }
 
+const getAllCourse = async (req, res) => {
+  const courses = await enrolledService.getAllCourse();
+  res.json(courses);
+}
+
 module.exports = {
   getUserByUid,
   getAllSubject,
+  getAllCourse,
 }
