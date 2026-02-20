@@ -2,10 +2,7 @@ import 'package:cn_planner_app/core/constants/app_colors.dart';
 import 'package:cn_planner_app/features/manage/widgets/search_box.dart';
 import 'package:cn_planner_app/features/manage/widgets/year_course.dart';
 import 'package:cn_planner_app/services/data_fetch.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'dart:convert';
 
 class ManageCoursePage extends StatefulWidget {
   const ManageCoursePage({super.key});
@@ -113,7 +110,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
       ),
       body: Column(
         children: [
-          // Text(_dataSubject.toString()),
+          Text(_dataEnrolled.toString()),
           SearchBox(onChanged: onSearch),
           Expanded(
             child: SingleChildScrollView(
