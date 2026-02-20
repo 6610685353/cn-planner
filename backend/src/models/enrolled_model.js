@@ -82,6 +82,14 @@ async function getAllSubject() {
   return data;
 }
 
+async function getAllCourse() {
+  const { data, error } = await supabase.from('YearCourses').select('*');
+
+  if(error) throw error;
+
+  return data;
+}
+
 module.exports = {
    findUser,
    getAllSubject,
