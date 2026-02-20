@@ -21,6 +21,17 @@ class YearCourseBox extends StatefulWidget {
 
 class _YearCourseBox extends State<YearCourseBox> {
   bool _isExpanded = false;
+  int selectCount = 0;
+
+  void onChecked(bool isChecked) {
+    setState(() {
+      if (isChecked) {
+        selectCount++;
+      } else {
+        selectCount--;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +50,7 @@ class _YearCourseBox extends State<YearCourseBox> {
                 "Year ${widget.year} Semester ${widget.semester}",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: Text('Progress Bar: %'),
+              subtitle: Text('Progress Bar: $selectCount'),
               trailing: IconButton(
                 icon: Icon(
                   _isExpanded
@@ -66,6 +77,7 @@ class _YearCourseBox extends State<YearCourseBox> {
                       subtitle: widget.subjectData[course]['subjectName'],
                       credits: (widget.subjectData[course]['credits'] as int).toDouble(),
                       grade: "A",
+                      onChanged: onChecked,
                     );
                 }).toList(),
               ),
