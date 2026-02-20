@@ -18,7 +18,7 @@ class HomeFeature extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 172,
+      width: 169,
       height: 130,
       margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(

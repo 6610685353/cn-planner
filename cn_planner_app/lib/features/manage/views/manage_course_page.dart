@@ -1,4 +1,5 @@
 import 'package:cn_planner_app/core/constants/app_colors.dart';
+import 'package:cn_planner_app/core/widgets/top_bar.dart';
 import 'package:cn_planner_app/features/manage/widgets/search_box.dart';
 import 'package:cn_planner_app/features/manage/widgets/year_course.dart';
 import 'package:cn_planner_app/services/data_fetch.dart';
@@ -55,7 +56,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
         _isLoading = false;
       });
     } catch (e) {
-      if(!mounted) return;
+      if (!mounted) return;
 
       setState(() {
         _errorMessage = e.toString();
@@ -98,7 +99,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     }
 
     if (_errorMessage != null) {
-      return const Center(child: Text('Error!'));
+      return const Center(child: Text('Error'));
     }
 
     if (_dataCourse.isEmpty) {
@@ -110,26 +111,17 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.maybePop(context),
-        ),
-        title: const Text('Manage Course')
-      ),
+      appBar: TopBar(header: "Manage Courses"),
       body: Column(
         children: [
-          Text(_dataEnrolled.toString()),
           SearchBox(onChanged: onSearch),
           Expanded(
             child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 20),
               child: Column(
                 children: _filteredCourses.entries.map((entry) {
                   return YearCourseBox(
-                    year: entry.value['year'], 
+                    year: entry.value['year'],
                     semester: entry.value['sem'],
                     courseSubject: entry.value['courses'],
                     subjectData: _dataSubject,
@@ -137,19 +129,47 @@ class _ManageCoursePage extends State<ManageCoursePage> {
                 }).toList(),
               ),
             ),
-          )
+          ),
         ],
       ),
-      
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 15,
+          bottom: MediaQuery.of(context).padding.bottom > 0
+              ? MediaQuery.of(context).padding.bottom + 10
+              : 20,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+          // borderRadius: const BorderRadius.only(
+          //   topLeft: Radius.circular(24),
+          //   topRight: Radius.circular(24),
+          // ),
+        ),
         child: ElevatedButton(
           onPressed: () {},
           style: ElevatedButton.styleFrom(
-            minimumSize: const Size.fromHeight(50), // ปุ่มกว้างเต็มหน้าจอ
-            backgroundColor: Colors.blue,
+            backgroundColor: AppColors.accentYellow,
+            foregroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
           ),
-          child: const Text('Confirm', style: TextStyle(color: Colors.white)),
+          child: const Text(
+            'Confirm Selection',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          ),
         ),
       ),
     );

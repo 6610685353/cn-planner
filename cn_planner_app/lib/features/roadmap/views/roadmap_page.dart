@@ -1,3 +1,4 @@
+import 'package:cn_planner_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class RoadMapPage extends StatelessWidget {
@@ -12,31 +13,26 @@ class RoadMapPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Roadmap Page',
+              'Coming Soon...',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: Colors.deepPurple.shade700,
+                color: AppColors.errorRed,
               ),
             ),
 
             const SizedBox(height: 20),
 
-            Text(
-              'This is a demo of Roadmap Page',
-              style: TextStyle(
-                fontSize: 16,
-                color: const Color.fromARGB(255, 65, 57, 101),
+            Container(
+              width: 300,
+              child: Text(
+                'We are working hard to bring you the roadmap feature. Stay tuned for updates!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.errorRed.withValues(alpha: 0.5),
+                ),
               ),
-            ),
-
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: () {
-                debugPrint('You pressed the button!');
-              },
-              child: Text('Roadmap demo button'),
             ),
           ],
         ),

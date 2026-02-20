@@ -9,7 +9,7 @@ class GpaBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
+      width: 358,
       height: 130,
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
