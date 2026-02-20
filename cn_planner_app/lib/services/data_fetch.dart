@@ -20,6 +20,19 @@ class DataFetch {
     }
   }
 
+  // Future<Map<String, dynamic>> getAllSubject() async {
+  //   try {
+  //     final List<dynamic> response = await Supabase.instance.client.from('Subjects').select();
+
+  //     return {
+  //       for (var item in response)
+  //         item['subjectCode']: item
+  //     };
+  //   } catch (e) {
+  //     throw Exception('Error fetching data, Error message: $e');
+  //   }
+  // }
+
   Future<Map<String, dynamic>> getAllSubject() async {
     final url = Uri.parse("http://192.168.1.198:3000/api/v1/enrolled/subjects");
 
@@ -30,14 +43,17 @@ class DataFetch {
       );
       print("Status: ${response.statusCode}");
 
-      return jsonDecode(response.body);
+      print(response.body);
+      final data =jsonDecode(response.body);
+      print(data);
+      return data;
     } catch (e) {
       throw Exception('Error fetching data, Error message: $e');
     }
   }
 
   Future<List<dynamic>> fetchEnrolled(String uid) async {
-    final url = Uri.parse("http://192.168.1.198:3000/api/v1/enrolled/$uid");
+    final url = Uri.parse("http://192.168.1.198:3000/api/v1/enrolled/uid/$uid");
 
     try {
       print("3 in fetch");
