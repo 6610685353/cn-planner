@@ -1,3 +1,4 @@
+const supabase = require('../config/supabase');
 const enrolledModel = require('../models/enrolled_model');
 
 function arrayToKeyMap(data, keyMap,) {
@@ -31,14 +32,33 @@ async function getAllSubject() {
 
 async function getAllCourse() {
   const data = await enrolledModel.getAllCourse();
-  console.log(data);
   const mapData = arraySumKeyMap(data, 'year', 'sem');
-  console.log(mapData);
   return mapData;
+}
+
+const updateGrade = async (uid, enrolledSubjects) => {
+
+  const { data, error } = await supabase
+    .from("Enrolled")
+    .update({ enrolledSubjects })
+    .eq("uid", uid)
+    .select();
+
+  console.log("Update result:", data);
+  console.log("Update error:", error);
+
+  if (error) throw error;
+
+  if (!data || data.length === 0) {
+    throw new Error("No row updated");
+  }
+
+  return data;
 }
 
 module.exports = { 
   getUserByUid, 
   getAllSubject,
   getAllCourse,
+  updateGrade,
   };

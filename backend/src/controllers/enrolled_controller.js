@@ -21,8 +21,23 @@ const getAllCourse = async (req, res) => {
   res.json(courses);
 }
 
+const submitGrade = async (req, res) => {
+  try {
+    const { uid , enrolledSubjects } = req.body;
+
+    console.log("Body",req.body);
+
+    const result = await enrolledService.updateGrade(uid, enrolledSubjects);
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.log("submit Error : ", err)
+  }
+}
+
 module.exports = {
   getUserByUid,
   getAllSubject,
   getAllCourse,
+  submitGrade,
 }

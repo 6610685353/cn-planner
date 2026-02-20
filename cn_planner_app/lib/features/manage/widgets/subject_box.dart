@@ -6,8 +6,11 @@ class SubjectBox extends StatefulWidget {
   final String subtitle;
   final double credits;
   final String grade;
-  final bool value;
+  final bool isChecked;
+
   final Function(String, bool) onChanged;
+  final Function(String, bool) onCheckChanged;
+  final Function(String) onGradeChanged;
 
   const SubjectBox({
     super.key,
@@ -15,8 +18,10 @@ class SubjectBox extends StatefulWidget {
     required this.subtitle,
     required this.credits,
     required this.grade,
-    required this.value,
+    required this.isChecked,
     required this.onChanged,
+    required this.onCheckChanged,
+    required this.onGradeChanged,
   });
 
   @override
@@ -24,7 +29,8 @@ class SubjectBox extends StatefulWidget {
 }
 
 class _SubjectBoxState extends State<SubjectBox> {
-  String _selectedValue = "A";
+  final String _defaultValue = "-";
+  String _selectedValue = "-";
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +46,7 @@ class _SubjectBoxState extends State<SubjectBox> {
           Transform.scale(
             scale: 1.5,
             child: Checkbox(
-              value: widget.value,
+              value: widget.isChecked,
               checkColor: Color.fromARGB(0, 0, 0, 0),
               fillColor: WidgetStateProperty.resolveWith((states) {
                 if (states.contains(WidgetState.selected)) {
@@ -50,6 +56,12 @@ class _SubjectBoxState extends State<SubjectBox> {
               }),
               onChanged: (bool? value) {
                 widget.onChanged(widget.title, value ?? false);
+                widget.onCheckChanged(widget.title, value ?? false);
+                setState(() {
+                  if (!(value ?? false)) {
+                      _selectedValue = _defaultValue;
+                    }
+                });
               },
             ),
           ),
@@ -111,20 +123,23 @@ class _SubjectBoxState extends State<SubjectBox> {
                 ),
               ),
               PopupMenuButton<String>(
+                enabled: widget.isChecked,
                 child: Row(
                   children: [
                     Text(
                       _selectedValue,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: widget.isChecked ? Colors.black : Colors.grey,
                       ),
                     ),
-                    Icon(Icons.arrow_drop_down, color: Colors.black),
+                    if (widget.isChecked)
+                      const Icon(Icons.arrow_drop_down, color: Colors.black),
                   ],
                 ),
                 onSelected: (String value) {
+                  widget.onGradeChanged(value);
                   setState(() {
                     _selectedValue = value;
                   });

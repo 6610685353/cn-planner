@@ -5,6 +5,7 @@ import 'package:cn_planner_app/features/manage/widgets/year_course.dart';
 import 'package:cn_planner_app/services/data_fetch.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cn_planner_app/services/update_course.dart';
 
 
 class ManageCoursePage extends StatefulWidget {
@@ -15,13 +16,20 @@ class ManageCoursePage extends StatefulWidget {
 }
 
 class _ManageCoursePage extends State<ManageCoursePage> {
+  //get from backend
   Map<String, dynamic> _dataCourse = {};
   Map<String, dynamic> _dataSubject = {};
-  Map<String, dynamic> _filteredCourses = {};
   List<dynamic> _dataEnrolled = [];
+
+  //normal use
   bool _isLoading = true;
   String? _errorMessage;
   String userID = "";
+  Map<String, dynamic> _filteredCourses = {};
+
+  //for backend
+  Map<String, bool> checkedMap = {};
+  Map<String, String> gradeMap = {};
 
   @override
   void initState() {
@@ -92,6 +100,34 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     });
   }
 
+  void updateCheck(String subject, bool value) {
+    setState(() {
+      checkedMap[subject] = value;
+
+      if(!value) {
+        gradeMap[subject] = "-";
+      }
+    });
+  }
+
+  void updateGrade(String subject, String grade) {
+    setState(() {
+      gradeMap[subject] = grade;
+    });
+  }
+
+  List<Map<String, String>> buildSubmitList() {
+    return checkedMap.entries
+      .where((entry) => 
+        entry.value == true &&
+        gradeMap[entry.key] != null &&
+        gradeMap[entry.key] != "-")
+      .map((entry) => {
+        "subject": entry.key,
+        "grade": gradeMap[entry.key]!
+      }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -114,6 +150,8 @@ class _ManageCoursePage extends State<ManageCoursePage> {
       appBar: TopBar(header: "Manage Courses"),
       body: Column(
         children: [
+          Text(checkedMap.toString()),
+          Text(gradeMap.toString()),
           SearchBox(onChanged: onSearch),
           Expanded(
             child: SingleChildScrollView(
@@ -125,6 +163,10 @@ class _ManageCoursePage extends State<ManageCoursePage> {
                     semester: entry.value['sem'],
                     courseSubject: entry.value['courses'],
                     subjectData: _dataSubject,
+                    checkedMap: checkedMap,
+                    gradeMap: gradeMap,
+                    onCheckChanged: updateCheck,
+                    onGradeChanged: updateGrade,
                   );
                 }).toList(),
               ),
@@ -150,13 +192,16 @@ class _ManageCoursePage extends State<ManageCoursePage> {
               offset: const Offset(0, -5),
             ),
           ],
-          // borderRadius: const BorderRadius.only(
-          //   topLeft: Radius.circular(24),
-          //   topRight: Radius.circular(24),
-          // ),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
         ),
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: () {
+            final result = buildSubmitList();
+            UpdateCourse.submitManageCourse(result);
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.accentYellow,
             foregroundColor: Colors.white,

@@ -6,6 +6,12 @@ class YearCourseBox extends StatefulWidget {
   final String semester;
   final List<dynamic> courseSubject;
   final Map<String, dynamic> subjectData;
+  final Map<String, bool> checkedMap;
+  final Map<String, String> gradeMap;
+  
+  //for backend
+  final Function(String, bool) onCheckChanged;
+  final Function(String, String) onGradeChanged;
 
   const YearCourseBox({
     super.key,
@@ -13,6 +19,11 @@ class YearCourseBox extends StatefulWidget {
     required this.semester,
     required this.courseSubject,
     required this.subjectData,
+    required this.checkedMap,
+    required this.gradeMap,
+
+    required this.onCheckChanged,
+    required this.onGradeChanged,
   });
 
   @override
@@ -48,7 +59,7 @@ class _YearCourseBox extends State<YearCourseBox> {
                 "Year ${widget.year} Semester ${widget.semester}",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: Text('Progress Bar: $selectedCount'),
+              subtitle: Text('Progress Bar: $selectedCount | $checkedItems'),
               trailing: IconButton(
                 icon: Icon(
                   _isExpanded
@@ -74,9 +85,11 @@ class _YearCourseBox extends State<YearCourseBox> {
                       title: course,
                       subtitle: widget.subjectData[course]['subjectName'],
                       credits: (widget.subjectData[course]['credits'] as int).toDouble(),
-                      grade: "A",
-                      value: checkedItems[course] ?? false,
+                      grade: widget.gradeMap[course] ?? "-",
+                      isChecked: checkedItems[course] ?? false,
                       onChanged: onChecked,
+                      onCheckChanged: widget.onCheckChanged,
+                      onGradeChanged: (grade) => widget.onGradeChanged(course, grade),
                     );
                 }).toList(),
               ),
