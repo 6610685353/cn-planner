@@ -21,20 +21,22 @@ class DataFetch {
   }
 
   Future<Map<String, dynamic>> getAllSubject() async {
-    try {
-      final List<dynamic> response = await Supabase.instance.client.from('Subjects').select();
+    final url = Uri.parse("http://192.168.1.198:3000/api/v1/enrolled/subjects");
 
-      return {
-        for (var item in response)
-          item['subjectCode']: item
-      };
+    try {
+      final response = await http.get(
+        url,
+        headers: {"Content-Type": "application/json"}
+      );
+      print("Status: ${response.statusCode}");
+
+      return jsonDecode(response.body);
     } catch (e) {
       throw Exception('Error fetching data, Error message: $e');
     }
   }
 
   Future<List<dynamic>> fetchEnrolled(String uid) async {
-    print("UID: $uid");
     final url = Uri.parse("http://192.168.1.198:3000/api/v1/enrolled/$uid");
 
     try {
@@ -43,20 +45,12 @@ class DataFetch {
         url,
         headers: {"Content-Type": "application/json"}
       ).timeout(Duration(seconds: 5));
-
-
       print("Status: ${response.statusCode}");
-      print("BODY: ${response.body}");
+
       return jsonDecode(response.body);
     } catch (e) {
       print("Error: $e");
       return [];
     }
-
-    // if (response.statusCode == 200) {
-    //   
-    // } else {
-    //   throw Exception("Failed to load data");
-    // }
   }
 }

@@ -49,8 +49,27 @@ exports.updateEnrollList = async (uid, enrollList) => {
 //////_____________________________________
 const enrolledModel = require('../models/enrolled_model');
 
+function arrayToKeyMap(data, keyColumn) {
+  return data.reduce((acc, item) => {
+    acc[item[keyColumn]] = item;
+    return acc;
+  }, {});
+}
+
+
 async function getUserByUid(uid) {
   return await enrolledModel.findUser(uid);
 }
 
-module.exports = { getUserByUid };
+async function getAllSubject() {
+  const data = enrolledModel.getAllSubject();
+  
+  const mapData = arrayToKeyMap(data, 'subjectCode');
+  return mapData;
+
+}
+
+module.exports = { 
+  getUserByUid, 
+  getAllSubject,
+  };

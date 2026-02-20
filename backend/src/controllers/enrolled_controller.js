@@ -72,3 +72,13 @@ const getUserByUid = async (req, res) => {
     const enrollment = await enrolledService.getUserByUid(uid);
     res.json(enrollment);
 }
+
+const getAllSubject = async (req, res) => {
+  const subjects = await enrolledService.getAllSubject();
+  res.json(subjects);
+}
+
+module.exports = {
+  getUserByUid,
+  getAllSubject,
+}

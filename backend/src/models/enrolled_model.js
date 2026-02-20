@@ -67,11 +67,22 @@ exports.replaceEnrollList = async (uid, newEnrollList) => {
 const supabase = require('../config/supabase');
 
 async function findUser(uid) {
-  const { data, error } = await supabase.from('Enrolled').select('*').eq("uid", uid);
+  const { data, error } = await supabase.from('Enrolled').select('*').eq("uid", uid).single();
 
   if(error) throw error;
 
   return data;
 }
 
-module.exports = { findUser };
+async function getAllSubject() {
+  const { data, error } = await supabase.from('Subjects').select('*');
+
+  if(error) throw error;
+
+  return data;
+}
+
+module.exports = {
+   findUser,
+   getAllSubject,
+   };
