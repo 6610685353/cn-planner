@@ -59,7 +59,7 @@ class _YearCourseBox extends State<YearCourseBox> {
                 "Year ${widget.year} Semester ${widget.semester}",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: Text('Progress Bar: $selectedCount | $checkedItems'),
+              subtitle: Text('Progress Bar: $selectedCount'),
               trailing: IconButton(
                 icon: Icon(
                   _isExpanded
