@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class UpdateCourse {
   static Future<void> submitManageCourse(List<Map<String,dynamic>> data) async {
-    final url = Uri.parse("http://192.168.1.198:3000/api/v1/enrolled/submit");
+    final url = Uri.parse("http://192.168.1.198:5001/cn-planner-app/asia-southeast3/api/v1/enrolled/submit");
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
     final response = await http.post(

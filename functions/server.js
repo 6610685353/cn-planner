@@ -11,13 +11,13 @@ const userEnrolledRoutes = require("./src/routes/enrolled_routes");
 app.use(cors({ origin: true }));
 app.use(express.json());
 
-app.use("/api/v1/enrolled", userEnrolledRoutes);
+app.use("/v1/enrolled", userEnrolledRoutes);
 
 app.use((err, req, res, next) => {
   res.status(500).json({ message: err.message });
 });
 
-exports.api = onRequest(app);
+exports.api = onRequest({ region: "asia-southeast3" }, app);
 
 const gpaRoutes = require("./src/routes/gpa_routes");
 
