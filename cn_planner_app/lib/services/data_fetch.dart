@@ -1,4 +1,5 @@
 import 'package:http/http.dart' as http;
+import 'package:cn_planner_app/services/api_config.dart';
 import 'dart:convert';
 
 class DataFetch {
@@ -7,7 +8,7 @@ class DataFetch {
   DataFetch._internal();
 
   Future<Map<String, dynamic>> getAllCourse() async {
-    final url = Uri.parse("http://192.168.1.198:5001/cn-planner-app/asia-southeast3/api/v1/enrolled/courses");
+    final url = Uri.parse("${Config.baseUrl}/v1/enrolled/courses");
 
     try {
       final response = await http.get(
@@ -23,7 +24,7 @@ class DataFetch {
   }
 
   Future<Map<String, dynamic>> getAllSubject() async {
-    final url = Uri.parse("http://192.168.1.198:5001/cn-planner-app/asia-southeast3/api/v1/enrolled/subjects");
+    final url = Uri.parse("${Config.baseUrl}/v1/enrolled/subjects");
 
     try {
       final response = await http.get(
@@ -39,7 +40,7 @@ class DataFetch {
   }
 
   Future<List<dynamic>> fetchEnrolled(String uid) async {
-    final url = Uri.parse("http://192.168.1.198:5001/cn-planner-app/asia-southeast3/api/v1/enrolled/uid/$uid");
+    final url = Uri.parse("${Config.baseUrl}/v1/enrolled/uid/$uid");
 
     try {
       final response = await http.get(
