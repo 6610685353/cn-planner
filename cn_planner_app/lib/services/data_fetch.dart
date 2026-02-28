@@ -7,46 +7,30 @@ class DataFetch {
   factory DataFetch() => _instance;
   DataFetch._internal();
 
-  Future<Map<String, dynamic>> getAllCourse() async {
-    final url = Uri.parse("${Config.baseUrl}/v1/enrolled/courses");
+  Future<Map<String, dynamic>> getManagePageData() async {
+    final url = Uri.parse("${Config.baseUrl}/v1/enrolled/manage");
 
     try {
       final response = await http.get(
         url,
         headers: {"Content-Type": "application/json"}
-      );
+      ).timeout(Duration(seconds: 15));
       print("Status: ${response.statusCode}");
 
       return jsonDecode(response.body);
     } catch (e) {
-      throw Exception('Error fetching data, Error message: $e');
+      throw Exception('Error fetching page data, Error message: $e');
     }
   }
 
-  Future<Map<String, dynamic>> getAllSubject() async {
-    final url = Uri.parse("${Config.baseUrl}/v1/enrolled/subjects");
+  Future<Map<String,dynamic>> fetchEnrolled(String uid) async {
+    final url = Uri.parse("${Config.baseUrl}/v1/enrolled/manage/$uid");
 
     try {
       final response = await http.get(
         url,
         headers: {"Content-Type": "application/json"}
-      );
-      print("getAllSubject Status: ${response.statusCode}");
-
-      return jsonDecode(response.body);
-    } catch (e) {
-      throw Exception('Error fetching data, Error message: $e');
-    }
-  }
-
-  Future<List<dynamic>> fetchEnrolled(String uid) async {
-    final url = Uri.parse("${Config.baseUrl}/v1/enrolled/uid/$uid");
-
-    try {
-      final response = await http.get(
-        url,
-        headers: {"Content-Type": "application/json"}
-      ).timeout(Duration(seconds: 10));
+      ).timeout(Duration(seconds: 15));
       print("fetchEnrolled Status: ${response.statusCode}");
 
       return jsonDecode(response.body);

@@ -1,31 +1,24 @@
 const supabase = require('../config/supabase');
 
-async function findUser(uid) {
-  const { data, error } = await supabase.from('Enrolled').select('*').eq("uid", uid);
+async function getUserData(uid) {
+  const { data, error } = await supabase.from('UserEnrolled').select('*').eq("uid", uid);
 
   if(error) throw error;
 
   return data;
 }
 
-async function getAllSubject() {
-  const { data, error } = await supabase.from('Subjects').select('*');
+async function getPageData() {
+  const { data , error } = await supabase
+    .from('YearCourses')
+    .select(`*, Subjects (*)`);
 
-  if(error) throw error;
-
-  return data;
-}
-
-async function getAllCourse() {
-  const { data, error } = await supabase.from('YearCourses').select('*');
-
-  if(error) throw error;
-
+  if (error) throw error;
+  
   return data;
 }
 
 module.exports = {
-   findUser,
-   getAllSubject,
-   getAllCourse,
+   getUserData,
+   getPageData,
    };
