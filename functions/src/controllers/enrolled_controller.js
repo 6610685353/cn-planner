@@ -28,18 +28,24 @@ const getPageData = async (req, res) => {
 
 //POST
 const submitGrade = async (req, res) => {
+  console.log("call submit Controller");
+  
   try {
-    const { uid , enrolledSubjects } = req.body;
+    const { uid , gradeList } = req.body;
+
+    if (!uid || !Array.isArray(gradeList)) {
+      return res.status(400).json({ message : "Invalid data" });
+    }
 
     console.log("Body",req.body);
 
-    const result = await enrolledService.updateGrade(uid, enrolledSubjects);
-
-    res.status(200).json(result);
+    await enrolledService.updateGrade(uid, gradeList);
+    console.log("controller updated")
+    res.status(200).json({ message: "Submit successful"});
   } catch (err) {
-    console.log("submit Error : ", err)
+    res.status(500).json({ error: err.message});
   }
-}
+};
 
 module.exports = {
   getUserData,

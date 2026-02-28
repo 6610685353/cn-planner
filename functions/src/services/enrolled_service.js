@@ -36,23 +36,33 @@ async function getPageData() {
 
 
 //call post to model
-const updateGrade = async (uid, enrolledSubjects) => {
-  const { data, error } = await supabase
-    .from("Enrolled")
-    .update({ enrolledSubjects })
-    .eq("uid", uid)
-    .select();
+const updateGrade = async (uid, gradeList) => {
+  console.log("Calling submit Service")
+  console.log(gradeList);
+  
+  const submittedSubjects = gradeList.map(item => item.subjectId);
 
-  console.log("Update result:", data);
-  console.log("Update error:", error);
+  const dataToUpsert = gradeList.map(item => ({
+    uid: uid,
+    subjectId: item.subjectId,
+    grade: item.grade
+  }));
 
-  if (error) throw error;
+  const { error: upsertError } = await supabase
+    .from('UserEnrolled')
+    .upsert(dataToUpsert, { onConflict: 'uid, subjectId' });
 
-  if (!data || data.length === 0) {
-    throw new Error("No row updated");
-  }
+  if (upsertError) console.log(upsertError);
 
-  return data;
+  const {error: deleteError } = await supabase
+    .from('UserEnrolled')
+    .delete()
+    .eq('uid', uid)
+    .not('subjectId', 'in', `(${submittedSubjects.join(',')})`);
+
+  if (deleteError) console.log(deleteError);
+
+  return { success: true };
 }
 
 module.exports = { 
