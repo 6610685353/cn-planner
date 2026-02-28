@@ -35,6 +35,12 @@ class _SubjectBoxState extends State<SubjectBox> {
   String _selectedValue = "-";
 
   @override
+  void initState() {
+    super.initState();
+    _selectedValue = widget.grade;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -45,7 +51,6 @@ class _SubjectBoxState extends State<SubjectBox> {
       ),
       child: Row(
         children: [
-          Text(widget.subjectId.toString()),
           Transform.scale(
             scale: 1.5,
             child: Checkbox(

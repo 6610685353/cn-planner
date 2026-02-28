@@ -23,7 +23,7 @@ class DataFetch {
     }
   }
 
-  Future<Map<String,dynamic>> fetchEnrolled(String uid) async {
+  Future<List<dynamic>> fetchEnrolled(String uid) async {
     final url = Uri.parse("${Config.baseUrl}/v1/enrolled/manage/$uid");
 
     try {
