@@ -27,8 +27,8 @@ class _ManageCoursePage extends State<ManageCoursePage> {
   Map<String, dynamic> _filteredCourses = {};
 
   //for backend
-  Map<String, bool> checkedMap = {};
-  Map<String, String> gradeMap = {};
+  Map<int, bool> checkedMap = {};
+  Map<int, String> gradeMap = {};
 
   @override
   void initState() {
@@ -97,30 +97,30 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     });
   }
 
-  void updateCheck(String subject, bool value) {
+  void updateCheck(int subjectId, bool value) {
     setState(() {
-      checkedMap[subject] = value;
+      checkedMap[subjectId] = value;
 
       if(!value) {
-        gradeMap[subject] = "-";
+        gradeMap[subjectId] = "-";
       }
     });
   }
 
-  void updateGrade(String subject, String grade) {
+  void updateGrade(int subjectId, String grade) {
     setState(() {
-      gradeMap[subject] = grade;
+      gradeMap[subjectId] = grade;
     });
   }
 
-  List<Map<String, String>> buildSubmitList() {
+  List<Map<String , dynamic>> buildSubmitList() {
     return checkedMap.entries
       .where((entry) => 
         entry.value == true &&
         gradeMap[entry.key] != null &&
         gradeMap[entry.key] != "-")
-      .map((entry) => {
-        "subject": entry.key,
+      .map<Map<String, dynamic>>((entry) => {
+        "subjectId": entry.key,
         "grade": gradeMap[entry.key]!
       }).toList();
   }
@@ -141,7 +141,6 @@ class _ManageCoursePage extends State<ManageCoursePage> {
         children: [
           Text(_dataEnrolled.toString()),
           Text(gradeMap.toString()),
-          Text(checkedMap.toString()),
           SearchBox(onChanged: onSearch),
           Expanded(
             child: SingleChildScrollView(

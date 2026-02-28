@@ -16,7 +16,7 @@ class UpdateCourse {
       },
       body: jsonEncode({
         "uid": uid,
-        "enrolledSubjects" : data,
+        "gradeList" : data,
       }),
     );
 

@@ -6,10 +6,11 @@ class SubjectBox extends StatefulWidget {
   final String subtitle;
   final double credits;
   final String grade;
+  final int subjectId;
   final bool isChecked;
 
-  final Function(String, bool) onChanged;
-  final Function(String, bool) onCheckChanged;
+  final Function(int, bool) onChanged;
+  final Function(int, bool) onCheckChanged;
   final Function(String) onGradeChanged;
 
   const SubjectBox({
@@ -18,6 +19,7 @@ class SubjectBox extends StatefulWidget {
     required this.subtitle,
     required this.credits,
     required this.grade,
+    required this.subjectId,
     required this.isChecked,
     required this.onChanged,
     required this.onCheckChanged,
@@ -43,6 +45,7 @@ class _SubjectBoxState extends State<SubjectBox> {
       ),
       child: Row(
         children: [
+          Text(widget.subjectId.toString()),
           Transform.scale(
             scale: 1.5,
             child: Checkbox(
@@ -55,8 +58,8 @@ class _SubjectBoxState extends State<SubjectBox> {
                 return Colors.white;
               }),
               onChanged: (bool? value) {
-                widget.onChanged(widget.title, value ?? false);
-                widget.onCheckChanged(widget.title, value ?? false);
+                widget.onChanged(widget.subjectId, value ?? false);
+                widget.onCheckChanged(widget.subjectId, value ?? false);
                 setState(() {
                   if (!(value ?? false)) {
                       _selectedValue = _defaultValue;
