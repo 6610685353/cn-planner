@@ -1,43 +1,42 @@
 const supabase = require('../config/supabase');
 const enrolledModel = require('../models/enrolled_model');
 
-function arrayToKeyMap(data, keyMap,) {
-  return data.reduce((acc, item) => {
-    const key = `${item[keyMap]}`;
-    acc[key] = item;               
+//logic function
+
+
+//call get to model
+async function getUserData(uid) {
+  const userData = await enrolledModel.getUserData(uid);
+
+  return userData;
+}
+
+async function getPageData() {
+  const rawPageData = await enrolledModel.getPageData();
+
+  // Convert data to Mapped list for frontend
+  const formatted = rawPageData.reduce((acc, item) => {
+    const { Subjects, ...rest } = item;
+
+    const flattened = { ...rest, ...Subjects };
+
+    const groupKey = `${item.year}_${item.sem}`;
+
+    if (!acc[groupKey]) {
+      acc[groupKey] = [];
+    }
+
+    acc[groupKey].push(flattened);
+
     return acc;
   }, {});
-}
 
-function arraySumKeyMap(data, keyC1, keyC2) {
-  return data.reduce((acc, item) => {
-    const key = `${item[keyC1]}_${item[keyC2]}`;
-    acc[key] = item; 
-    return acc;
-  }, {});
-}
+  return formatted;
+};
 
 
-async function getUserByUid(uid) {
-  return await enrolledModel.findUser(uid);
-}
-
-async function getAllSubject() {
-  const data = await enrolledModel.getAllSubject();
-  
-  const mapData = arrayToKeyMap(data, 'subjectCode');
-  
-  return mapData;
-}
-
-async function getAllCourse() {
-  const data = await enrolledModel.getAllCourse();
-  const mapData = arraySumKeyMap(data, 'year', 'sem');
-  return mapData;
-}
-
+//call post to model
 const updateGrade = async (uid, enrolledSubjects) => {
-
   const { data, error } = await supabase
     .from("Enrolled")
     .update({ enrolledSubjects })
@@ -57,8 +56,7 @@ const updateGrade = async (uid, enrolledSubjects) => {
 }
 
 module.exports = { 
-  getUserByUid, 
-  getAllSubject,
-  getAllCourse,
   updateGrade,
+  getUserData,
+  getPageData,
   };

@@ -2,10 +2,10 @@ const express = require("express");
 const router = express.Router();
 const userEnrolledController = require("../controllers/enrolled_controller");
 
-router.get("/uid/:uid", userEnrolledController.getUserByUid); //get enrolled info
-router.get("/subjects", userEnrolledController.getAllSubject); //get all subject to show
-router.get("/courses", userEnrolledController.getAllCourse);
+//new
+router.get("/manage", userEnrolledController.getPageData); //get Manage page data
+router.get("/manage/:uid", userEnrolledController.getUserData); //get Enrolled Data
 
-router.post("/submit", userEnrolledController.submitGrade);
+router.post("/submit", userEnrolledController.submitGrade); //rebuild in future
 
 module.exports = router;

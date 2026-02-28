@@ -17,9 +17,8 @@ class ManageCoursePage extends StatefulWidget {
 
 class _ManageCoursePage extends State<ManageCoursePage> {
   //get from backend
-  Map<String, dynamic> _dataCourse = {};
-  Map<String, dynamic> _dataSubject = {};
-  List<dynamic> _dataEnrolled = [];
+  Map<String, dynamic> _pageData = {};
+  Map<String, dynamic> _dataEnrolled = {};
 
   //normal use
   bool _isLoading = true;
@@ -48,18 +47,15 @@ class _ManageCoursePage extends State<ManageCoursePage> {
 
   Future<void> _loadData() async {
     try {
-      final dataCourseF = await DataFetch().getAllCourse();
-      final dataSubjectF = await DataFetch().getAllSubject();
-      final dataEnrolledF = await DataFetch().fetchEnrolled(userID);
+      final pageDataF = await DataFetch().getManagePageData();
+      // final dataEnrolledF = await DataFetch().fetchEnrolled(userID);
       print("after calling API");
 
       if (!mounted) return;
 
       setState(() {
-        _dataCourse = dataCourseF;
-        _dataSubject = dataSubjectF;
-        _dataEnrolled = dataEnrolledF;
-        _filteredCourses = _dataCourse;
+        _pageData = pageDataF;
+        _filteredCourses = _pageData;
         
         _isLoading = false;
       });
@@ -76,22 +72,23 @@ class _ManageCoursePage extends State<ManageCoursePage> {
   void onSearch(String query) {
     if (query.isEmpty) {
       setState(() {
-        _filteredCourses = _dataCourse;
+        _filteredCourses = _pageData;
       });
       return;
     }
 
     final Map<String, dynamic> result = {};
 
-    _dataCourse.forEach((category, items) {
-      final courses = (items['courses'] as List<dynamic>);
+    _pageData.forEach((category, items) {
+      final List<dynamic> coursesList = items as List<dynamic>;
 
-      final matched = courses.where((c) =>
-        c.toString().toLowerCase().contains(query.toLowerCase())
-      ).toList();
+      final matched = coursesList.where((course) {
+        final String code = course['subjectCode']?.toString() ?? "";
+        return code.toLowerCase().contains(query.toLowerCase());
+      }).toList();
 
       if (matched.isNotEmpty) {
-        result[category] = {...items, 'courses':matched};
+        result[category] = matched;
       }
     });
 
@@ -135,34 +132,31 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     }
 
     if (_errorMessage != null) {
-      return const Center(child: Text('Error'));
-    }
-
-    if (_dataCourse.isEmpty) {
-      return const Center(child: Text("Course not found."));
-    }
-
-    if (_dataSubject.isEmpty) {
-      return const Center(child: Text("Subject not found."));
+      return Center(child: Text('Error : ${_errorMessage ?? "idk"}'));
     }
 
     return Scaffold(
       appBar: TopBar(header: "Manage Courses"),
       body: Column(
         children: [
-          // Text(checkedMap.toString()),
-          // Text(gradeMap.toString()),
+          Text(_dataEnrolled.toString()),
+          Text(gradeMap.toString()),
+          Text(checkedMap.toString()),
           SearchBox(onChanged: onSearch),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.only(bottom: 20),
               child: Column(
                 children: _filteredCourses.entries.map((entry) {
+                  final parts = entry.key.split('_');
+                  final String year = parts[0];
+                  final String sem = parts[1];
+                  final List<dynamic> subjects = entry.value;
                   return YearCourseBox(
-                    year: entry.value['year'],
-                    semester: entry.value['sem'],
-                    courseSubject: entry.value['courses'],
-                    subjectData: _dataSubject,
+                    year: year,
+                    semester: sem,
+                    courseSubject: subjects,
+                    subjectData: subjects,
                     checkedMap: checkedMap,
                     gradeMap: gradeMap,
                     onCheckChanged: updateCheck,

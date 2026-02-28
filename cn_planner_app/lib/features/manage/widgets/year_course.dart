@@ -2,10 +2,10 @@ import 'package:cn_planner_app/features/manage/widgets/subject_box.dart';
 import 'package:flutter/material.dart';
 
 class YearCourseBox extends StatefulWidget {
-  final int year;
+  final String year;
   final String semester;
   final List<dynamic> courseSubject;
-  final Map<String, dynamic> subjectData;
+  final List<dynamic> subjectData;
   final Map<String, bool> checkedMap;
   final Map<String, String> gradeMap;
   
@@ -80,16 +80,16 @@ class _YearCourseBox extends State<YearCourseBox> {
                   vertical: 10.0,
                 ),
                 child: Column(
-                  children: widget.courseSubject.map((course) {
+                  children: widget.courseSubject.map((subject) {
                     return SubjectBox(
-                      title: course,
-                      subtitle: widget.subjectData[course]['subjectName'],
-                      credits: (widget.subjectData[course]['credits'] as int).toDouble(),
-                      grade: widget.gradeMap[course] ?? "-",
-                      isChecked: checkedItems[course] ?? false,
+                      title: subject['subjectCode'],
+                      subtitle: subject['subjectName'],
+                      credits: (subject['credits'] as int).toDouble(),
+                      grade: widget.gradeMap[subject['subjectCode']] ?? "-",
+                      isChecked: checkedItems[subject['subjectCode']] ?? false,
                       onChanged: onChecked,
                       onCheckChanged: widget.onCheckChanged,
-                      onGradeChanged: (grade) => widget.onGradeChanged(course, grade),
+                      onGradeChanged: (grade) => widget.onGradeChanged(subject['subjectCode'], grade),
                     );
                 }).toList(),
               ),

@@ -1,26 +1,32 @@
 const enrolledService = require('../services/enrolled_service')
 
-const getUserByUid = async (req, res) => {
+//GET
+const getUserData = async (req, res) => {
   const { uid } = req.params;
 
   if (!uid) {
-    return res.status(400).json({ message: "uid is required"});
+    return res.status(400).json({ message : "error" });
   }
 
-  const enrollment = await enrolledService.getUserByUid(uid);
-  res.json(enrollment);
+  try {
+    const data = await enrolledService.getUserData(uid);
+    res.json(data);
+  } catch (err) {
+    console.log("get user data error : ", err);
+  }
 }
 
-const getAllSubject = async (req, res) => {
-  const subjects = await enrolledService.getAllSubject();
-  res.json(subjects);
+const getPageData = async (req, res) => {
+  try {
+    const data = await enrolledService.getPageData();
+    res.json(data);
+  } catch (err) {
+    console.log("get page data error : ", err);
+  }
 }
 
-const getAllCourse = async (req, res) => {
-  const courses = await enrolledService.getAllCourse();
-  res.json(courses);
-}
 
+//POST
 const submitGrade = async (req, res) => {
   try {
     const { uid , enrolledSubjects } = req.body;
@@ -36,8 +42,7 @@ const submitGrade = async (req, res) => {
 }
 
 module.exports = {
-  getUserByUid,
-  getAllSubject,
-  getAllCourse,
+  getUserData,
+  getPageData,
   submitGrade,
 }
