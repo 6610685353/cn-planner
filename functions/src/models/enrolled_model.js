@@ -1,7 +1,7 @@
 const supabase = require('../config/supabase');
 
 async function getUserData(uid) {
-  const { data, error } = await supabase.from('UserEnrolled').select('*').eq("uid", uid);
+  const { data, error } = await supabase.from('UserEnrolled').select('subjectId, grade').eq("uid", uid);
 
   if(error) throw error;
 

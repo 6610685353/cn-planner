@@ -5,7 +5,6 @@ class YearCourseBox extends StatefulWidget {
   final String year;
   final String semester;
   final List<dynamic> courseSubject;
-  final List<dynamic> subjectData;
   final Map<int, bool> checkedMap;
   final Map<int, String> gradeMap;
   
@@ -18,7 +17,6 @@ class YearCourseBox extends StatefulWidget {
     required this.year,
     required this.semester,
     required this.courseSubject,
-    required this.subjectData,
     required this.checkedMap,
     required this.gradeMap,
 
@@ -32,15 +30,20 @@ class YearCourseBox extends StatefulWidget {
 
 class _YearCourseBox extends State<YearCourseBox> {
   bool _isExpanded = false;
-  Map<int, bool> checkedItems = {};
 
   void onChecked(int key, bool value) {
     setState(() {
-      checkedItems[key] = value;
+      widget.checkedMap[key] = value;
     });
   }
 
-  int get selectedCount => checkedItems.values.where((v) => v).length;
+  int get selectedCount {
+    return widget.courseSubject.where((subject) {
+      final id = subject['subjectId'];
+
+      return widget.gradeMap.containsKey(id) && widget.gradeMap[id] != null && widget.gradeMap[id] != "-";
+    }).length;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +90,7 @@ class _YearCourseBox extends State<YearCourseBox> {
                       credits: (subject['credits'] as int).toDouble(),
                       grade: widget.gradeMap[subject['subjectId']] ?? "-",
                       subjectId: subject['subjectId'],
-                      isChecked: checkedItems[subject['subjectId']] ?? false,
+                      isChecked: widget.checkedMap[subject['subjectId']] ?? false,
                       onChanged: onChecked,
                       onCheckChanged: widget.onCheckChanged,
                       onGradeChanged: (grade) => widget.onGradeChanged(subject['subjectId'], grade),

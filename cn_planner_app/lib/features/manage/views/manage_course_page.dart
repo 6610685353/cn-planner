@@ -18,7 +18,6 @@ class ManageCoursePage extends StatefulWidget {
 class _ManageCoursePage extends State<ManageCoursePage> {
   //get from backend
   Map<String, dynamic> _pageData = {};
-  Map<String, dynamic> _dataEnrolled = {};
 
   //normal use
   bool _isLoading = true;
@@ -48,8 +47,13 @@ class _ManageCoursePage extends State<ManageCoursePage> {
   Future<void> _loadData() async {
     try {
       final pageDataF = await DataFetch().getManagePageData();
-      // final dataEnrolledF = await DataFetch().fetchEnrolled(userID);
+      final dataEnrolledF = await DataFetch().fetchEnrolled(userID);
       print("after calling API");
+
+      for (var item in dataEnrolledF) {
+        gradeMap[item['subjectId']] = item['grade'];
+        checkedMap[item['subjectId']] = true;
+      }
 
       if (!mounted) return;
 
@@ -139,8 +143,6 @@ class _ManageCoursePage extends State<ManageCoursePage> {
       appBar: TopBar(header: "Manage Courses"),
       body: Column(
         children: [
-          Text(_dataEnrolled.toString()),
-          Text(gradeMap.toString()),
           SearchBox(onChanged: onSearch),
           Expanded(
             child: SingleChildScrollView(
@@ -155,7 +157,6 @@ class _ManageCoursePage extends State<ManageCoursePage> {
                     year: year,
                     semester: sem,
                     courseSubject: subjects,
-                    subjectData: subjects,
                     checkedMap: checkedMap,
                     gradeMap: gradeMap,
                     onCheckChanged: updateCheck,
@@ -194,6 +195,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
           onPressed: () {
             final result = buildSubmitList();
             UpdateCourse.submitManageCourse(result);
+            Navigator.pop(context);
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.accentYellow,
