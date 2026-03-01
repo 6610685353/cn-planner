@@ -136,6 +136,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     }
 
     if (_errorMessage != null) {
+      print(_errorMessage);
       return Center(child: Text('Error : ${_errorMessage ?? "idk"}'));
     }
 
