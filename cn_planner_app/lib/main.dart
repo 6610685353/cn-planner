@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:cn_planner_app/route.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,6 +17,14 @@ Future<void> main() async {
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhenN3emdkbnh3anFieWViZ25qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMjAxOTAsImV4cCI6MjA4NjY5NjE5MH0.jxPnFZB8tY0Wqsm4wn8GBC_Kj6F5acZD6IqtY-6F83c',
   );
+
+  if(kDebugMode) {
+    String host = Platform.isAndroid ? '10.0.2.2' : 'localhost';
+    await FirebaseAuth.instance.useAuthEmulator(host, 5001);
+
+    print("Running on Debug Mode: Connect to Firebase emulator");
+  }
+
   runApp(const MyApp());
 }
 

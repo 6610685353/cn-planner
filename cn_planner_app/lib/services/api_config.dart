@@ -5,7 +5,7 @@ class Config {
   static const String _localUrl = "http://192.168.1.112:5001/cn-planner-app/asia-southeast3/api";
   
   //for cloud deployment
-  static const String _cloudUrl = "";
+  static const String _prodUrl = "https://asia-southeast1-cn-planner-app.cloudfunctions.net/api";
 
-  static String get baseUrl => kDebugMode ? _localUrl : _cloudUrl;
+  static String get baseUrl => kDebugMode ? _localUrl : _prodUrl;
 }
