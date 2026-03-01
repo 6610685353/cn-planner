@@ -17,7 +17,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: err.message });
 });
 
-exports.api = onRequest({ region: "asia-southeast3" }, app);
+exports.api = onRequest({ region: "asia-southeast1" , secrets: ["SUPABASE_URL", "SUPABASE_ANON_KEY"] }, app);
 
 const gpaRoutes = require("./src/routes/gpa_routes");
 

@@ -1,8 +1,15 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseURL = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const getSupabase = () => {
+    const supabaseURL = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
-const supabase = createClient(supabaseURL, supabaseKey);
+    if(!supabaseURL || !supabaseKey) {
+        console.warn("Deployment analysis: Supabase failed");
+        return null;
+    }
 
-module.exports = supabase;
+    return createClient(supabaseURL, supabaseKey);
+};
+
+module.exports = getSupabase;

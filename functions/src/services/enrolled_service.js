@@ -1,4 +1,4 @@
-const supabase = require('../config/supabase');
+const getSupabase = require('../config/supabase');
 const enrolledModel = require('../models/enrolled_model');
 
 //logic function
@@ -48,6 +48,8 @@ const updateGrade = async (uid, gradeList) => {
     grade: item.grade
   }));
 
+  const supabase = getSupabase();
+  
   const { error: upsertError } = await supabase
     .from('UserEnrolled')
     .upsert(dataToUpsert, { onConflict: 'uid, subjectId' });
