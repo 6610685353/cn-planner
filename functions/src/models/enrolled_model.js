@@ -1,6 +1,7 @@
-const supabase = require('../config/supabase');
+const getSupabase = require('../config/supabase');
 
 async function getUserData(uid) {
+  const supabase = getSupabase();
   const { data, error } = await supabase.from('UserEnrolled').select('subjectId, grade').eq("uid", uid);
 
   if(error) throw error;
@@ -9,6 +10,7 @@ async function getUserData(uid) {
 }
 
 async function getPageData() {
+  const supabase = getSupabase();
   const { data , error } = await supabase
     .from('YearCourses')
     .select(`*, Subjects (*)`);
