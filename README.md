@@ -1,4 +1,4 @@
-# 📱 CN PLANNER (v1.0.0)
+# 📱 CN PLANNER (v1.0.1)
 
 **Personalized Study Planning for CN Students** โปรเจกต์นี้เป็นส่วนหนึ่งของรายวิชา MOBILE APPLICATION CN333
 
