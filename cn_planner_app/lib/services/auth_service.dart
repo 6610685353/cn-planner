@@ -1,14 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final SupabaseClient _supabase = Supabase.instance.client;
 
-  // --- สมัครสมาชิก + บันทึกข้อมูล 2 ฐานข้อมูล (Firestore & Supabase) ---
+  // --- 1. สมัครสมาชิก (ตัด Supabase ออกแล้ว) ---
   Future<User?> register({
     required String email,
     required String password,
@@ -28,30 +26,22 @@ class AuthService {
       }
 
       UserCredential result = await _auth.createUserWithEmailAndPassword(
-        email: email,
+        email: email.trim(),
         password: password,
       );
 
       User? user = result.user;
 
       if (user != null) {
-        // บันทึกลง Firestore
         await _firestore.collection('users').doc(user.uid).set({
           'uid': user.uid,
           'username': username.toLowerCase().trim(),
           'firstName': firstName,
           'lastName': lastName,
-          'email': email,
+          'email': email.trim(),
           'year': year,
           'createdAt': FieldValue.serverTimestamp(),
         });
-
-        // บันทึกลง Supabase ตาราง enrolled
-        await _supabase.from('Enrolled').insert({'uid': user.uid});
-
-        print(
-          "Success: Firebase UID ${user.uid} saved to Supabase table Enrolled",
-        );
       }
       return user;
     } catch (e) {
@@ -60,7 +50,7 @@ class AuthService {
     }
   }
 
-  // --- เข้าสู่ระบบ (รองรับทั้ง Email และ Username) ---
+  // --- 2. เข้าสู่ระบบ (รองรับ Email/Username) ---
   Future<User?> login(String identifier, String password) async {
     try {
       String email = identifier.trim();
@@ -82,16 +72,16 @@ class AuthService {
       );
       return result.user;
     } catch (e) {
+      debugPrint("Login Error: $e");
       rethrow;
     }
   }
 
-  // --- รีเซ็ตรหัสผ่าน (รองรับทั้ง Email และ Username) ---
+  // --- 3. รีเซ็ตรหัสผ่าน (ที่หน้า Forgot Password เรียกใช้) ---
   Future<void> sendPasswordReset(String identifier) async {
     try {
       String email = identifier.trim();
 
-      // ถ้าไม่มี @ แสดงว่าเป็น Username ต้องไปหา Email ใน Firestore ก่อน
       if (!email.contains('@')) {
         final querySnapshot = await _firestore
             .collection('users')
@@ -112,20 +102,27 @@ class AuthService {
     }
   }
 
-  // --- ออกจากระบบ ---
+  // --- 4. ดึงข้อมูลโปรไฟล์ (ที่หน้า Home/Profile เรียกใช้) ---
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return null;
+
+      final doc = await _firestore.collection('users').doc(user.uid).get();
+      if (!doc.exists) return null;
+
+      return doc.data();
+    } catch (e) {
+      debugPrint("Get Profile Error: $e");
+      return null;
+    }
+  }
+
+  // --- 5. ออกจากระบบ ---
   Future<void> logout() async {
     await _auth.signOut();
   }
 
-  Future<Map<String, dynamic>?> getUserProfile() async {
-    final user = _auth.currentUser;
-
-    if (user == null) return null;
-
-    final doc = await _firestore.collection('users').doc(user.uid).get();
-
-    if (!doc.exists) return null;
-
-    return doc.data();
-  }
+  // Stream สำหรับเช็คสถานะการล็อกอิน
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
 }
