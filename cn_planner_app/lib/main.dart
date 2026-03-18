@@ -1,4 +1,5 @@
 import 'package:cn_planner_app/route.dart';
+import 'package:cn_planner_app/services/api_config.dart';
 import 'package:cn_planner_app/services/emulator_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -18,8 +19,11 @@ Future<void> main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhenN3emdkbnh3anFieWViZ25qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMjAxOTAsImV4cCI6MjA4NjY5NjE5MH0.jxPnFZB8tY0Wqsm4wn8GBC_Kj6F5acZD6IqtY-6F83c',
   );
 
+  
   if(kDebugMode) {
     await dotenv.load(fileName: ".env.local");
+    await Config.init();
+
     final host = await getHost();
     FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
 

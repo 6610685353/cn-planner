@@ -1,12 +1,19 @@
+import 'package:cn_planner_app/services/emulator_check.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Config {
   //for local emu test
-  static final String _localUrl = "http://${dotenv.env['EMU_HOST']}:5001/cn-planner-app/asia-southeast1/api";
-  
+  static late String _localUrl;
+
   //for cloud deployment
   static const String _prodUrl = "https://asia-southeast1-cn-planner-app.cloudfunctions.net/api";
 
+  static Future<void> init() async {
+    final host = await getHost();
+    _localUrl = "http://$host:5001/cn-planner-app/asia-southeast1/api";
+  }
+  
+  
+  
   static String get baseUrl => kDebugMode ? _localUrl : _prodUrl;
 }
