@@ -1,10 +1,10 @@
-import 'dart:io';
-
 import 'package:cn_planner_app/route.dart';
+import 'package:cn_planner_app/services/emulator_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
 
@@ -19,7 +19,8 @@ Future<void> main() async {
   );
 
   if(kDebugMode) {
-    String host = Platform.isAndroid ? '10.0.2.2' : 'localhost';
+    await dotenv.load(fileName: ".env.local");
+    final host = await getHost();
     FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
 
     print("Running on Debug Mode: Connect to Firebase emulator");
