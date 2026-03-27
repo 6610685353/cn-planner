@@ -18,7 +18,7 @@ class _MainWrapperState extends State<MainWrapper> {
   // รายการหน้าหลักทั้ง 4 หน้า
   final List<Widget> _pages = const [
     HomePage(),
-    RoadMapPage(), // เปลี่ยนเป็น RoadmapPage()
+    RoadmapPage(mode: RoadmapMode.view), // เปลี่ยนเป็น RoadmapPage()
     SchedulePage(), // เปลี่ยนเป็น SchedulePage()
     ProfilePage(),
   ];

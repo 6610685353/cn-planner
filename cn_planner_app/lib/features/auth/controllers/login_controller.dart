@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cn_planner_app/route.dart';
 import 'package:cn_planner_app/services/auth_service.dart';
 import '../../../core/widgets/status_dialog.dart';
+import 'package:cn_planner_app/features/roadmap/services/profile_service.dart';
 
 class LoginController {
   // เปลี่ยนชื่อช่องกรอกให้สื่อว่าเป็นได้ทั้งคู่ (ใน UI อาจจะเขียนคำอธิบายว่า Email or Username)
@@ -28,8 +29,20 @@ class LoginController {
     }
 
     try {
-      // เรียกใช้ฟังก์ชัน login แบบ Hybrid
-      await _authService.login(identifier, password);
+      // 1. ล็อกอินผ่าน Firebase (โค้ดเพื่อน)
+      final user = await _authService.login(identifier, password);
+
+      if (user != null) {
+        // 2. 🔥 ดึงข้อมูลจาก Firestore มาดูก่อนว่า User คนนี้อยู่ปีอะไร
+        final userData = await _authService.getUserProfile();
+
+        // ดึงค่า 'year' จาก Firestore (ถ้าหาไม่เจอจริงๆ ค่อยให้เป็น 1)
+        int actualYear = userData?['year'] ?? 1;
+
+        // 3. 🔥 ส่ง 'actualYear' (ปีจริงๆ) ไปให้ Supabase
+        final profileService = ProfileService();
+        await profileService.checkOrCreateProfile(user.uid, actualYear);
+      }
 
       if (context.mounted) {
         Navigator.pushReplacementNamed(context, AppRoutes.main);
