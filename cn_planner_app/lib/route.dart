@@ -35,7 +35,8 @@ class AppRoutes {
     forgotPassword: (context) => const ForgotPasswordPage(),
     main: (context) => const MainWrapper(),
     home: (context) => const HomePage(),
-    roadmap: (context) => const RoadMapPage(),
+    roadmap: (context) =>
+        const RoadmapPage(mode: RoadmapMode.view), // เพิ่ม mode
     schedule: (context) => const SchedulePage(),
     profile: (context) => const ProfilePage(),
     editProfile: (context) => const EditProfilePage(),
