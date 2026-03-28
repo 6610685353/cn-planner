@@ -32,7 +32,6 @@ class _ManageCoursePage extends State<ManageCoursePage> {
   @override
   void initState() {
     super.initState();
-    print("call initState");
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
       if(user != null) {
         print(user.uid);
@@ -48,7 +47,6 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     try {
       final pageDataF = await DataFetch().getManagePageData();
       final dataEnrolledF = await DataFetch().fetchEnrolled(userID);
-      print("after calling API");
 
       for (var item in dataEnrolledF) {
         gradeMap[item['subjectId']] = item['grade'];
@@ -104,6 +102,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
   void updateCheck(int subjectId, bool value) {
     setState(() {
       checkedMap[subjectId] = value;
+      gradeMap[subjectId] = "-";
 
       if(!value) {
         gradeMap[subjectId] = "-";
@@ -121,8 +120,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     return checkedMap.entries
       .where((entry) => 
         entry.value == true &&
-        gradeMap[entry.key] != null &&
-        gradeMap[entry.key] != "-")
+        gradeMap[entry.key] != null)
       .map<Map<String, dynamic>>((entry) => {
         "subjectId": entry.key,
         "grade": gradeMap[entry.key]!
@@ -144,6 +142,8 @@ class _ManageCoursePage extends State<ManageCoursePage> {
       appBar: TopBar(header: "Manage Courses"),
       body: Column(
         children: [
+          Text(checkedMap.toString()),
+          Text(gradeMap.toString()),
           SearchBox(onChanged: onSearch),
           Expanded(
             child: SingleChildScrollView(
