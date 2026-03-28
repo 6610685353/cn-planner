@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
-import 'package:cn_planner_app/route.dart';
+import 'package:cn_planner_app/features/gpa_calculator/widgets/course_card.dart';
+import 'package:cn_planner_app/features/gpa_calculator/widgets/stat_card.dart';
 
 class GPACalculatorPage extends StatefulWidget {
   const GPACalculatorPage({super.key});
@@ -10,9 +11,6 @@ class GPACalculatorPage extends StatefulWidget {
 }
 
 class _GPACalculatorPageState extends State<GPACalculatorPage> {
-  // --- Data & State ---
-
-  // 1. Mock Data Integration
   final Map<String, dynamic> mockData = {
     "user": {
       "1": {
@@ -253,7 +251,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                _StatCard(
+                StatCard(
                   title: "Target GPA",
                   value: "3.95",
                   textColor: const Color(0xffB71C1C), // Deep Red
@@ -261,7 +259,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                   iconColor: const Color(0xffB71C1C),
                 ),
                 const SizedBox(width: 16),
-                _StatCard(
+                StatCard(
                   title:
                       "Estimated", // Assuming "Estimated" refers to current standing or prediction
                   value: "3.45", // Mock value or use currentGPA
@@ -316,7 +314,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
               itemCount: currentSemesterCourses.length,
               itemBuilder: (context, index) {
                 final course = currentSemesterCourses[index];
-                return _CourseCard(
+                return CourseCard(
                   name: course['name'],
                   credit: course['credit'],
                   grade: course['grade'],
@@ -477,334 +475,4 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
 
 // --- Private Widgets (Refactored) ---
 
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final Color textColor;
-  final IconData iconData;
-  final Color iconColor;
 
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.textColor,
-    required this.iconData,
-    required this.iconColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        height: 120, // Check height usage
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(
-            0xFFFFFBE6,
-          ), // Light Yellowish bg for both? Or distinct?
-          // The image shows white cards actually. Let's use White with specific styles.
-          // Wait, the design description said "White cards with shadow".
-          gradient: const LinearGradient(
-            colors: [Colors.white, Colors.white], // Just white
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                Icon(iconData, size: 20, color: iconColor),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: iconColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// --- Swipe to Reveal Helper ---
-class _SwipeToReveal extends StatefulWidget {
-  final Widget child;
-  final Widget action;
-  final VoidCallback onAction;
-  final double actionWidth = 80.0;
-
-  const _SwipeToReveal({
-    required this.child,
-    required this.action,
-    required this.onAction,
-  });
-
-  @override
-  State<_SwipeToReveal> createState() => _SwipeToRevealState();
-}
-
-class _SwipeToRevealState extends State<_SwipeToReveal>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  double _dragExtent = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _handleDragUpdate(DragUpdateDetails details) {
-    setState(() {
-      _dragExtent += details.primaryDelta!;
-      if (_dragExtent > 0) _dragExtent = 0; // Prevent swipe right
-      if (_dragExtent < -widget.actionWidth * 1.5) {
-        _dragExtent = -widget.actionWidth * 1.5; // Limit overscroll
-      }
-    });
-  }
-
-  void _handleDragEnd(DragEndDetails details) {
-    if (_dragExtent < -widget.actionWidth / 2) {
-      // Snap open
-      _animateTo(-widget.actionWidth);
-    } else {
-      // Snap close
-      _animateTo(0.0);
-    }
-  }
-
-  void _animateTo(double target) {
-    final start = _dragExtent;
-    // Simple animation loop using controller value as a progress ticker
-    // Actually, let's just use a Tweener or simple setState for simplicity in this context
-    // or use the controller to drive value.
-    // For simplicity in a single-file widget without external deps:
-
-    Animation<double> animation = Tween<double>(
-      begin: start,
-      end: target,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
-    _controller.reset();
-    animation.addListener(() {
-      setState(() {
-        _dragExtent = animation.value;
-      });
-    });
-    _controller.forward();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Background (Action)
-        Positioned.fill(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  // Close then act
-                  _animateTo(0.0);
-                  widget.onAction();
-                },
-                child: Container(
-                  width: widget.actionWidth,
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xffB71C1C),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  alignment: Alignment.center,
-                  margin: const EdgeInsets.only(
-                    bottom: 12,
-                  ), // Same margin as card
-                  child: widget.action,
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Foreground (Child)
-        GestureDetector(
-          onHorizontalDragUpdate: _handleDragUpdate,
-          onHorizontalDragEnd: _handleDragEnd,
-          child: Transform.translate(
-            offset: Offset(_dragExtent, 0),
-            child: widget.child,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CourseCard extends StatelessWidget {
-  final String name;
-  final double credit;
-  final String grade;
-  final List<String> gradeOptions;
-  final ValueChanged<String?> onGradeChanged;
-  final VoidCallback onDelete;
-
-  const _CourseCard({
-    required this.name,
-    required this.credit,
-    required this.grade,
-    required this.gradeOptions,
-    required this.onGradeChanged,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // The inner card content
-    Widget cardContent = Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        // mainAxisAlignment: MainAxisAlignment.spaceBetween, // Remove this since we have Expanded
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD), // Light Blue
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    "${credit.toStringAsFixed(0)} Credits", // e.g. "3 Credits"
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF1976D2), // Blue
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Grade Column (Centered)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.center, // Centered alignment
-              children: [
-                const Text(
-                  "GRADE",
-                  style: TextStyle(
-                    color: Color(0xFF1976D2),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-                DropdownButton<String>(
-                  value: grade,
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: Colors.black54,
-                  ),
-                  underline: const SizedBox(), // Remove underline
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: Colors.black87,
-                  ),
-                  items: gradeOptions.map((g) {
-                    return DropdownMenuItem(value: g, child: Text(g));
-                  }).toList(),
-                  onChanged: onGradeChanged,
-                ),
-              ],
-            ),
-          ),
-
-          // Removed standard Delete Button
-        ],
-      ),
-    );
-
-    return _SwipeToReveal(
-      action: const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.delete_outline, color: Colors.white, size: 28),
-          SizedBox(height: 4),
-          Text(
-            "Delete",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-      onAction: onDelete,
-      child: cardContent,
-    );
-  }
-}
