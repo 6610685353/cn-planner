@@ -5,6 +5,10 @@ import '../../../core/widgets/timetable_grid.dart';
 import 'daily_schedule_page.dart';
 import '../../../core/widgets/course_card.dart';
 import '../services/mock_schedule_service.dart';
+import 'package:cn_planner_app/core/services/notification_service.dart';
+import '../../notification/views/notifications_page.dart';
+import '../../notification/controllers/notifications_controller.dart';
+import '../../notification/models/notifications_models.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -178,6 +182,37 @@ class _ScheduleScreenState extends State<SchedulePage> {
                 ),
               ],
             ),
+      // 👉 ปุ่มสำหรับกดเทสต์ Notification
+      // 👉 ปุ่มสำหรับกดเทสต์ In-App Notification (แบบเชื่อมกับของเพื่อน)
+      floatingActionButton: ElevatedButton(
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent),
+        onPressed: () {
+          // 1. สร้างและโยนข้อมูลใส่ Controller ของเพื่อน (ใช้ Category: CLASS REMINDER)
+          NotificationController.addNotification(
+            NotificationsModel(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              category: "CLASS REMINDER", // เพื่อนทำไอคอนสำหรับหมวดนี้ไว้แล้ว
+              title: '🚨 แจ้งเตือนคลาสเรียน',
+              subtitle: 'วิชา CN101 กำลังจะเริ่มในอีก 15 นาทีที่ห้อง SC3-201!',
+              time:
+                  '${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}',
+              isRead: false,
+            ),
+          );
+
+          print("✅ สร้าง In-App Notification สำเร็จ!");
+
+          // 2. สั่งเปลี่ยนหน้าไปที่หน้ารวม Noti ของเพื่อน
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const NotificationsPage()),
+          );
+        },
+        child: const Text(
+          "🔔 เทสต์หน้ารวม Noti",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
     );
   }
 }

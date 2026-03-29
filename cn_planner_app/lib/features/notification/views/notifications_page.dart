@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/widgets/top_bar.dart';
+// import '../../../core/widgets/top_bar.dart'; // 👉 ปิดตัวนี้ไว้ก่อนถ้ามันบังคับไปหน้า Home
 import '../controllers/notifications_controller.dart';
 import '../widgets/notification_tile.dart';
 
@@ -12,34 +12,48 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
-  // 1. ประกาศ Controller ไว้ที่ระดับ State เพื่อให้เก็บข้อมูลไว้ได้ตลอดอายุของหน้านี้
   final NotificationController _controller = NotificationController();
+
+  // 👉 หัวใจสำคัญ: เมื่อหน้าจอถูกปิด (ผู้ใช้กด Back) ให้สั่ง Mark all as read ทันที
+  @override
+  void dispose() {
+    _controller.markAllAsRead(); // สั่งเปลี่ยนสถานะใน Controller ส่วนกลาง
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const TopBar(header: "Notifications", route: "main"),
+      // 👉 แก้ไข AppBar ให้ใช้ Navigator.pop เพื่อให้กลับไปหน้า Schedule ได้จริง
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context), // ย้อนกลับหน้าก่อนหน้า
+        ),
+        title: const Text(
+          "Notifications",
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+      ),
       body: Column(
         children: [
-          // ส่วนหัว RECENT และปุ่ม Mark all as read
           _buildHeader(),
-
-          // รายการแจ้งเตือน
           Expanded(
             child: ListView.builder(
               physics: const BouncingScrollPhysics(),
-              itemCount: _controller.notifications.length,
+              itemCount: NotificationController.notifications.length,
               itemBuilder: (context, index) {
-                final noti = _controller.notifications[index];
+                final noti = NotificationController.notifications[index];
                 return NotificationTile(
-                  // ดึง Icon ตามหมวดหมู่จาก Controller
                   icon: _controller.getCategoryIcon(noti.category),
                   category: noti.category,
                   title: noti.title,
                   subtitle: noti.subtitle,
                   time: noti.time,
-                  isRead: noti.isRead,
+                  isRead: noti.isRead, // จะโชว์ว่ายังไม่อ่านตอนเข้ามาครั้งแรก
                 );
               },
             ),
@@ -60,23 +74,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: AppColors.primaryYellow,
-              letterSpacing: 1.1,
             ),
           ),
           TextButton(
-            onPressed: () {
-              // 2. เมื่อกดปุ่ม สั่งให้ Controller เปลี่ยนสถานะ และสั่ง setState เพื่อ Refresh หน้าจอ
-              setState(() {
-                _controller.markAllAsRead();
-              });
-            },
+            onPressed: () => setState(() => _controller.markAllAsRead()),
             child: const Text(
               "Mark all as read",
-              style: TextStyle(
-                color: Color(0xFFA52A2A), // สีน้ำตาลแดงตามดีไซน์
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: Color(0xFFA52A2A)),
             ),
           ),
         ],
