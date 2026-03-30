@@ -1,41 +1,41 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+// 👉 1. Import ตัวนี้เพิ่ม เพื่อให้ใช้ kIsWeb ได้
+import 'package:flutter/foundation.dart';
 
 class NotificationService {
-  // สร้างตัวแปรหลักสำหรับเรียกใช้ Plugin
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  // 1. ฟังก์ชันตั้งค่าเริ่มต้น (ต้องเรียกตอนเปิดแอป)
   static Future<void> init() async {
-    // กำหนดโซนเวลาให้ระบบรู้จัก
-    tz.initializeTimeZones();
+    // 👉 2. ถ้าเป็นเว็บ ให้หยุดการทำงานฟังก์ชันนี้ไปเลย
+    if (kIsWeb) {
+      print("🌐 ระบบรันบน Web: ข้ามการตั้งค่า Notification");
+      return;
+    }
 
-    // ตั้งค่าสำหรับ Android (ใช้ไอคอนเริ่มต้นของแอป)
+    tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Asia/Bangkok'));
+
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    // ตั้งค่าสำหรับ iOS
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
           requestAlertPermission: true,
           requestBadgePermission: true,
           requestSoundPermission: true,
         );
-
     const InitializationSettings initializationSettings =
         InitializationSettings(
           android: initializationSettingsAndroid,
           iOS: initializationSettingsIOS,
         );
-
-    // สั่งรันการตั้งค่า
     await _notificationsPlugin.initialize(settings: initializationSettings);
   }
 
-  // 2. ฟังก์ชันขออนุญาตส่งแจ้งเตือน (สำคัญมากสำหรับ Android 13 ขึ้นไป และ iOS)
   static Future<void> requestPermission() async {
+    if (kIsWeb) return; // กันพังบนเว็บ
     final androidImplementation = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -43,16 +43,15 @@ class NotificationService {
     await androidImplementation?.requestNotificationsPermission();
   }
 
-  // 3. ฟังก์ชันตั้งเวลาแจ้งเตือนล่วงหน้า (เอาไว้ใช้เตือนก่อนเข้าเรียน)
   static Future<void> scheduleClassReminder({
-    required int id, // รหัสแจ้งเตือน (ห้ามซ้ำกัน)
-    required String title, // หัวข้อ (เช่น "CN101 กำลังจะเริ่ม!")
-    required String body, // เนื้อหา (เช่น "เรียนที่ SC3-201 ในอีก 15 นาที")
-    required DateTime classStartTime, // เวลาเริ่มเรียนจริง
+    required int id,
+    required String title,
+    required String body,
+    required DateTime classStartTime,
   }) async {
-    // คำนวณเวลาแจ้งเตือน (เตือนก่อน 15 นาที)
-    final scheduledTime = classStartTime.subtract(const Duration(minutes: 15));
+    if (kIsWeb) return; // กันพังบนเว็บ
 
+    final scheduledTime = classStartTime.subtract(const Duration(minutes: 15));
     await _notificationsPlugin.zonedSchedule(
       id: id,
       title: title,
@@ -60,8 +59,8 @@ class NotificationService {
       scheduledDate: tz.TZDateTime.from(scheduledTime, tz.local),
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
-          'class_reminder_channel', // ID ของแชแนล
-          'Class Reminders', // ชื่อแชแนลที่ผู้ใช้เห็นใน Setting
+          'class_reminder_channel',
+          'Class Reminders',
           channelDescription: 'แจ้งเตือนก่อนถึงเวลาเรียน',
           importance: Importance.max,
           priority: Priority.high,
@@ -72,19 +71,18 @@ class NotificationService {
           presentSound: true,
         ),
       ),
-      androidScheduleMode:
-          AndroidScheduleMode.exactAllowWhileIdle, // ให้เตือนแม้เครื่องล็อกอยู่
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
-  // 4. ฟังก์ชันสำหรับยิงแจ้งเตือนทดสอบทันที (ไม่ต้องรอเวลา)
   static Future<void> showTestNotification() async {
+    if (kIsWeb) return;
     const NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: AndroidNotificationDetails(
         'test_channel',
         'Test Notifications',
-        channelDescription: 'สำหรับการทดสอบระบบแจ้งเตือน',
-        importance: Importance.max, // ให้เด้งเตือนแบบมีเสียงและ Pop-up
+        channelDescription: 'สำหรับการทดสอบ',
+        importance: Importance.max,
         priority: Priority.high,
       ),
       iOS: DarwinNotificationDetails(
@@ -93,14 +91,117 @@ class NotificationService {
         presentSound: true,
       ),
     );
-
-    // สั่งโชว์เดี๋ยวนี้เลย!
     await _notificationsPlugin.show(
-      id: 999, // 👉 เติม id:
-      title: '🔔 สำเร็จแล้ว!', // 👉 เติม title:
-      body: 'ระบบ Notification ของคุณมีนทำงานได้ 100% 🎉', // 👉 เติม body:
-      notificationDetails:
-          platformChannelSpecifics, // 👉 เติม notificationDetails:
+      id: 999,
+      title: '🔔 สำเร็จแล้ว!',
+      body: 'ระบบ Notification ทำงานได้ 100% 🎉',
+      notificationDetails: platformChannelSpecifics,
     );
+  }
+
+  static DateTime _getNextClassDateTime(String dayName, String timeStr) {
+    final now = DateTime.now();
+    final dayMap = {
+      'MON': 1,
+      'TUE': 2,
+      'WED': 3,
+      'THU': 4,
+      'FRI': 5,
+      'SAT': 6,
+      'SUN': 7,
+    };
+    final targetWeekday = dayMap[dayName.toUpperCase()] ?? 1;
+    final parts = timeStr.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    var scheduledDate = DateTime(now.year, now.month, now.day, hour, minute);
+    while (scheduledDate.weekday != targetWeekday ||
+        scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+    return scheduledDate;
+  }
+
+  static Future<void> autoScheduleAllClasses(
+    List<dynamic> classSessions,
+  ) async {
+    // 🌐 บล็อกสำหรับรันเช็คบน Web
+    if (kIsWeb) {
+      print("🌐 รันบน Web: จำลองการคำนวณคิวแจ้งเตือน...");
+      print("==================================================");
+      int mockId = 0;
+      for (var session in classSessions) {
+        final days = session.day.split(', ');
+        for (var day in days) {
+          // 👉 เช็คห้องเรียน ถ้าไม่มีห้องให้ตัดคำว่า "ที่ห้อง..." ออก
+          String roomText =
+              (session.room == '-' || session.room.toUpperCase() == 'TBA')
+              ? '!'
+              : ' ที่ห้อง ${session.room}!';
+
+          // 👉 ใช้ข้อความตามที่คุณมีนออกแบบเป๊ะๆ
+          String titleMsg = '🚨 แจ้งเตือนคลาสเรียน';
+          String bodyMsg =
+              'วิชา ${session.code} กำลังจะเริ่มในอีก 15 นาที$roomText';
+
+          print("-> ID: ${mockId++}");
+          print("   หัวข้อ: $titleMsg");
+          print("   ข้อความ: $bodyMsg");
+          print("--------------------------------------------------");
+        }
+      }
+      print("==================================================");
+      return;
+    }
+
+    // 📱 บล็อกสำหรับรันของจริงบน Mobile
+    await _notificationsPlugin.cancelAll();
+    int notiId = 0;
+    for (var session in classSessions) {
+      final days = session.day.split(', ');
+      for (var day in days) {
+        final classTime = _getNextClassDateTime(day, session.start);
+
+        String roomText =
+            (session.room == '-' || session.room.toUpperCase() == 'TBA')
+            ? '!'
+            : ' ที่ห้อง ${session.room}!';
+
+        String titleMsg = '🚨 แจ้งเตือนคลาสเรียน';
+        String bodyMsg =
+            'วิชา ${session.code} กำลังจะเริ่มในอีก 15 นาที$roomText';
+
+        await scheduleClassReminder(
+          id: notiId++,
+          title: titleMsg,
+          body: bodyMsg,
+          classStartTime: classTime,
+        );
+      }
+    }
+    print(
+      "✅ Auto-Scheduled Notifications for ${classSessions.length} classes.",
+    );
+  }
+
+  static Future<void> checkPendingNotifications() async {
+    if (kIsWeb) {
+      print("🌐 รันบน Web: ไม่สามารถเช็คคิวแจ้งเตือนของมือถือได้");
+      return;
+    }
+
+    final pendingRequests = await _notificationsPlugin
+        .pendingNotificationRequests();
+
+    print("==================================================");
+    print("🔔 มีคิวแจ้งเตือนล่วงหน้าทั้งหมด: ${pendingRequests.length} รายการ");
+
+    for (var noti in pendingRequests) {
+      print("-> ID: ${noti.id}");
+      print("   หัวข้อ: ${noti.title}");
+      print("   ข้อความ: ${noti.body}");
+      print("--------------------------------------------------");
+    }
+    print("==================================================");
   }
 }

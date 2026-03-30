@@ -9,6 +9,10 @@ import 'package:cn_planner_app/core/services/notification_service.dart';
 import '../../notification/views/notifications_page.dart';
 import '../../notification/controllers/notifications_controller.dart';
 import '../../notification/models/notifications_models.dart';
+import '../services/schedule_service.dart';
+import '../services/schedule_service.dart';
+import '../../../core/services/notification_service.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // อย่าลืม import ถ้าใช้ Firebase Auth
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -28,72 +32,102 @@ class _ScheduleScreenState extends State<SchedulePage> {
     _loadData();
   }
 
+  // ... โค้ดส่วนบนเหมือนเดิม ...
   Future<void> _loadData() async {
-    // 1. สมมติว่านี่คือข้อมูลรหัสวิชาที่ดึงมาจากหน้า Roadmap
-    List<String> myEnrolledCourses = ["CN101", "TU100"];
+    try {
+      print("🟡 1. เริ่มโหลดข้อมูล...");
+      String myUid = "RyMRAjy9Q8ZQMgQM8m1Sdk8GuGU2";
 
-    // 2. เรียกใช้ Service จำลองของเรา เพื่อหาเวลาเรียน
-    final service = MockScheduleService();
-    final masterCourses = service.getScheduleForUser(myEnrolledCourses);
+      final service = ScheduleService();
+      print("🟡 2. กำลังดึงข้อมูลจาก Supabase...");
+      final masterCourses = await service.getRealScheduleForUser(myUid);
 
-    // 3. แปลงร่างข้อมูลของเรา (MasterCourseModel) ให้กลายเป็นของเพื่อน (ClassSession) เพื่อให้ UI รู้จัก
-    List<ClassSession> convertedClasses = [];
-    final List<Color> cardColors = [
-      const Color(0xFFC8E6B2),
-      const Color(0xFFC3EEFA),
-    ]; // สีจำลอง
+      print("🟡 3. ดึงข้อมูลสำเร็จ! ได้มา ${masterCourses.length} วิชา");
 
-    int colorIndex = 0;
-    for (var course in masterCourses) {
-      for (var slot in course.timeSlots) {
-        convertedClasses.add(
-          ClassSession(
-            code: course.courseCode,
-            name: course.courseName,
-            instructor: course.instructor,
-            day: slot.day,
-            start: slot.startTime,
-            stop: slot.endTime,
-            section: "01", // สมมติว่าลง Sec 1
-            room: slot.room,
-            color: cardColors[colorIndex % cardColors.length],
-          ),
-        );
+      List<ClassSession> convertedClasses = [];
+      final List<Color> cardColors = [
+        const Color(0xFFC8E6B2),
+        const Color(0xFFC3EEFA),
+        const Color(0xFFFFD8B1),
+        const Color(0xFFE8D1FF),
+      ];
+
+      int colorIndex = 0;
+      for (var course in masterCourses) {
+        for (var slot in course.timeSlots) {
+          convertedClasses.add(
+            ClassSession(
+              code: course.courseCode,
+              name: course.courseName,
+              instructor: course.instructor,
+              day: slot.day,
+              start: slot.startTime,
+              stop: slot.endTime,
+              section: "01",
+              room: slot.room,
+              color: cardColors[colorIndex % cardColors.length],
+            ),
+          );
+        }
+        colorIndex++;
       }
-      colorIndex++;
-    }
 
-    // 4. สร้างข้อมูลสำหรับ Card ด้านล่าง (รวมวันแบบที่เพื่อนทำไว้)
-    final Map<String, ClassSession> groupedMap = {};
-    for (var session in convertedClasses) {
-      if (groupedMap.containsKey(session.code)) {
-        final existing = groupedMap[session.code]!;
-        final newDays = "${existing.day}, ${session.day}";
-        groupedMap[session.code] = ClassSession(
-          code: existing.code,
-          name: existing.name,
-          instructor: existing.instructor,
-          day: newDays,
-          start: existing.start,
-          stop: existing.stop,
-          section: existing.section,
-          room: existing.room,
-          color: existing.color,
-        );
-      } else {
-        groupedMap[session.code] = session;
+      // 👉 ลองคอมเมนต์บรรทัด Noti ไว้ก่อน! เพื่อแยกให้ออกว่าพังที่ Noti หรือพังที่ดึงข้อมูล
+      // print("🟡 4. กำลังตั้งเวลาแจ้งเตือน...");
+      // await NotificationService.autoScheduleAllClasses(convertedClasses);
+
+      // ... (โค้ดดึงข้อมูลด้านบน) ...
+
+      // 4. สั่งให้ระบบตั้งเวลาแจ้งเตือนล่วงหน้า 15 นาที
+      await NotificationService.autoScheduleAllClasses(convertedClasses);
+
+      // 👉 เติมบรรทัดนี้ลงไป เพื่อสั่งปริ้นต์เช็คผลลัพธ์ทันที!
+      await NotificationService.checkPendingNotifications();
+
+      // ... (โค้ด groupedMap ด้านล่างเหมือนเดิม) ...
+
+      final Map<String, ClassSession> groupedMap = {};
+      for (var session in convertedClasses) {
+        if (groupedMap.containsKey(session.code)) {
+          final existing = groupedMap[session.code]!;
+          final newDays = "${existing.day}, ${session.day}";
+          groupedMap[session.code] = ClassSession(
+            code: existing.code,
+            name: existing.name,
+            instructor: existing.instructor,
+            day: newDays,
+            start: existing.start,
+            stop: existing.stop,
+            section: existing.section,
+            room: existing.room,
+            color: existing.color,
+          );
+        } else {
+          groupedMap[session.code] = session;
+        }
       }
-    }
 
-    // 5. อัปเดตหน้าจอ
-    if (mounted) {
-      setState(() {
-        myClasses = convertedClasses; // ส่งเข้าตาราง
-        uniqueClasses = groupedMap.values.toList(); // ส่งเข้าการ์ดด้านล่าง
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          myClasses = convertedClasses;
+          uniqueClasses = groupedMap.values.toList();
+        });
+      }
+      print("🟢 5. จัดเตรียมข้อมูลลง UI เสร็จสมบูรณ์!");
+    } catch (e) {
+      // ถ้ามีอะไรพัง มันจะเด้งมาตรงนี้แทนการค้าง!
+      print("🔴 เกิดข้อผิดพลาดอย่างรุนแรงใน _loadData: $e");
+    } finally {
+      // finally คือ "ทำเสมอไม่ว่าจะพังหรือไม่พัง" -> เอาไว้สั่งหยุดหมุน!
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
+
+  // หมายเหตุ: ตรง Scaffold ด้านล่าง ให้ลบ floatingActionButton ทิ้งไปได้เลยค่ะ ไม่ต้องใช้ปุ่มเทสต์แล้ว!
 
   @override
   Widget build(BuildContext context) {
