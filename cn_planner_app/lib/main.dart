@@ -9,63 +9,33 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
 import 'package:cn_planner_app/core/services/notification_service.dart';
-import 'core/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 1. เปิดระบบ Notification & Timezone
   await NotificationService.init();
 
-  // 1. ปิด Firebase ไว้เหมือนเดิม เพราะเราจะเทสต์แค่ UI
+  // 2. เปิดระบบ Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // 3. เปิดระบบ Supabase
   await Supabase.initialize(
     url: 'https://razswzgdnxwjqbyebgnj.supabase.co',
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhenN3emdkbnh3anFieWViZ25qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMjAxOTAsImV4cCI6MjA4NjY5NjE5MH0.jxPnFZB8tY0Wqsm4wn8GBC_Kj6F5acZD6IqtY-6F83c',
   );
 
-  // 👉 1. ใส่ Try-Catch ดัก Error Firebase
-  try {
-    print("🟡 กำลังเชื่อมต่อ Firebase...");
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    print("🟢 Firebase เชื่อมต่อสำเร็จ!");
-  } catch (e) {
-    print("🔴 เกิดข้อผิดพลาดตอนเปิด Firebase: $e");
-  }
-
-  // 👉 2. ดัก Supabase ด้วยเผื่อไว้
-  try {
-    print("🟡 กำลังเชื่อมต่อ Supabase...");
-    await Supabase.initialize(
-      url: 'https://razswzgdnxwjqbyebgnj.supabase.co',
-      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', // คีย์ของคุณมีนยาวๆ
-    );
-    print("🟢 Supabase เชื่อมต่อสำเร็จ!");
-  } catch (e) {
-    print("🔴 เกิดข้อผิดพลาดตอนเปิด Supabase: $e");
-  }
-
   if (kDebugMode) {
-    // 2. ใส่ try-catch ป้องกันแอปพังกรณีไม่มีไฟล์ .env.local
     try {
       await dotenv.load(fileName: ".env.local");
       await Config.init();
-
-      // final host = await getHost();
-
-      // 3. 🔴 คอมเมนต์บรรทัดนี้ปิดไว้! เพื่อไม่ให้มันไปเรียก Firebase ที่ยังไม่ได้ Initialize
-      // FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
-
-      print("Running on Debug Mode: Bypassed Firebase Emulator for UI testing");
+      print("Running on Debug Mode");
     } catch (e) {
-      print("ENV/Config Warning (Safe to ignore for UI testing): $e");
+      print("Config Error: $e");
     }
   }
 
-  print("🟡 กำลังจะเปิดหน้าแอป (runApp)...");
   runApp(const MyApp());
 }
 
@@ -92,7 +62,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: AppRoutes.login, // พุ่งตรงไปหน้า Schedule เลย
+      initialRoute: AppRoutes.login,
       routes: AppRoutes.routes,
     );
   }
