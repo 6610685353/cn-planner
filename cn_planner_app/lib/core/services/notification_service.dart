@@ -157,7 +157,7 @@ class NotificationService {
 
   static Future<void> checkPendingNotifications() async {
     if (kIsWeb) {
-      print("🌐 รันบน Web: ไม่สามารถเช็คคิวแจ้งเตือนของมือถือได้");
+      // print("🌐 รันบน Web: ไม่สามารถเช็คคิวแจ้งเตือนของมือถือได้");
       return;
     }
 

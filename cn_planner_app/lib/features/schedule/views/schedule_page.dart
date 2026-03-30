@@ -1,18 +1,12 @@
 import 'package:cn_planner_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/core/models/class_session.dart';
-import '../../../core/widgets/timetable_grid.dart';
-import 'daily_schedule_page.dart';
-import '../../../core/widgets/course_card.dart';
-import '../services/mock_schedule_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cn_planner_app/core/services/notification_service.dart';
-import '../../notification/views/notifications_page.dart';
-import '../../notification/controllers/notifications_controller.dart';
-import '../../notification/models/notifications_models.dart';
 import '../services/schedule_service.dart';
-import '../services/schedule_service.dart';
-import '../../../core/services/notification_service.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // อย่าลืม import ถ้าใช้ Firebase Auth
+import 'daily_schedule_page.dart';
+import '../../../core/widgets/timetable_grid.dart';
+import '../../../core/widgets/course_card.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
