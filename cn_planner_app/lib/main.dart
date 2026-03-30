@@ -17,13 +17,36 @@ Future<void> main() async {
   await NotificationService.init();
 
   // 1. ปิด Firebase ไว้เหมือนเดิม เพราะเราจะเทสต์แค่ UI
-  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await Supabase.initialize(
     url: 'https://razswzgdnxwjqbyebgnj.supabase.co',
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhenN3emdkbnh3anFieWViZ25qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMjAxOTAsImV4cCI6MjA4NjY5NjE5MH0.jxPnFZB8tY0Wqsm4wn8GBC_Kj6F5acZD6IqtY-6F83c',
   );
+
+  // 👉 1. ใส่ Try-Catch ดัก Error Firebase
+  try {
+    print("🟡 กำลังเชื่อมต่อ Firebase...");
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print("🟢 Firebase เชื่อมต่อสำเร็จ!");
+  } catch (e) {
+    print("🔴 เกิดข้อผิดพลาดตอนเปิด Firebase: $e");
+  }
+
+  // 👉 2. ดัก Supabase ด้วยเผื่อไว้
+  try {
+    print("🟡 กำลังเชื่อมต่อ Supabase...");
+    await Supabase.initialize(
+      url: 'https://razswzgdnxwjqbyebgnj.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', // คีย์ของคุณมีนยาวๆ
+    );
+    print("🟢 Supabase เชื่อมต่อสำเร็จ!");
+  } catch (e) {
+    print("🔴 เกิดข้อผิดพลาดตอนเปิด Supabase: $e");
+  }
 
   if (kDebugMode) {
     // 2. ใส่ try-catch ป้องกันแอปพังกรณีไม่มีไฟล์ .env.local
@@ -42,6 +65,7 @@ Future<void> main() async {
     }
   }
 
+  print("🟡 กำลังจะเปิดหน้าแอป (runApp)...");
   runApp(const MyApp());
 }
 
@@ -68,7 +92,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: AppRoutes.schedule, // พุ่งตรงไปหน้า Schedule เลย
+      initialRoute: AppRoutes.login, // พุ่งตรงไปหน้า Schedule เลย
       routes: AppRoutes.routes,
     );
   }

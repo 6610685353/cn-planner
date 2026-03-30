@@ -125,36 +125,10 @@ class NotificationService {
   static Future<void> autoScheduleAllClasses(
     List<dynamic> classSessions,
   ) async {
-    // 🌐 บล็อกสำหรับรันเช็คบน Web
-    if (kIsWeb) {
-      print("🌐 รันบน Web: จำลองการคำนวณคิวแจ้งเตือน...");
-      print("==================================================");
-      int mockId = 0;
-      for (var session in classSessions) {
-        final days = session.day.split(', ');
-        for (var day in days) {
-          // 👉 เช็คห้องเรียน ถ้าไม่มีห้องให้ตัดคำว่า "ที่ห้อง..." ออก
-          String roomText =
-              (session.room == '-' || session.room.toUpperCase() == 'TBA')
-              ? '!'
-              : ' ที่ห้อง ${session.room}!';
+    // 🌐 ถ้าเผลอรันบน Web ให้หยุดทำงานไปเลยแบบเงียบๆ (ไม่ปริ้นต์อะไรแล้ว)
+    if (kIsWeb) return;
 
-          // 👉 ใช้ข้อความตามที่คุณมีนออกแบบเป๊ะๆ
-          String titleMsg = '🚨 แจ้งเตือนคลาสเรียน';
-          String bodyMsg =
-              'วิชา ${session.code} กำลังจะเริ่มในอีก 15 นาที$roomText';
-
-          print("-> ID: ${mockId++}");
-          print("   หัวข้อ: $titleMsg");
-          print("   ข้อความ: $bodyMsg");
-          print("--------------------------------------------------");
-        }
-      }
-      print("==================================================");
-      return;
-    }
-
-    // 📱 บล็อกสำหรับรันของจริงบน Mobile
+    // 📱 รันบน Mobile: ตั้งเวลาแจ้งเตือนของจริง
     await _notificationsPlugin.cancelAll();
     int notiId = 0;
     for (var session in classSessions) {
@@ -179,9 +153,6 @@ class NotificationService {
         );
       }
     }
-    print(
-      "✅ Auto-Scheduled Notifications for ${classSessions.length} classes.",
-    );
   }
 
   static Future<void> checkPendingNotifications() async {

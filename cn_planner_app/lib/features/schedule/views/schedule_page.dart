@@ -35,14 +35,17 @@ class _ScheduleScreenState extends State<SchedulePage> {
   // ... โค้ดส่วนบนเหมือนเดิม ...
   Future<void> _loadData() async {
     try {
-      print("🟡 1. เริ่มโหลดข้อมูล...");
-      String myUid = "RyMRAjy9Q8ZQMgQM8m1Sdk8GuGU2";
+      // 👉 1. ดึง UID ของคนที่ล็อกอินอยู่จริงๆ
+      String myUid = FirebaseAuth.instance.currentUser?.uid ?? "";
+
+      // ถ้าไม่ได้ล็อกอิน (หรือ Session หลุด) ให้หยุดการทำงาน
+      if (myUid.isEmpty) {
+        print("❌ ผู้ใช้ยังไม่ได้ล็อกอิน");
+        return;
+      }
 
       final service = ScheduleService();
-      print("🟡 2. กำลังดึงข้อมูลจาก Supabase...");
       final masterCourses = await service.getRealScheduleForUser(myUid);
-
-      print("🟡 3. ดึงข้อมูลสำเร็จ! ได้มา ${masterCourses.length} วิชา");
 
       List<ClassSession> convertedClasses = [];
       final List<Color> cardColors = [
@@ -72,19 +75,8 @@ class _ScheduleScreenState extends State<SchedulePage> {
         colorIndex++;
       }
 
-      // 👉 ลองคอมเมนต์บรรทัด Noti ไว้ก่อน! เพื่อแยกให้ออกว่าพังที่ Noti หรือพังที่ดึงข้อมูล
-      // print("🟡 4. กำลังตั้งเวลาแจ้งเตือน...");
-      // await NotificationService.autoScheduleAllClasses(convertedClasses);
-
-      // ... (โค้ดดึงข้อมูลด้านบน) ...
-
-      // 4. สั่งให้ระบบตั้งเวลาแจ้งเตือนล่วงหน้า 15 นาที
+      // 👉 2. สั่งตั้งคิวแจ้งเตือนอัตโนมัติ (เอาพวกเช็คปริ้นต์ข้อความออกแล้ว)
       await NotificationService.autoScheduleAllClasses(convertedClasses);
-
-      // 👉 เติมบรรทัดนี้ลงไป เพื่อสั่งปริ้นต์เช็คผลลัพธ์ทันที!
-      await NotificationService.checkPendingNotifications();
-
-      // ... (โค้ด groupedMap ด้านล่างเหมือนเดิม) ...
 
       final Map<String, ClassSession> groupedMap = {};
       for (var session in convertedClasses) {
@@ -113,12 +105,9 @@ class _ScheduleScreenState extends State<SchedulePage> {
           uniqueClasses = groupedMap.values.toList();
         });
       }
-      print("🟢 5. จัดเตรียมข้อมูลลง UI เสร็จสมบูรณ์!");
     } catch (e) {
-      // ถ้ามีอะไรพัง มันจะเด้งมาตรงนี้แทนการค้าง!
-      print("🔴 เกิดข้อผิดพลาดอย่างรุนแรงใน _loadData: $e");
+      print("🔴 Error ใน _loadData: $e");
     } finally {
-      // finally คือ "ทำเสมอไม่ว่าจะพังหรือไม่พัง" -> เอาไว้สั่งหยุดหมุน!
       if (mounted) {
         setState(() {
           isLoading = false;
@@ -216,37 +205,6 @@ class _ScheduleScreenState extends State<SchedulePage> {
                 ),
               ],
             ),
-      // 👉 ปุ่มสำหรับกดเทสต์ Notification
-      // 👉 ปุ่มสำหรับกดเทสต์ In-App Notification (แบบเชื่อมกับของเพื่อน)
-      floatingActionButton: ElevatedButton(
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent),
-        onPressed: () {
-          // 1. สร้างและโยนข้อมูลใส่ Controller ของเพื่อน (ใช้ Category: CLASS REMINDER)
-          NotificationController.addNotification(
-            NotificationsModel(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
-              category: "CLASS REMINDER", // เพื่อนทำไอคอนสำหรับหมวดนี้ไว้แล้ว
-              title: '🚨 แจ้งเตือนคลาสเรียน',
-              subtitle: 'วิชา CN101 กำลังจะเริ่มในอีก 15 นาทีที่ห้อง SC3-201!',
-              time:
-                  '${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}',
-              isRead: false,
-            ),
-          );
-
-          print("✅ สร้าง In-App Notification สำเร็จ!");
-
-          // 2. สั่งเปลี่ยนหน้าไปที่หน้ารวม Noti ของเพื่อน
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const NotificationsPage()),
-          );
-        },
-        child: const Text(
-          "🔔 เทสต์หน้ารวม Noti",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
     );
   }
 }
