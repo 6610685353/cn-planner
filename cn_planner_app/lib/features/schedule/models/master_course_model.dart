@@ -16,12 +16,14 @@ class MasterCourseModel {
   final String courseCode;
   final String courseName;
   final String instructor;
+  final String section;
   final List<TimeSlot> timeSlots;
 
   MasterCourseModel({
     required this.courseCode,
     required this.courseName,
     required this.instructor,
+    required this.section,
     required this.timeSlots,
   });
 }

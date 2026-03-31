@@ -56,6 +56,8 @@ class ScheduleService {
       Map<String, MasterCourseModel> courseMap = {};
       for (var row in scheduleResponse) {
         final code = row['subject_code'];
+        // 👉 ดึงค่า section จากฐานข้อมูล (ถ้าใน Supabase เพื่อนตั้งชื่อคอลัมน์ว่า sec ก็แก้ตรงนี้นะคะ)
+        final sectionFromDB = row['section']?.toString() ?? "01";
         final slot = TimeSlot(
           day: row['day'],
           startTime: row['start_time'],
@@ -75,6 +77,7 @@ class ScheduleService {
             courseCode: code,
             courseName: realName,
             instructor: realInstructor,
+            section: sectionFromDB,
             timeSlots: [slot],
           );
         }

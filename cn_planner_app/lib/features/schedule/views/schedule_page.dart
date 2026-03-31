@@ -60,7 +60,7 @@ class _ScheduleScreenState extends State<SchedulePage> {
               day: slot.day,
               start: slot.startTime,
               stop: slot.endTime,
-              section: "01",
+              section: course.section,
               room: slot.room,
               color: cardColors[colorIndex % cardColors.length],
             ),
