@@ -20,7 +20,17 @@ async function getPageData() {
   return data;
 }
 
+async function getCurSemData(uid) {
+  const supabase = getSupabase();
+  const { data , error } = await supabase.from('UserEnrolled').select('subjectId, grade').eq("uid", uid);
+  
+  if(error) throw error;
+  
+  return data;
+}
+
 module.exports = {
    getUserData,
    getPageData,
+   getCurSemData,
    };

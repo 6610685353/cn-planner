@@ -1,7 +1,9 @@
+import 'package:cn_planner_app/services/data_fetch.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import 'package:cn_planner_app/features/gpa_calculator/widgets/course_card.dart';
 import 'package:cn_planner_app/features/gpa_calculator/widgets/stat_card.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class GPACalculatorPage extends StatefulWidget {
   const GPACalculatorPage({super.key});
@@ -11,6 +13,10 @@ class GPACalculatorPage extends StatefulWidget {
 }
 
 class _GPACalculatorPageState extends State<GPACalculatorPage> {
+  double targetGPA = 0;
+  Map<String, dynamic> currentSemCourse = {};
+  String userID = "";
+
   final Map<String, dynamic> mockData = {
     "user": {
       "1": {
@@ -53,10 +59,27 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      userID = user.uid;
+    }
+    _loadData();
   }
 
-  void _loadInitialData() {
+  Future<void> _loadData() async {
+    try {  
+      final currentSemCourseF = await DataFetch().fetchCurrentSem(userID);
+      print("pulling current sem course");
+
+      setState(() {
+        currentSemCourse = currentSemCourseF;
+      });
+    } catch (e) {
+      print("fail get current sem: $e");
+      throw Exception(e);
+    }
+
+
     // Navigate mock data structure for User "1"
     final user = mockData['user']['1'];
     final subjects = mockData['subject'];
@@ -223,13 +246,11 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
     });
   }
 
-  // --- UI Construction ---
-
+  //main page
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors
-          .white, // Match design background or AppColors.background if suitable
+      backgroundColor: Colors.white, // Match design background or AppColors.background if suitable
       appBar: AppBar(
         title: const Text(
           "GPA Calculator",
@@ -246,14 +267,14 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
       ),
       body: Column(
         children: [
-          // 1. Top Cards Row
+          Text(currentSemCourse.toString()),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 StatCard(
                   title: "Target GPA",
-                  value: "3.95",
+                  value: targetGPA.toString(),
                   textColor: const Color(0xffB71C1C), // Deep Red
                   iconData: Icons.stars_rounded,
                   iconColor: const Color(0xffB71C1C),
