@@ -2,8 +2,9 @@ const getSupabase = require('../config/supabase');
 const enrolledModel = require('../models/enrolled_model');
 const cache = require('../utils/cache');
 
+// get function
 async function getPageData() {
-  const cacheKey = 'PageData';
+  const cacheKey = 'EnrolledPageData';
   let PageData = cache.get(cacheKey);
 
   if(!PageData) {
@@ -46,6 +47,15 @@ async function getUserData(uid) {
   return userData;
 }
 
+async function getCurSemData(uid) {
+  // const cacheKey = `user:${uid}:cur_sem`;
+  // let enrolledData = cache.get(cacheKey);
+
+  const curSemData = await enrolledModel.getCurSemData(uid);
+  return curSemData;
+}
+
+// post
 const updateGrade = async (uid, gradeList) => {
   // for debug
   console.log("Calling submit Service")
@@ -87,4 +97,5 @@ module.exports = {
   updateGrade,
   getUserData,
   getPageData,
+  getCurSemData,
   };

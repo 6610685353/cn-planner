@@ -13,7 +13,5 @@ class Config {
     _localUrl = "http://$host:5001/cn-planner-app/asia-southeast1/api";
   }
   
-  
-  
   static String get baseUrl => kDebugMode ? _localUrl : _prodUrl;
 }

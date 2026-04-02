@@ -16,6 +16,23 @@ const getUserData = async (req, res) => {
   }
 }
 
+const getCurSemData = async (req, res) => {
+  const { uid } = req.params;
+
+  if (!uid) {
+    return res.status(400).json({ message : "error"});
+  }
+
+  try {
+    console.log("calling getCurSemData");
+    const data = await enrolledService.getCurSemData(uid);
+    console.log(data);
+    res.json(data);
+  } catch (err) {
+    console.log("get current semester error : ", err);
+  }
+}
+
 const getPageData = async (req, res) => {
   try {
     const data = await enrolledService.getPageData();
@@ -51,4 +68,5 @@ module.exports = {
   getUserData,
   getPageData,
   submitGrade,
+  getCurSemData,
 }

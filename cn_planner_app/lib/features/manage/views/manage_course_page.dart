@@ -142,8 +142,6 @@ class _ManageCoursePage extends State<ManageCoursePage> {
       appBar: TopBar(header: "Manage Courses"),
       body: Column(
         children: [
-          Text(checkedMap.toString()),
-          Text(gradeMap.toString()),
           SearchBox(onChanged: onSearch),
           Expanded(
             child: SingleChildScrollView(

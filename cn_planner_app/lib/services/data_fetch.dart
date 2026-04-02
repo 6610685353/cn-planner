@@ -15,7 +15,7 @@ class DataFetch {
         url,
         headers: {"Content-Type": "application/json"}
       ).timeout(Duration(seconds: 15));
-      print("Status: ${response.statusCode}");
+      print("get Manage Page Data Status: ${response.statusCode}");
 
       return jsonDecode(response.body);
     } catch (e) {
@@ -36,6 +36,24 @@ class DataFetch {
       return jsonDecode(response.body);
     } catch (e) {
       throw Exception('Error fetching data, Error message: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchCurrentSem(String uid) async {
+    final url = Uri.parse("${Config.baseUrl}/v1/enrolled/gpa/$uid");
+    print("------------------");
+    print(url.toString());
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {"Content-Type": "application/json"}
+      ).timeout(Duration(seconds: 10));
+      print("fetch currentSemester Status: ${response.statusCode}");
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      throw Exception('Error fetching current semester, Error message: $e');
     }
   }
 }
