@@ -62,7 +62,7 @@ class CreditCategoryItem extends StatelessWidget {
                       categoryName,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16, // ขนาดมาตรฐาน 16
+                        fontSize: 14, // ขนาดมาตรฐาน 16
                         color: Colors.black,
                       ),
                     ),
@@ -88,8 +88,8 @@ class CreditCategoryItem extends StatelessWidget {
               // --- ส่วนขวา: วงรีแสดงหน่วยกิต (ขนาดพอดี) ---
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
+                  horizontal: 12,
+                  vertical: 4,
                 ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F5F5),
@@ -102,14 +102,14 @@ class CreditCategoryItem extends StatelessWidget {
                         text: '$earned',
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
-                          fontSize: 14, // ตัวเลขไม่ใหญ่เกินไป
+                          fontSize: 12, // ตัวเลขไม่ใหญ่เกินไป
                           color: Colors.black,
                         ),
                       ),
                       const TextSpan(
                         text: ' / ',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: Colors.black,
                           fontWeight: FontWeight.w900,
                         ),
@@ -117,7 +117,7 @@ class CreditCategoryItem extends StatelessWidget {
                       TextSpan(
                         text: '$required',
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: Colors.black,
                           fontWeight: FontWeight.w900,
                         ),

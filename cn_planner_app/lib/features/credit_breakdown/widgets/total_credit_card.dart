@@ -67,7 +67,7 @@ class TotalCreditCard extends StatelessWidget {
                   Text(
                     "$percentage%",
                     style: const TextStyle(
-                      fontSize: 38,
+                      fontSize: 30,
                       fontWeight: FontWeight.w800, // หนาพิเศษ
                       color: Colors.black,
                       height: 1.0,
@@ -77,7 +77,7 @@ class TotalCreditCard extends StatelessWidget {
                   const Text(
                     "COMPLETED",
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Color.fromARGB(255, 103, 102, 102),
                     ),
@@ -95,7 +95,7 @@ class TotalCreditCard extends StatelessWidget {
                 TextSpan(
                   text: "$earnedCredits", // ตัวเลขหน่วยกิตที่ได้ (สีดำ)
                   style: const TextStyle(
-                    fontSize: 36,
+                    fontSize: 28,
                     // fontWeight: FontWeight.bold,
                     fontWeight: FontWeight.w900,
                     color: Colors.black,
@@ -104,7 +104,7 @@ class TotalCreditCard extends StatelessWidget {
                 TextSpan(
                   text: " /$totalCredits", // ตัวหารหน่วยกิตทั้งหมด (สีเทา)
                   style: const TextStyle(
-                    fontSize: 25,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textGrey,
                   ),
@@ -118,7 +118,7 @@ class TotalCreditCard extends StatelessWidget {
           const Text(
             "Total Credits Earned",
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: Color.fromARGB(255, 103, 102, 102),
               fontWeight: FontWeight.w500,
             ),
