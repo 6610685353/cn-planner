@@ -266,8 +266,6 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
       appBar: TopBar(header: "Select Course (Term ${widget.targetTerm})"),
       body: Column(
         children: [
-          Text(checkedMap.toString()),
-          Text(gradeMap.toString()),
           SearchBox(onChanged: onSearch),
 
           Expanded(
