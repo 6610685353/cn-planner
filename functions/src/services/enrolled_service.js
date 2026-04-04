@@ -29,7 +29,7 @@ async function getPageData() {
     cache.set(cacheKey, formatted, 600);
     return formatted;
   }
-  console.log("PageData: Using cache")
+  console.log("PageData: Using cache");
   return PageData;
 };
 
@@ -38,20 +38,26 @@ async function getUserData(uid) {
   let userData = cache.get(cacheKey);
 
   if (!userData) {
+    console.log("UserData : Pulling from database");
     userData = await enrolledModel.getUserData(uid);
     cache.set(cacheKey, userData, 180);
-    console.log("UserData : Pulling from database")
     return userData;
   }
-  console.log("UserData : Using cache")
+  console.log("UserData : Using cache");
   return userData;
 }
 
 async function getCurSemData(uid) {
-  // const cacheKey = `user:${uid}:cur_sem`;
-  // let enrolledData = cache.get(cacheKey);
+  const cacheKey = `user:${uid}:cur_sem`;
+  let curSemData = cache.get(cacheKey);
 
-  const curSemData = await enrolledModel.getCurSemData(uid);
+  if (!curSemData) {
+    console.log("getCurSem : Pulling from database.");
+    curSemData = await enrolledModel.getCurSemData(uid);
+    cache.set(cacheKey, curSemData, 120);
+    return curSemData;
+  }
+  console.log("getCurSum : Using cache");
   return curSemData;
 }
 
