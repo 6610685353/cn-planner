@@ -1,6 +1,5 @@
 import 'package:cn_planner_app/services/data_fetch.dart';
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
 import 'package:cn_planner_app/features/gpa_calculator/widgets/course_card.dart';
 import 'package:cn_planner_app/features/gpa_calculator/widgets/stat_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,27 +13,11 @@ class GPACalculatorPage extends StatefulWidget {
 
 class _GPACalculatorPageState extends State<GPACalculatorPage> {
   double targetGPA = 0;
-  Map<String, dynamic> currentSemCourse = {};
+  double currentGPAX = 0;
+  double predictedGPAX = 0;
+  double predictOnlyThisSem = 0;
+  List<dynamic> currentSemCourses = [];
   String userID = "";
-
-  final Map<String, dynamic> mockData = {
-    "user": {
-      "1": {
-        "username": "A",
-        "year": 2,
-        "enrolled": ["CN201"],
-        "pass": [
-          {"code": "CN101", "grade": "B+"},
-          {"code": "MA111", "grade": "A"},
-        ],
-      },
-    },
-    "subject": {
-      "MA111": {"credits": 3.0},
-      "CN101": {"credits": 3.0},
-      "CN201": {"credits": 4.0},
-    },
-  };
 
   final Map<String, double> gradePoints = {
     "A": 4.0,
@@ -45,9 +28,10 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
     "D+": 1.5,
     "D": 1.0,
     "F": 0.0,
+    "-": 0.0,
   };
 
-  List<Map<String, dynamic>> currentSemesterCourses = [];
+  // List<Map<String, dynamic>> currentSemesterCourses = [];
 
   double currentGPA = 0.00;
   double predictedGPA = 0.00;
@@ -72,80 +56,17 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
       print("pulling current sem course");
 
       setState(() {
-        currentSemCourse = currentSemCourseF;
+        currentSemCourses = currentSemCourseF;
       });
     } catch (e) {
       print("fail get current sem: $e");
       throw Exception(e);
     }
-
-
-    // Navigate mock data structure for User "1"
-    final user = mockData['user']['1'];
-    final subjects = mockData['subject'];
-
-    // 1. Calculate Current GPA from 'pass' list
-    List passList = user['pass'] ?? [];
-    double tempPoints = 0.0;
-    double tempCredits = 0.0;
-
-    for (var item in passList) {
-      String code = item['code'];
-      String grade = item['grade'];
-
-      // Get credits from subject map or default to 3.0
-      double credit = (subjects[code] != null)
-          ? subjects[code]['credits']
-          : 3.0;
-      double point = gradePoints[grade] ?? 0.0;
-
-      tempPoints += (point * credit);
-      tempCredits += credit;
-    }
-
-    // Set accumulated stats
-    pastTotalPoints = tempPoints;
-    pastTotalCredits = tempCredits;
-
-    // Calculate initial current GPA
-    if (pastTotalCredits > 0) {
-      currentGPA = pastTotalPoints / pastTotalCredits;
-      predictedGPA = currentGPA; // Initial prediction matches current
-    }
-
-    // 2. Load 'enrolled' courses for the current semester
-    List enrolledList = user['enrolled'] ?? [];
-    for (var code in enrolledList) {
-      double credit = (subjects[code] != null)
-          ? subjects[code]['credits']
-          : 3.0;
-      // Add to list with default grade 'A'
-      currentSemesterCourses.add({
-        "code": code,
-        "name": "Subject $code", // Using code as placeholder name
-        "credit": credit,
-        "grade": "A",
-      });
-    }
-  }
-
-  // --- Logic ---
-
-  void _addNewCourse(String name, double credit) {
-    setState(() {
-      currentSemesterCourses.add({
-        "code": name, // Using name as code for manually added subjects
-        "name": name,
-        "credit": credit,
-        "grade": "A",
-      });
-    });
   }
 
   void _updateCourseGrade(int index, String newGrade) {
     setState(() {
-      currentSemesterCourses[index]['grade'] = newGrade;
-      // Note: We DO NOT calculate GPA here, only update the state.
+      currentSemCourses[index]['grade'] = newGrade;
     });
   }
 
@@ -153,9 +74,13 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
     double semesterPoints = 0.0;
     double semesterCredits = 0.0;
 
-    for (var course in currentSemesterCourses) {
+    for (var course in currentSemCourses) {
       double point = gradePoints[course['grade']] ?? 0.0;
-      double credit = course['credit'];
+      int credit = 0;
+
+      if (course['grade'] != "-") {
+        credit = course['credit'];
+      }
 
       semesterPoints += (point * credit);
       semesterCredits += credit;
@@ -168,81 +93,80 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
       if (totalCredits > 0) {
         predictedGPA = totalPoints / totalCredits;
       } else {
-        predictedGPA = 0.0; // Should handle 0 credits appropriately
+        predictedGPA = 0.0;
       }
     });
   }
 
-  void _showAddCourseDialog() {
-    String name = "";
-    String creditStr = "3.0";
+  // void _showAddCourseDialog() {
+  //   String name = "";
+  //   String creditStr = "3.0";
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text("Add New Course"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: "Subject Name/Code",
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (v) => name = v,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: "Credits",
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                onChanged: (v) => creditStr = v,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                "Cancel",
-                style: TextStyle(color: Colors.black54),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (name.isNotEmpty) {
-                  final credit = double.tryParse(creditStr) ?? 3.0;
-                  _addNewCourse(name, credit);
-                  Navigator.pop(context);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.errorRed,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text("Add"),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return AlertDialog(
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(16),
+  //         ),
+  //         title: const Text("Add New Course"),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             TextField(
+  //               decoration: const InputDecoration(
+  //                 labelText: "Subject Name/Code",
+  //                 border: OutlineInputBorder(),
+  //               ),
+  //               onChanged: (v) => name = v,
+  //             ),
+  //             const SizedBox(height: 12),
+  //             TextField(
+  //               decoration: const InputDecoration(
+  //                 labelText: "Credits",
+  //                 border: OutlineInputBorder(),
+  //               ),
+  //               keyboardType: const TextInputType.numberWithOptions(
+  //                 decimal: true,
+  //               ),
+  //               onChanged: (v) => creditStr = v,
+  //             ),
+  //           ],
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.pop(context),
+  //             child: const Text(
+  //               "Cancel",
+  //               style: TextStyle(color: Colors.black54),
+  //             ),
+  //           ),
+  //           ElevatedButton(
+  //             onPressed: () {
+  //               if (name.isNotEmpty) {
+  //                 final credit = double.tryParse(creditStr) ?? 3.0;
+  //                 _addNewCourse(name, credit);
+  //                 Navigator.pop(context);
+  //               }
+  //             },
+  //             style: ElevatedButton.styleFrom(
+  //               backgroundColor: AppColors.errorRed,
+  //               foregroundColor: Colors.white,
+  //               shape: RoundedRectangleBorder(
+  //                 borderRadius: BorderRadius.circular(8),
+  //               ),
+  //             ),
+  //             child: const Text("Add"),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   void _deleteCourse(int index) {
     setState(() {
-      currentSemesterCourses.removeAt(index);
-      // Not recalculating GPA automatically, matching the requirement.
+      // currentSemesterCourses.removeAt(index);
     });
   }
 
@@ -250,7 +174,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Match design background or AppColors.background if suitable
+      backgroundColor: Colors.white, 
       appBar: AppBar(
         title: const Text(
           "GPA Calculator",
@@ -267,24 +191,23 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
       ),
       body: Column(
         children: [
-          Text(currentSemCourse.toString()),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 StatCard(
-                  title: "Target GPA",
+                  title: "Pred GPAX",
                   value: targetGPA.toString(),
-                  textColor: const Color(0xffB71C1C), // Deep Red
+                  textColor: const Color(0xffB71C1C), 
                   iconData: Icons.stars_rounded,
                   iconColor: const Color(0xffB71C1C),
                 ),
                 const SizedBox(width: 16),
                 StatCard(
                   title:
-                      "Estimated", // Assuming "Estimated" refers to current standing or prediction
-                  value: "3.45", // Mock value or use currentGPA
-                  textColor: const Color(0xffFFC107), // Amber/Yellow
+                      "Cur GPAX",
+                  value: currentGPAX.toString(), 
+                  textColor: const Color(0xffFFC107), 
                   iconData: Icons.bar_chart_rounded,
                   iconColor: const Color(0xffFFC107),
                 ),
@@ -312,13 +235,13 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD), // Light Blue
+                    color: const Color(0xFFE3F2FD), 
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    "${currentSemesterCourses.length} courses",
+                    "${currentSemCourses.length} courses",
                     style: const TextStyle(
-                      color: Color(0xFF1976D2), // Blue
+                      color: Color(0xFF1976D2), 
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -328,15 +251,15 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
             ),
           ),
 
-          // 3. Course List
+          // Course List
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: currentSemesterCourses.length,
+              itemCount: currentSemCourses.length,
               itemBuilder: (context, index) {
-                final course = currentSemesterCourses[index];
+                final course = currentSemCourses[index];
                 return CourseCard(
-                  name: course['name'],
+                  name: course['subjectName'],
                   credit: course['credit'],
                   grade: course['grade'],
                   gradeOptions: gradePoints.keys.toList(),
@@ -380,11 +303,8 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                       side: const BorderSide(
                         color: Colors.grey,
                         width: 1,
-                        style: BorderStyle
-                            .none, // Can't do native dashed border easily in flutter without custom paint, using solid grey for now to be safe, or stick to provided request instructions strictly if possible.
-                        // To do a dashed border properly requires `DottedBorder` package or `CustomPainter`.
-                        // I will replicate the "style" with a specific visual if possible, otherwise solid grey border.
-                      ),
+                        style: BorderStyle.none,
+                        ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -400,11 +320,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
             ),
           ),
 
-          // Custom Dashed Border workaround (Optional polish):
-          // Since OutlinedButton doesn't support dashed border out of the box, users usually use DottedBorder or CustomPainter.
-          // I'll stick to a standard OutlinedButton with grey border as the next best native thing for now.
-
-          // 5. Bottom Result Bar
+          // Bottom Result Bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             decoration: const BoxDecoration(
@@ -446,7 +362,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "CURRENT GPA",
+                      "Pred this sem",
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 12,
@@ -493,7 +409,4 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
     );
   }
 }
-
-// --- Private Widgets (Refactored) ---
-
 

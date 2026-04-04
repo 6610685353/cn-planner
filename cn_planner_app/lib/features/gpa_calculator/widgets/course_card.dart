@@ -3,7 +3,7 @@ import 'package:cn_planner_app/features/gpa_calculator/widgets/swipe_to_reveal.d
 
 class CourseCard extends StatelessWidget {
   final String name;
-  final double credit;
+  final int credit;
   final String grade;
   final List<String> gradeOptions;
   final ValueChanged<String?> onGradeChanged;

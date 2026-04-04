@@ -22,11 +22,20 @@ async function getPageData() {
 
 async function getCurSemData(uid) {
   const supabase = getSupabase();
-  const { data , error } = await supabase.from('UserEnrolled').select('subjectId, grade').eq("uid", uid);
+  const { data , error } = await supabase
+    .from('UserEnrolled')
+    .select('grade, Subjects(subjectName, credits, subjectCode)')
+    .eq("uid", uid)
+    .eq("grade", "-");
   
   if(error) throw error;
   
-  return data;
+  return data.map(item => ({
+    subjectName: item.Subjects?.subjectName,
+    subjectCode: item.Subjects?.subjectCode,
+    grade: item.grade,
+    credit: item.Subjects?.credits,
+  }));
 }
 
 module.exports = {
