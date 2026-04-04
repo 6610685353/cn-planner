@@ -39,7 +39,7 @@ class DataFetch {
     }
   }
 
-  Future<Map<String, dynamic>> fetchCurrentSem(String uid) async {
+  Future<List<dynamic>> fetchCurrentSem(String uid) async {
     final url = Uri.parse("${Config.baseUrl}/v1/enrolled/gpa/$uid");
     print("------------------");
     print(url.toString());
