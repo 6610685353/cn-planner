@@ -7,9 +7,10 @@ import '../models/subject_model.dart';
 import '../services/subject_service.dart';
 import '../services/profile_service.dart';
 import '../services/roadmap_service.dart';
-import '../services/validation_service.dart'; // 🔥 Import validation
+// import '../services/validation_service.dart'; // 🔥 Import validation
 import 'academic_history_page.dart';
 import 'simulator_page.dart';
+import '../../manage/views/manage_course_page.dart';
 
 enum RoadmapMode { view, edit, simulate }
 
@@ -39,6 +40,18 @@ class _RoadmapPageState extends State<RoadmapPage> {
   List<Map<String, dynamic>> editedHistory = [];
   List<Map<String, dynamic>> universityPlan = [];
   List<Map<String, dynamic>> simulatedPlan = [];
+  List<String> getPassedSubjects(List<Map<String, dynamic>> plan) {
+    return plan
+        .where(
+          (e) => e['grade'] != null && e['grade'] != 'F' && e['grade'] != 'W',
+        )
+        .map((e) => e['subject_code'] as String)
+        .toList();
+  }
+
+  List<String> getAllSubjectCodes(List<Map<String, dynamic>> plan) {
+    return plan.map((e) => e['subject_code'] as String).toList();
+  }
 
   bool hasChanges = false;
   bool isLoading = true;
@@ -301,10 +314,13 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     userProfile: userProfile,
                     initialCourses: termCourses,
                     allPlanCourses: editedHistory,
+
                     onRefresh: loadAllData,
+
                     isSelected:
                         selectedYear == term['year'] &&
                         selectedTerm == term['term'],
+
                     onSelect: () {
                       if (widget.mode == RoadmapMode.edit) {
                         setState(() {
@@ -314,62 +330,48 @@ class _RoadmapPageState extends State<RoadmapPage> {
                         });
                       }
                     },
+
                     onDeleteYear:
                         !isStatic &&
                             (term['year'] as int) > 4 &&
                             term['term'] == 2
                         ? () => _confirmDeleteYear(term['year'] as int)
                         : null,
-                    onAddPressed: (subject, year, termIdx) {
-                      // 🔥 เช็คหน่วยกิตก่อนแอด
-                      double currentCredits =
-                          ValidationService.calculateTotalCredits(
-                            termCourses,
-                            allSubjects,
+
+                    /// 🔥 ADD COURSE (ใช้ Manage ใหม่)
+                    onAddPressed: (result, year, termIdx) {
+                      setState(() {
+                        for (var item in result) {
+                          final subject = item['subject'];
+                          final grade = item['grade'];
+
+                          final exists = editedHistory.any(
+                            (e) =>
+                                e['subject_code'] == subject.subjectCode &&
+                                e['subjectId'] == subject.subjectId &&
+                                e['year'] == year &&
+                                e['semester'] == termIdx,
                           );
-                      if (currentCredits + subject.credits > 22) {
-                        _showErrorDialog(
-                          "Credits Exceeded",
-                          "This term's total credits will exceed 22.0 limit.",
-                        );
-                        return;
-                      }
 
-                      // 🔥 เช็คตัวต่อ (Validation)
-                      final validation = ValidationService.validateCourse(
-                        targetSubject: subject,
-                        targetYear: year,
-                        targetSemester: termIdx,
-                        currentPlan: editedHistory,
-                        allSubjects: allSubjects,
-                      );
+                          if (exists) continue; // 🔥 กันซ้ำ
 
-                      if (validation['isValid']) {
-                        setState(() {
                           editedHistory.add({
                             'id':
-                                'temp_${DateTime.now().millisecondsSinceEpoch}',
+                                'temp_${DateTime.now().millisecondsSinceEpoch}_${subject.subjectCode}',
                             'subject_code': subject.subjectCode,
+                            'subjectId': subject.subjectId,
                             'year': year,
                             'semester': termIdx,
-                            'status': 'passed',
-                            'grade': null,
+                            'status': (grade == null || grade == '-')
+                                ? 'planned'
+                                : (grade == 'F' || grade == 'W')
+                                ? 'not_pass'
+                                : 'passed',
+                            'grade': grade ?? "-", // ✅ default "-"
                           });
-                          hasChanges = true;
-                        });
-                      } else {
-                        String msg = "";
-                        if (validation['isWrongSemester'])
-                          msg +=
-                              "• This course is not offered in Term $termIdx\n";
-                        if (validation['missingRequire'].isNotEmpty)
-                          msg +=
-                              "• Missing Prerequisite: ${validation['missingRequire'].join(', ')}\n";
-                        if (validation['missingCoreq'].isNotEmpty)
-                          msg +=
-                              "• Missing Corequisite: ${validation['missingCoreq'].join(', ')}";
-                        _showErrorDialog("Ineligible Course", msg);
-                      }
+                        }
+                        hasChanges = true;
+                      });
                     },
                     onDeletePressed: (id) {
                       setState(() {
@@ -377,6 +379,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
                         hasChanges = true;
                       });
                     },
+
                     onGradeChangedPressed: (code, grade) {
                       setState(() {
                         final idx = editedHistory.indexWhere(

@@ -7,10 +7,10 @@ class YearCourseBox extends StatefulWidget {
   final List<dynamic> courseSubject;
   final Map<int, bool> checkedMap;
   final Map<int, String> gradeMap;
-  
+
   //for backend
-  final Function(int , bool) onCheckChanged;
-  final Function(int , String) onGradeChanged;
+  final Function(int, bool) onCheckChanged;
+  final Function(int, String) onGradeChanged;
 
   const YearCourseBox({
     super.key,
@@ -41,7 +41,9 @@ class _YearCourseBox extends State<YearCourseBox> {
     return widget.courseSubject.where((subject) {
       final id = subject['subjectId'];
 
-      return widget.gradeMap.containsKey(id) && widget.gradeMap[id] != null && widget.gradeMap[id] != "-";
+      return widget.gradeMap.containsKey(id) &&
+          widget.gradeMap[id] != null &&
+          widget.gradeMap[id] != "-";
     }).length;
   }
 
@@ -90,17 +92,19 @@ class _YearCourseBox extends State<YearCourseBox> {
                       credits: (subject['credits'] as int).toDouble(),
                       grade: widget.gradeMap[subject['subjectId']] ?? "-",
                       subjectId: subject['subjectId'],
-                      isChecked: widget.checkedMap[subject['subjectId']] ?? false,
+                      isChecked:
+                          widget.checkedMap[subject['subjectId']] ?? false,
                       onChanged: onChecked,
                       onCheckChanged: widget.onCheckChanged,
-                      onGradeChanged: (grade) => widget.onGradeChanged(subject['subjectId'], grade),
+                      onGradeChanged: (grade) =>
+                          widget.onGradeChanged(subject['subjectId'], grade),
                     );
-                }).toList(),
+                  }).toList(),
+                ),
               ),
-            )
-        ],
+          ],
+        ),
       ),
-    )
     );
   }
 }

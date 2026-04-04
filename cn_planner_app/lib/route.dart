@@ -42,7 +42,12 @@ class AppRoutes {
     editProfile: (context) => const EditProfilePage(),
     setting: (context) => const SettingPage(),
     notification: (context) => const NotificationsPage(),
-    manage: (context) => const ManageCoursePage(),
+    manage: (context) => const ManageCoursePage(
+      targetTerm: 1,
+      subjects: const [],
+      passedSubjects: const [],
+      alreadyAddedCodes: const [],
+    ),
     gpa: (context) => const GPACalculatorPage(),
     creditBreakdown: (context) => const CreditBreakdownPage(),
   };

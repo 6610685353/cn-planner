@@ -5,7 +5,7 @@ class SubjectBox extends StatefulWidget {
   final String title;
   final String subtitle;
   final double credits;
-  final String grade;
+  final String? grade; // ✅ allow null
   final int subjectId;
   final bool isChecked;
 
@@ -37,7 +37,17 @@ class _SubjectBoxState extends State<SubjectBox> {
   @override
   void initState() {
     super.initState();
-    _selectedValue = widget.grade;
+    _selectedValue = widget.grade ?? _defaultValue; // ✅ กัน null
+  }
+
+  @override
+  void didUpdateWidget(covariant SubjectBox oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // 🔥 sync เวลาค่าเปลี่ยนจากข้างนอก
+    if (widget.grade != oldWidget.grade) {
+      _selectedValue = widget.grade ?? _defaultValue;
+    }
   }
 
   @override
@@ -55,7 +65,7 @@ class _SubjectBoxState extends State<SubjectBox> {
             scale: 1.5,
             child: Checkbox(
               value: widget.isChecked,
-              checkColor: Color.fromARGB(0, 0, 0, 0),
+              checkColor: Colors.transparent,
               fillColor: WidgetStateProperty.resolveWith((states) {
                 if (states.contains(WidgetState.selected)) {
                   return AppColors.accentYellow;
@@ -63,13 +73,24 @@ class _SubjectBoxState extends State<SubjectBox> {
                 return Colors.white;
               }),
               onChanged: (bool? value) {
-                widget.onChanged(widget.subjectId, value ?? false);
-                widget.onCheckChanged(widget.subjectId, value ?? false);
-                setState(() {
-                  if (!(value ?? false)) {
-                      _selectedValue = _defaultValue;
-                    }
-                });
+                final bool newValue = value ?? false;
+
+                widget.onChanged(widget.subjectId, newValue);
+                widget.onCheckChanged(widget.subjectId, newValue);
+
+                if (!newValue) {
+                  // 🔥 reset grade
+                  widget.onGradeChanged(_defaultValue);
+                  setState(() {
+                    _selectedValue = _defaultValue;
+                  });
+                } else {
+                  // 🔥 set default grade ตอนติ๊ก
+                  widget.onGradeChanged("-");
+                  setState(() {
+                    _selectedValue = "-";
+                  });
+                }
               },
             ),
           ),
@@ -78,13 +99,12 @@ class _SubjectBoxState extends State<SubjectBox> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
                     Text(
                       widget.title,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -120,7 +140,6 @@ class _SubjectBoxState extends State<SubjectBox> {
 
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
                 "GRADE",
@@ -142,8 +161,7 @@ class _SubjectBoxState extends State<SubjectBox> {
                         color: widget.isChecked ? Colors.black : Colors.grey,
                       ),
                     ),
-                    if (widget.isChecked)
-                      const Icon(Icons.arrow_drop_down, color: Colors.black),
+                    if (widget.isChecked) const Icon(Icons.arrow_drop_down),
                   ],
                 ),
                 onSelected: (String value) {
@@ -153,6 +171,7 @@ class _SubjectBoxState extends State<SubjectBox> {
                   });
                 },
                 itemBuilder: (BuildContext context) => [
+                  const PopupMenuItem(value: "-", child: Text("-")), // ✅ เพิ่ม
                   const PopupMenuItem(value: "A", child: Text("A")),
                   const PopupMenuItem(value: "B+", child: Text("B+")),
                   const PopupMenuItem(value: "B", child: Text("B")),
@@ -161,6 +180,7 @@ class _SubjectBoxState extends State<SubjectBox> {
                   const PopupMenuItem(value: "D+", child: Text("D+")),
                   const PopupMenuItem(value: "D", child: Text("D")),
                   const PopupMenuItem(value: "F", child: Text("F")),
+                  const PopupMenuItem(value: "W", child: Text("W")),
                 ],
               ),
             ],
