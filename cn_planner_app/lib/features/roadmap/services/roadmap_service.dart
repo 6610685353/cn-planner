@@ -20,12 +20,14 @@ class RoadmapService {
   Future<void> addCourseToRoadmap({
     required String uid,
     required String subjectCode,
+    required int subjectId,
     required int year,
     required int semester,
   }) async {
     await _supabase.from('UserRoadmap').insert({
       'user_id': uid,
       'subject_code': subjectCode,
+      'subjectId': subjectId,
       'year': year,
       'semester': semester,
       'status': 'planned', // ค่าเริ่มต้นคือวางแผนไว้
@@ -43,7 +45,11 @@ class RoadmapService {
           .from('UserRoadmap')
           .update({
             'grade': grade,
-            'status': (grade == null || grade == '-') ? 'planned' : 'passed',
+            'status': (grade == null || grade == '-')
+                ? 'planned'
+                : (grade == 'F' || grade == 'W')
+                ? 'not_pass'
+                : 'passed',
             // ถ้ามีเกรดแล้วให้เปลี่ยน status เป็น passed อัตโนมัติ
           })
           .eq('user_id', uid)
@@ -82,10 +88,11 @@ class RoadmapService {
           (item) => {
             'user_id': uid,
             'subject_code': item['subject_code'],
+            'subjectId': item['subjectId'],
             'year': item['year'],
             'semester': item['semester'],
             'grade': item['grade'],
-            'status': item['status'] ?? 'passed',
+            'status': item['status'] ?? 'planned',
           },
         )
         .toList();

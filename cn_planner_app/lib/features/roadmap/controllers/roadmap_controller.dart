@@ -7,17 +7,17 @@ class RoadmapService {
 
   Future<void> addCourseToRoadmap({
     required String uid,
-    required String subjectCode,
+    required int subjectId,
     required int year,
     required int semester,
   }) async {
     try {
       final response = await _supabase.from('UserRoadmap').insert({
         'user_id': uid, // ต้องเป็น text ใน DB
-        'subject_code': subjectCode, // ในตาราง UserRoadmap คือ subject_code
+        'subjectId': subjectId,
         'year': year,
         'semester': semester,
-        'status': 'passed',
+        'status': 'planned',
       }).select(); // ใส่ select เพื่อเช็คว่ามีข้อมูลกลับมาไหม
 
       print("Insert Success: $response");

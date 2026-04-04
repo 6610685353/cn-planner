@@ -4,63 +4,54 @@ import 'package:cn_planner_app/features/manage/widgets/search_box.dart';
 import 'package:cn_planner_app/features/manage/widgets/year_course.dart';
 import 'package:cn_planner_app/services/data_fetch.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cn_planner_app/services/update_course.dart';
-
+import 'package:cn_planner_app/features/roadmap/models/subject_model.dart';
 
 class ManageCoursePage extends StatefulWidget {
-  const ManageCoursePage({super.key});
+  final int targetTerm;
+  final List<SubjectModel> subjects;
+  final List<String> passedSubjects;
+  final List<String> alreadyAddedCodes;
+
+  const ManageCoursePage({
+    super.key,
+    required this.targetTerm,
+    required this.subjects,
+    required this.passedSubjects,
+    required this.alreadyAddedCodes,
+  });
 
   @override
-  State<ManageCoursePage> createState() => _ManageCoursePage();
+  State<ManageCoursePage> createState() => _ManageCoursePageState();
 }
 
-class _ManageCoursePage extends State<ManageCoursePage> {
-  //get from backend
+class _ManageCoursePageState extends State<ManageCoursePage> {
   Map<String, dynamic> _pageData = {};
-
-  //normal use
-  bool _isLoading = true;
-  String? _errorMessage;
-  String userID = "";
   Map<String, dynamic> _filteredCourses = {};
 
-  //for backend
+  bool _isLoading = true;
+  String? _errorMessage;
+
   Map<int, bool> checkedMap = {};
-  Map<int, String> gradeMap = {};
+  Map<int, String> gradeMap = {}; // ✅ กลับมาใช้
+
+  late Map<int, SubjectModel> subjectMap;
 
   @override
   void initState() {
     super.initState();
-    print("call initState");
-    FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if(user != null) {
-        print(user.uid);
-        userID = user.uid;
-      } else {
-        print("Not login");
-      }
-    });
+    subjectMap = {for (var s in widget.subjects) s.subjectId: s};
     _loadData();
   }
 
   Future<void> _loadData() async {
     try {
       final pageDataF = await DataFetch().getManagePageData();
-      final dataEnrolledF = await DataFetch().fetchEnrolled(userID);
-      print("after calling API");
-
-      for (var item in dataEnrolledF) {
-        gradeMap[item['subjectId']] = item['grade'];
-        checkedMap[item['subjectId']] = true;
-      }
 
       if (!mounted) return;
 
       setState(() {
         _pageData = pageDataF;
         _filteredCourses = _pageData;
-        
         _isLoading = false;
       });
     } catch (e) {
@@ -73,6 +64,7 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     }
   }
 
+  /// 🔍 search
   void onSearch(String query) {
     if (query.isEmpty) {
       setState(() {
@@ -101,12 +93,112 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     });
   }
 
+  /// ✅ เช็คลงได้ไหม
+  bool canTake(SubjectModel subject) {
+    final selectedCodes = checkedMap.entries
+        .where((e) => e.value)
+        .map((e) => subjectMap[e.key]!.subjectCode)
+        .toList();
+
+    bool prereqMet = true;
+    if (subject.require != null && subject.require!.isNotEmpty) {
+      prereqMet = subject.require!.every(
+        (req) => widget.passedSubjects.contains(req),
+      );
+    }
+
+    bool isOffered = true;
+    if (subject.offeredSemester != null &&
+        subject.offeredSemester!.isNotEmpty) {
+      isOffered = subject.offeredSemester!.contains(widget.targetTerm);
+    }
+
+    bool notDuplicate =
+        !(widget.alreadyAddedCodes.contains(subject.subjectCode) &&
+            widget.passedSubjects.contains(subject.subjectCode));
+
+    bool coreqMet = true;
+    if (subject.corequisite != null && subject.corequisite!.isNotEmpty) {
+      coreqMet = subject.corequisite!.every(
+        (c) => widget.passedSubjects.contains(c) || selectedCodes.contains(c),
+      );
+    }
+
+    return prereqMet && isOffered && notDuplicate && coreqMet;
+  }
+
+  List<String> getReasons(SubjectModel subject) {
+    final selectedCodes = checkedMap.entries
+        .where((e) => e.value)
+        .map((e) => subjectMap[e.key]!.subjectCode)
+        .toList();
+
+    List<String> reasons = [];
+
+    // ❌ offered
+    if (subject.offeredSemester != null &&
+        subject.offeredSemester!.isNotEmpty &&
+        !subject.offeredSemester!.contains(widget.targetTerm)) {
+      reasons.add("Not offered in Term ${widget.targetTerm}");
+    }
+
+    // ❌ prerequisite
+    if (subject.require != null) {
+      final missing = subject.require!
+          .where((r) => !widget.passedSubjects.contains(r))
+          .toList();
+
+      if (missing.isNotEmpty) {
+        reasons.add("Missing prereq: ${missing.join(', ')}");
+      }
+    }
+
+    // ❌ corequisite
+    if (subject.corequisite != null) {
+      final missingCoreq = subject.corequisite!
+          .where(
+            (c) =>
+                !widget.passedSubjects.contains(c) &&
+                !selectedCodes.contains(c),
+          )
+          .toList();
+
+      if (missingCoreq.isNotEmpty) {
+        reasons.add("Need co-req: ${missingCoreq.join(', ')}");
+      }
+    }
+
+    // ❌ duplicate
+    if (widget.alreadyAddedCodes.contains(subject.subjectCode)) {
+      reasons.add("Already added");
+    }
+
+    return reasons;
+  }
+
   void updateCheck(int subjectId, bool value) {
+    final subject = subjectMap[subjectId];
+    bool hasOnlyCoreqIssue(SubjectModel subject) {
+      final reasons = getReasons(subject);
+      return reasons.every((r) => r.startsWith("Need co-req"));
+    }
+
+    if (subject == null) return;
+
+    if (value && !canTake(subject) && !hasOnlyCoreqIssue(subject)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(getReasons(subject).join("\n"))));
+      return;
+    }
+
     setState(() {
       checkedMap[subjectId] = value;
 
-      if(!value) {
+      if (!value) {
         gradeMap[subjectId] = "-";
+      } else {
+        gradeMap.putIfAbsent(subjectId, () => "-"); // default grade
       }
     });
   }
@@ -117,51 +209,93 @@ class _ManageCoursePage extends State<ManageCoursePage> {
     });
   }
 
-  List<Map<String , dynamic>> buildSubmitList() {
-    return checkedMap.entries
-      .where((entry) => 
-        entry.value == true &&
-        gradeMap[entry.key] != null &&
-        gradeMap[entry.key] != "-")
-      .map<Map<String, dynamic>>((entry) => {
-        "subjectId": entry.key,
-        "grade": gradeMap[entry.key]!
-      }).toList();
+  /// 🔥 ส่งกลับพร้อม grade
+  void _onConfirm() {
+    final selected = checkedMap.entries
+        .where((e) => e.value == true)
+        .map((e) => e.key)
+        .toList();
+
+    if (selected.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select at least 1 course")),
+      );
+      return;
+    }
+
+    final result = selected.map((id) {
+      final subject = widget.subjects.firstWhere((s) => s.subjectId == id);
+
+      return {
+        "subject": subject,
+        "grade": gradeMap[id] ?? "-", // ✅ default = "-"
+      };
+    }).toList();
+
+    Navigator.pop(context, result); // 🔥 ส่ง list + grade
   }
 
   @override
   Widget build(BuildContext context) {
+    int selectedCount = checkedMap.values.where((v) => v).length;
+
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_errorMessage != null) {
-      print(_errorMessage);
-      return Center(child: Text('Error : ${_errorMessage ?? "idk"}'));
+      return Scaffold(body: Center(child: Text('Error : $_errorMessage')));
     }
 
     return Scaffold(
-      appBar: TopBar(header: "Manage Courses"),
+      appBar: TopBar(header: "Select Course (Term ${widget.targetTerm})"),
       body: Column(
         children: [
           SearchBox(onChanged: onSearch),
+
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 20),
               child: Column(
                 children: _filteredCourses.entries.map((entry) {
                   final parts = entry.key.split('_');
                   final String year = parts[0];
                   final String sem = parts[1];
                   final List<dynamic> subjects = entry.value;
-                  return YearCourseBox(
-                    year: year,
-                    semester: sem,
-                    courseSubject: subjects,
-                    checkedMap: checkedMap,
-                    gradeMap: gradeMap,
-                    onCheckChanged: updateCheck,
-                    onGradeChanged: updateGrade,
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      YearCourseBox(
+                        year: year,
+                        semester: sem,
+                        courseSubject: subjects,
+                        checkedMap: checkedMap,
+                        gradeMap: gradeMap,
+                        onCheckChanged: updateCheck,
+                        onGradeChanged: updateGrade,
+                      ),
+
+                      ...subjects.map((c) {
+                        final subject = subjectMap[c['subjectId']];
+                        if (subject == null) return const SizedBox();
+
+                        if (canTake(subject)) return const SizedBox();
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 2,
+                          ),
+                          child: Text(
+                            "${subject.subjectCode}: ${getReasons(subject).join(', ')}",
+                            style: const TextStyle(
+                              color: Colors.redAccent,
+                              fontSize: 12,
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
                   );
                 }).toList(),
               ),
@@ -169,48 +303,16 @@ class _ManageCoursePage extends State<ManageCoursePage> {
           ),
         ],
       ),
+
       bottomNavigationBar: Container(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 15,
-          bottom: MediaQuery.of(context).padding.bottom > 0
-              ? MediaQuery.of(context).padding.bottom + 10
-              : 20,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-        ),
+        padding: const EdgeInsets.all(20),
         child: ElevatedButton(
-          onPressed: () {
-            final result = buildSubmitList();
-            UpdateCourse.submitManageCourse(result);
-            Navigator.pop(context);
-          },
+          onPressed: _onConfirm,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.accentYellow,
-            foregroundColor: Colors.white,
             minimumSize: const Size.fromHeight(56),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 0,
           ),
-          child: const Text(
-            'Confirm Selection',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-          ),
+          child: Text("Confirm ($selectedCount)"),
         ),
       ),
     );

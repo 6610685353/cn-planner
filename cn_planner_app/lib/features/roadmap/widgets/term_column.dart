@@ -1,3 +1,4 @@
+import 'package:cn_planner_app/features/manage/views/manage_course_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cn_planner_app/features/roadmap/models/subject_model.dart';
@@ -6,6 +7,7 @@ import 'package:cn_planner_app/features/roadmap/views/course_selection_page.dart
 import 'package:cn_planner_app/features/roadmap/services/roadmap_service.dart';
 import 'package:cn_planner_app/features/roadmap/services/validation_service.dart'; // 🔥 เพิ่ม
 import '../views/roadmap_page.dart';
+import 'package:cn_planner_app/features/manage/views/manage_course_page.dart';
 
 class TermColumn extends StatefulWidget {
   final String title;
@@ -20,7 +22,8 @@ class TermColumn extends StatefulWidget {
   final VoidCallback onSelect;
   final VoidCallback? onDeleteYear;
 
-  final Function(SubjectModel subject, int year, int term)? onAddPressed;
+  final Function(List<Map<String, dynamic>> result, int year, int term)?
+  onAddPressed;
   final Function(dynamic id)? onDeletePressed;
   final Function(String subjectCode, String grade)? onGradeChangedPressed;
 
@@ -239,10 +242,10 @@ class _TermColumnState extends State<TermColumn> {
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => CourseSelectionPage(
+                          builder: (_) => ManageCoursePage(
                             targetTerm: getTerm(),
                             subjects: widget.allSubjects,
-                            // 🔥 ส่งรายชื่อวิชาที่ "ผ่านแล้ว" จากทั้งแผนการเรียนไปเช็คตัวต่อ
+
                             passedSubjects: widget.allPlanCourses
                                 .where(
                                   (e) =>
@@ -252,6 +255,7 @@ class _TermColumnState extends State<TermColumn> {
                                 )
                                 .map((e) => e['subject_code'] as String)
                                 .toList(),
+
                             alreadyAddedCodes: widget.allPlanCourses
                                 .map((e) => e['subject_code'] as String)
                                 .toList(),
@@ -259,29 +263,19 @@ class _TermColumnState extends State<TermColumn> {
                         ),
                       );
 
-                      if (result != null && result is SubjectModel) {
-                        // เช็คหน่วยกิตที่นี่อีกรอบ (Client-side safety)
-                        if (currentTotalCredits + result.credits > 22) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  "Total credits exceed 22.0 limit!",
-                                ),
-                                backgroundColor: Colors.redAccent,
-                              ),
+                      if (result != null && result is List) {
+                        for (var item in result) {
+                          final subject = item['subject'];
+                          final grade = item['grade'];
+
+                          if (widget.mode == RoadmapMode.simulate ||
+                              widget.mode == RoadmapMode.edit) {
+                            widget.onAddPressed?.call(
+                              result.cast<Map<String, dynamic>>(),
+                              getYear(),
+                              getTerm(),
                             );
                           }
-                          return;
-                        }
-
-                        if (widget.mode == RoadmapMode.simulate ||
-                            widget.mode == RoadmapMode.edit) {
-                          widget.onAddPressed?.call(
-                            result,
-                            getYear(),
-                            getTerm(),
-                          );
                         }
                       }
                     },
