@@ -5,7 +5,7 @@ const submitGrade = async (req, res) => {
     console.log("call submit grade controller");
 
     try {
-        const { uid , gpax , credits } = req.body;
+        const { uid , gpax , credits , gpa, thisSemCred } = req.body;
 
         if (!uid) {
             return res.status(400).json({ message : "Invalid UID"});
@@ -13,7 +13,7 @@ const submitGrade = async (req, res) => {
 
         console.log("Body", req.body);
 
-        await roadmapService.submitGPAX(uid, gpax, credits);
+        await roadmapService.submitGPAX(uid, gpax, credits, gpa, thisSemCred);
         console.log("controller updated")
         res.status(200).json({ message: "Submit successful"});
     } catch (err) {

@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 
 class SendGrade {
-  static Future<void> submitGPAX(double gpax, double totalCredits) async {
+  static Future<void> submitGPAX(double gpax, double totalCredits, double gpa, double thisSemCredits) async {
     print("Calling submitGPAX");
     final url = Uri.parse("${Config.baseUrl}/v1/roadmap/submit");
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -19,6 +19,8 @@ class SendGrade {
         "uid": uid,
         "gpax": gpax,
         "credits": totalCredits,
+        "gpa": gpa,
+        "thisSemCred": thisSemCredits,
       }),
     );
 
