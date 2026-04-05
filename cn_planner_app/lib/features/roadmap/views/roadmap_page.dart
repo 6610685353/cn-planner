@@ -351,8 +351,47 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     /// 🔥 ADD COURSE (ใช้ Manage ใหม่)
                     onAddPressed: (result, year, termIdx) {
                       setState(() {
+                        // คำนวณจำนวนเครดิตปัจจุบันของเทอมนี้
+                        double currentCredits = 0;
+                        final termCourses = editedHistory.where(
+                          (e) => e['year'] == year && e['semester'] == termIdx,
+                        );
+                        for (var item in termCourses) {
+                          final subject = allSubjects.firstWhere(
+                            (s) => s.subjectCode == item['subject_code'],
+                            orElse: () => SubjectModel(
+                              subjectCode: '',
+                              subjectName: '',
+                              credits: 0,
+                              subjectId: 0,
+                            ),
+                          );
+                          currentCredits += subject.credits;
+                        }
+
+                        // คำนวณเครดิตของวิชาที่กำลังจะเพิ่ม
+                        double newCredits = 0;
                         for (var item in result) {
-                          final subject = item['subject'];
+                          final subject = item['subject'] as SubjectModel;
+                          newCredits += subject.credits;
+                        }
+
+                        // ตรวจสอบว่าเกิน 22 หน่วยกิตหรือไม่
+                        if (currentCredits + newCredits > 22) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Cannot add courses: exceeding 22 credits per term.",
+                              ),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return; // ❌ ไม่เพิ่มวิชา
+                        }
+
+                        // เพิ่มวิชาได้
+                        for (var item in result) {
+                          final subject = item['subject'] as SubjectModel;
                           final grade = item['grade'];
 
                           final exists = editedHistory.any(
@@ -362,8 +401,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
                                 e['year'] == year &&
                                 e['semester'] == termIdx,
                           );
-
-                          if (exists) continue; // 🔥 กันซ้ำ
+                          if (exists) continue;
 
                           editedHistory.add({
                             'id':
@@ -377,7 +415,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
                                 : (grade == 'F' || grade == 'W')
                                 ? 'not_pass'
                                 : 'passed',
-                            'grade': grade ?? "-", // ✅ default "-"
+                            'grade': grade ?? "-",
                           });
                         }
                         hasChanges = true;
@@ -398,6 +436,14 @@ class _RoadmapPageState extends State<RoadmapPage> {
                         if (idx != -1) {
                           editedHistory[idx]['grade'] = grade;
                           hasChanges = true;
+                        }
+
+                        if (grade == "-" || grade == "W" || grade == "F") {
+                          editedHistory[idx]['status'] = (grade == "-")
+                              ? 'planned'
+                              : 'not_pass';
+                        } else {
+                          editedHistory[idx]['status'] = 'passed';
                         }
                       });
                     },
