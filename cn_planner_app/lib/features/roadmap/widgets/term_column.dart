@@ -267,6 +267,7 @@ class _TermColumnState extends State<TermColumn> {
                         for (var item in result) {
                           final subject = item['subject'];
                           final grade = item['grade'];
+                          final section = item['section'];
 
                           if (widget.mode == RoadmapMode.simulate ||
                               widget.mode == RoadmapMode.edit) {

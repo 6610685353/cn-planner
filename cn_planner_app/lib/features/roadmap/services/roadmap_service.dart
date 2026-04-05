@@ -93,6 +93,7 @@ class RoadmapService {
             'semester': item['semester'],
             'grade': item['grade'],
             'status': item['status'] ?? 'planned',
+            'section': item['section'] ?? "-", // ✅ กัน null
           },
         )
         .toList();

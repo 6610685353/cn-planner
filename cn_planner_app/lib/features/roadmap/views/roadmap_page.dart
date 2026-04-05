@@ -94,7 +94,12 @@ class _RoadmapPageState extends State<RoadmapPage> {
           academicHistory = history;
 
           editedHistory = List<Map<String, dynamic>>.from(
-            history.map((e) => Map<String, dynamic>.from(e)),
+            history.map(
+              (e) => {
+                ...Map<String, dynamic>.from(e),
+                'section': e['section'] ?? '-', // ✅ กัน null
+              },
+            ),
           );
 
           maxYear = profile?['max_year'] ?? 4;
@@ -382,6 +387,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
                         for (var item in result) {
                           final subject = item['subject'] as SubjectModel;
                           final grade = item['grade'];
+                          final section = item['section'];
 
                           final exists = editedHistory.any(
                             (e) =>
@@ -399,6 +405,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
                             'subjectId': subject.subjectId,
                             'year': year,
                             'semester': termIdx,
+                            'section': section ?? "-",
                             'status': (grade == null || grade == '-')
                                 ? 'planned'
                                 : (grade == 'F' || grade == 'W')
