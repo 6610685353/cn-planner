@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cn_planner_app/core/constants/app_colors.dart';
 
 class ProgressHeader extends StatelessWidget {
   final double currentCredits; // 🔥 รับค่าหน่วยกิตปัจจุบัน
@@ -15,17 +16,8 @@ class ProgressHeader extends StatelessWidget {
     if (progress < 0) progress = 0;
 
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      decoration: BoxDecoration(color: AppColors.background),
       child: Column(
         children: [
           Row(
@@ -39,7 +31,7 @@ class ProgressHeader extends StatelessWidget {
               Text(
                 "${currentCredits.toStringAsFixed(1)} / $maxCredits Credits",
                 style: const TextStyle(
-                  color: Colors.blue,
+                  color: AppColors.primaryBlue,
                   fontWeight: FontWeight.bold,
                 ),
               ),

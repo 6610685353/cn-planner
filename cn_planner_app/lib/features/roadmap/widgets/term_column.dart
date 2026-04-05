@@ -146,7 +146,7 @@ class _TermColumnState extends State<TermColumn> {
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     icon: const Icon(
-                      Icons.delete_sweep,
+                      Icons.delete_outline,
                       color: Colors.redAccent,
                       size: 22,
                     ),
@@ -221,6 +221,7 @@ class _TermColumnState extends State<TermColumn> {
                         );
                       }
                     },
+                    section: data['section'], // ✅ เพิ่ม section
                     onDelete: () {
                       if (widget.mode == RoadmapMode.simulate ||
                           widget.mode == RoadmapMode.edit) {

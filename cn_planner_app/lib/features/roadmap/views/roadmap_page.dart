@@ -57,7 +57,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
 
   List<Map<String, dynamic>> academicHistory = [];
   List<Map<String, dynamic>> editedHistory = [];
-  List<Map<String, dynamic>> universityPlan = [];
+  List<Map<String, dynamic>> roadmapPlan = [];
   List<Map<String, dynamic>> simulatedPlan = [];
   List<String> getPassedSubjects(List<Map<String, dynamic>> plan) {
     return plan
@@ -124,7 +124,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
 
           maxYear = profile?['max_year'] ?? 4;
 
-          simulatedPlan = [
+          roadmapPlan = [
             {
               'subject_code': 'CN101',
               'year': 1,
@@ -146,7 +146,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
           ];
 
           // 🔥 Mock ข้อมูลแผนจำลอง (หรือดึงจาก DB simulated_plans ถ้ามี)
-          // simulatedPlan = List<Map<String, dynamic>>.from(history);
+          simulatedPlan = List<Map<String, dynamic>>.from(history);
 
           selectedYear = profile?['current_year'];
           selectedTerm = profile?['current_semester'];
@@ -255,11 +255,40 @@ class _RoadmapPageState extends State<RoadmapPage> {
   Widget _buildViewRoadmapLayout() {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(title: const Text("Roadmap")),
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              'ROADMAP',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+            Text(
+              'Computer Engineering',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
       floatingActionButton: _buildViewFabs(),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _buildTermList(simulatedPlan, isStatic: true),
+          : _buildTermList(roadmapPlan, isStatic: false),
     );
   }
 
@@ -267,18 +296,39 @@ class _RoadmapPageState extends State<RoadmapPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("Edit Academic History"),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () async {
-            if (await _onWillPop()) Navigator.pop(context);
-          },
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              'EDIT ACADEMIC HISTORY',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+            ),
+            Text(
+              'Computer Engineering',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: _buildSaveFab(),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _buildTermList(simulatedPlan, isStatic: false),
+          : _buildTermList(editedHistory, isStatic: false),
     );
   }
 
@@ -472,16 +522,46 @@ class _RoadmapPageState extends State<RoadmapPage> {
   }
 
   Widget _buildAddYearButton() {
-    return Container(
-      width: 150,
-      margin: const EdgeInsets.only(left: 10, top: 40),
-      child: OutlinedButton.icon(
-        onPressed: () => setState(() {
-          maxYear++;
-          hasChanges = true;
-        }),
-        icon: const Icon(Icons.add),
-        label: const Text("Add Year"),
+    return GestureDetector(
+      onTap: () => setState(() {
+        maxYear++;
+        hasChanges = true;
+      }),
+      child: Container(
+        width: 150,
+        margin: const EdgeInsets.only(left: 10, top: 40),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(50),
+          border: Border.all(color: Colors.grey.shade300),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_circle_outline,
+              color: Colors.grey.shade500,
+              size: 26,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Add Year",
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

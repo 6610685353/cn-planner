@@ -73,12 +73,35 @@ class _AcademicHistoryPageState extends State<AcademicHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text("Academic History"),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              'ACADEMIC HISTORY',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+            Text(
+              'Computer Engineering',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: Container(
@@ -103,9 +126,9 @@ class _AcademicHistoryPageState extends State<AcademicHistoryPage> {
               ),
             ).then((_) => loadData());
           },
-          backgroundColor: AppColors.lightYellow,
-          foregroundColor:
-              AppColors.primaryYellow, // เปลี่ยนเป็น primary เพื่อให้เห็นชัด
+          backgroundColor: Color(0xFFFFFBEE),
+          foregroundColor: AppColors.accentYellow,
+
           icon: const Icon(Icons.edit_note, size: 24),
           label: const Text(
             "Edit History",
