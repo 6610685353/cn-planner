@@ -43,6 +43,8 @@ class _RoadmapPageState extends State<RoadmapPage> {
 
   double totalGradePoints = 0;
   double totalCredits = 0;
+  double thisSemCredits = 0;
+  double thisSemGradePoints = 0;
 
   List<Map<String, dynamic>> academicHistory = [];
   List<Map<String, dynamic>> editedHistory = [];
@@ -534,10 +536,18 @@ class _RoadmapPageState extends State<RoadmapPage> {
 
             totalGradePoints += (gradeScheme[grade]! * subject.credits);
             totalCredits += subject.credits;
+
+            
+            if (item['year'] == selectedYear && item['semester'] == selectedTerm) {
+              thisSemGradePoints += (gradeScheme[grade]! * subject.credits);
+              thisSemCredits += subject.credits;
+            }
           }
 
           var gpax = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
-          await SendGrade.submitGPAX(gpax, totalCredits);
+          var gpa = thisSemCredits > 0 ? thisSemGradePoints / thisSemCredits : 0.0;
+
+          await SendGrade.submitGPAX(gpax, totalCredits, gpa, thisSemCredits);
 
           await _profileService.updateStatus(
             user.uid,
