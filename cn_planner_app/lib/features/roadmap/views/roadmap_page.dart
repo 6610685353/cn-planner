@@ -345,6 +345,9 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     /// 🔥 ADD COURSE (ใช้ Manage ใหม่)
                     onAddPressed: (result, year, termIdx) {
                       setState(() {
+                        final isCurrentTerm =
+                            year == userProfile?['current_year'] &&
+                            termIdx == userProfile?['current_semester'];
                         // คำนวณจำนวนเครดิตปัจจุบันของเทอมนี้
                         double currentCredits = 0;
                         final termCourses = editedHistory.where(
@@ -388,6 +391,16 @@ class _RoadmapPageState extends State<RoadmapPage> {
                           final subject = item['subject'] as SubjectModel;
                           final grade = item['grade'];
                           final section = item['section'];
+                          if (isCurrentTerm &&
+                              (section == null ||
+                                  section == "-" ||
+                                  section == "")) {
+                            _showErrorDialog(
+                              "Section Required",
+                              "You must select a section for current semester courses.",
+                            );
+                            return; // ❌ หยุดทันที
+                          }
 
                           final exists = editedHistory.any(
                             (e) =>
