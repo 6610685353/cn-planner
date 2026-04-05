@@ -5,6 +5,7 @@ import 'package:cn_planner_app/features/manage/widgets/year_course.dart';
 import 'package:cn_planner_app/services/data_fetch.dart';
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/features/roadmap/models/subject_model.dart';
+import 'package:cn_planner_app/services/schedule_service.dart';
 
 class ManageCoursePage extends StatefulWidget {
   final int targetTerm;
@@ -32,7 +33,10 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
   String? _errorMessage;
 
   Map<int, bool> checkedMap = {};
-  Map<int, String> gradeMap = {}; // ✅ กลับมาใช้
+  Map<int, String> gradeMap = {};
+  Map<int, String> sectionMap = {}; // ✅ กลับมาใช้
+  Map<int, Map<String, List<Map>>> scheduleMap = {};
+  Map<int, List<String>> sectionOptionsMap = {};
 
   late Map<int, SubjectModel> subjectMap;
 
@@ -46,6 +50,9 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
   Future<void> _loadData() async {
     try {
       final pageDataF = await DataFetch().getManagePageData();
+      final scheduleRaw = await DataFetch().getSchedule();
+      scheduleMap = ScheduleService.buildScheduleMap(scheduleRaw);
+      sectionOptionsMap = ScheduleService.buildSectionOptions(scheduleMap);
 
       if (!mounted) return;
 
@@ -197,8 +204,10 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
 
       if (!value) {
         gradeMap[subjectId] = "-";
+        sectionMap[subjectId] = "-";
       } else {
         gradeMap.putIfAbsent(subjectId, () => "-"); // default grade
+        sectionMap.putIfAbsent(subjectId, () => "-"); // default section
       }
     });
   }
@@ -207,6 +216,10 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
     setState(() {
       gradeMap[subjectId] = grade;
     });
+  }
+
+  void updateSection(int subjectId, String section) {
+    setState(() => sectionMap[subjectId] = section);
   }
 
   /// 🔥 ส่งกลับพร้อม grade
@@ -228,7 +241,8 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
 
       return {
         "subject": subject,
-        "grade": gradeMap[id] ?? "-", // ✅ default = "-"
+        "grade": gradeMap[id] ?? "-",
+        "section": sectionMap[id] ?? "-", // ✅ default = "-"
       };
     }).toList();
 
@@ -271,8 +285,12 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
                         courseSubject: subjects,
                         checkedMap: checkedMap,
                         gradeMap: gradeMap,
+                        sectionMap: sectionMap,
                         onCheckChanged: updateCheck,
                         onGradeChanged: updateGrade,
+                        onSectionChanged: updateSection,
+                        sectionOptionsMap: sectionOptionsMap, // ✅
+                        scheduleMap: scheduleMap, // ✅
                       ),
 
                       ...subjects.map((c) {
