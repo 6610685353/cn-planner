@@ -5,13 +5,16 @@ class SubjectBox extends StatefulWidget {
   final String title;
   final String subtitle;
   final double credits;
-  final String? grade; // ✅ allow null
+  final String? grade;
+  final String? section; // ✅ เพิ่ม section
+  final List<String> availableSections; // ✅ รายการ section ที่ให้เลือก
   final int subjectId;
   final bool isChecked;
 
   final Function(int, bool) onChanged;
   final Function(int, bool) onCheckChanged;
   final Function(String) onGradeChanged;
+  final Function(String) onSectionChanged; // ✅ callback สำหรับ section
 
   const SubjectBox({
     super.key,
@@ -19,11 +22,14 @@ class SubjectBox extends StatefulWidget {
     required this.subtitle,
     required this.credits,
     required this.grade,
+    this.section, // ✅ allow null
+    this.availableSections = const ["1", "2", "3"], // ✅ default sections
     required this.subjectId,
     required this.isChecked,
     required this.onChanged,
     required this.onCheckChanged,
     required this.onGradeChanged,
+    required this.onSectionChanged, // ✅ เพิ่ม
   });
 
   @override
@@ -31,22 +37,27 @@ class SubjectBox extends StatefulWidget {
 }
 
 class _SubjectBoxState extends State<SubjectBox> {
-  final String _defaultValue = "-";
-  String _selectedValue = "-";
+  final String _defaultGrade = "-";
+  final String _defaultSection = "-";
+
+  String _selectedGrade = "-";
+  String _selectedSection = "-";
 
   @override
   void initState() {
     super.initState();
-    _selectedValue = widget.grade ?? _defaultValue; // ✅ กัน null
+    _selectedGrade = widget.grade ?? _defaultGrade;
+    _selectedSection = widget.section ?? _defaultSection;
   }
 
   @override
   void didUpdateWidget(covariant SubjectBox oldWidget) {
     super.didUpdateWidget(oldWidget);
-
-    // 🔥 sync เวลาค่าเปลี่ยนจากข้างนอก
     if (widget.grade != oldWidget.grade) {
-      _selectedValue = widget.grade ?? _defaultValue;
+      _selectedGrade = widget.grade ?? _defaultGrade;
+    }
+    if (widget.section != oldWidget.section) {
+      _selectedSection = widget.section ?? _defaultSection;
     }
   }
 
@@ -61,6 +72,7 @@ class _SubjectBoxState extends State<SubjectBox> {
       ),
       child: Row(
         children: [
+          // --- Checkbox ---
           Transform.scale(
             scale: 1.5,
             child: Checkbox(
@@ -74,39 +86,40 @@ class _SubjectBoxState extends State<SubjectBox> {
               }),
               onChanged: (bool? value) {
                 final bool newValue = value ?? false;
-
                 widget.onChanged(widget.subjectId, newValue);
                 widget.onCheckChanged(widget.subjectId, newValue);
 
                 if (!newValue) {
-                  // 🔥 reset grade
-                  widget.onGradeChanged(_defaultValue);
+                  widget.onGradeChanged(_defaultGrade);
+                  widget.onSectionChanged(_defaultSection);
                   setState(() {
-                    _selectedValue = _defaultValue;
+                    _selectedGrade = _defaultGrade;
+                    _selectedSection = _defaultSection;
                   });
                 } else {
-                  // 🔥 set default grade ตอนติ๊ก
                   widget.onGradeChanged("-");
-                  setState(() {
-                    _selectedValue = "-";
-                  });
+                  // ไม่รีเซ็ต section ถ้าติ๊กถูก (หรือจะรีเซ็ตก็ได้แล้วแต่ logic)
                 }
               },
             ),
           ),
           const SizedBox(width: 5),
 
+          // --- Subject Info ---
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text(
-                      widget.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    Flexible(
+                      child: Text(
+                        widget.title,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -138,13 +151,14 @@ class _SubjectBoxState extends State<SubjectBox> {
             ),
           ),
 
+          // --- Section Selector ---
           Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Text(
-                "GRADE",
+                "SECTION",
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 10,
                   color: AppColors.primaryBlue,
                   fontWeight: FontWeight.bold,
                 ),
@@ -154,24 +168,71 @@ class _SubjectBoxState extends State<SubjectBox> {
                 child: Row(
                   children: [
                     Text(
-                      _selectedValue,
+                      _selectedSection,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: widget.isChecked ? Colors.black : Colors.grey,
                       ),
                     ),
-                    if (widget.isChecked) const Icon(Icons.arrow_drop_down),
+                    if (widget.isChecked)
+                      const Icon(Icons.arrow_drop_down, size: 20),
+                  ],
+                ),
+                onSelected: (String value) {
+                  widget.onSectionChanged(value);
+                  setState(() {
+                    _selectedSection = value;
+                  });
+                },
+                itemBuilder: (BuildContext context) => [
+                  const PopupMenuItem(value: "-", child: Text("-")),
+                  ...widget.availableSections.map(
+                    (sec) => PopupMenuItem(value: sec, child: Text(sec)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          const SizedBox(width: 12),
+
+          // --- Grade Selector ---
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                "GRADE",
+                style: TextStyle(
+                  fontSize: 10,
+                  color: AppColors.primaryBlue,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              PopupMenuButton<String>(
+                enabled: widget.isChecked,
+                child: Row(
+                  children: [
+                    Text(
+                      _selectedGrade,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: widget.isChecked ? Colors.black : Colors.grey,
+                      ),
+                    ),
+                    if (widget.isChecked)
+                      const Icon(Icons.arrow_drop_down, size: 20),
                   ],
                 ),
                 onSelected: (String value) {
                   widget.onGradeChanged(value);
                   setState(() {
-                    _selectedValue = value;
+                    _selectedGrade = value;
                   });
                 },
                 itemBuilder: (BuildContext context) => [
-                  const PopupMenuItem(value: "-", child: Text("-")), // ✅ เพิ่ม
+                  const PopupMenuItem(value: "-", child: Text("-")),
                   const PopupMenuItem(value: "A", child: Text("A")),
                   const PopupMenuItem(value: "B+", child: Text("B+")),
                   const PopupMenuItem(value: "B", child: Text("B")),
