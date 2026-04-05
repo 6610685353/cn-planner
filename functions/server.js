@@ -7,11 +7,13 @@ const cors = require("cors");
 const app = express();
 
 const userEnrolledRoutes = require("./src/routes/enrolled_routes");
+const userRoadmapRoutes = require("./src/routes/roadmap_routes")
 
 app.use(cors({ origin: true }));
 app.use(express.json());
 
 app.use("/v1/enrolled", userEnrolledRoutes);
+app.use("/v1/roadmap", userRoadmapRoutes);
 
 app.use((err, req, res, next) => {
   res.status(500).json({ message: err.message });
