@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cn_planner_app/features/roadmap/models/subject_model.dart';
 import 'package:cn_planner_app/features/roadmap/widgets/subject_card.dart';
-import 'package:cn_planner_app/features/roadmap/views/course_selection_page.dart';
 import 'package:cn_planner_app/features/roadmap/services/roadmap_service.dart';
 import 'package:cn_planner_app/features/roadmap/services/validation_service.dart'; // 🔥 เพิ่ม
 import '../views/roadmap_page.dart';
