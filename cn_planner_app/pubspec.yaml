@@ -44,7 +44,7 @@ dependencies:
   flutter_dotenv: ^6.0.0
   shared_preferences: ^2.2.2
   flutter_svg: ^2.0.10
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -94,7 +94,6 @@ flutter:
         - asset: assets/fonts/Open_Sans/static/OpenSans-SemiBold.ttf
           weight: 600
         - asset: assets/fonts/Open_Sans/static/OpenSans-Italic.ttf
-          style: italic
           style: italic
 # - family: Trajan Pro
   #     fonts:
