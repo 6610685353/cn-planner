@@ -174,6 +174,7 @@ class SubjectCard extends StatelessWidget {
               ),
               underline: const SizedBox(),
               items: [
+                "-",
                 "A",
                 "B+",
                 "B",
