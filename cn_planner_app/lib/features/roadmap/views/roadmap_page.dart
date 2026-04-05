@@ -39,7 +39,16 @@ class _RoadmapPageState extends State<RoadmapPage> {
   List<SubjectModel> allSubjects = [];
   Map<String, dynamic>? userProfile;
 
-  Map<String, double> gradeScheme = {'A': 4.0, 'B+': 3.5, 'B': 3.0, 'C+': 2.5, 'C': 2.0, 'D+': 1.5, 'D': 1.0, 'F': 0.0};
+  Map<String, double> gradeScheme = {
+    'A': 4.0,
+    'B+': 3.5,
+    'B': 3.0,
+    'C+': 2.5,
+    'C': 2.0,
+    'D+': 1.5,
+    'D': 1.0,
+    'F': 0.0,
+  };
 
   double totalGradePoints = 0;
   double totalCredits = 0;
@@ -115,7 +124,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
 
           maxYear = profile?['max_year'] ?? 4;
 
-          universityPlan = [
+          simulatedPlan = [
             {
               'subject_code': 'CN101',
               'year': 1,
@@ -137,7 +146,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
           ];
 
           // 🔥 Mock ข้อมูลแผนจำลอง (หรือดึงจาก DB simulated_plans ถ้ามี)
-          simulatedPlan = List<Map<String, dynamic>>.from(history);
+          // simulatedPlan = List<Map<String, dynamic>>.from(history);
 
           selectedYear = profile?['current_year'];
           selectedTerm = profile?['current_semester'];
@@ -244,30 +253,13 @@ class _RoadmapPageState extends State<RoadmapPage> {
   }
 
   Widget _buildViewRoadmapLayout() {
-    return DefaultTabController(
-      length: 2,
-      initialIndex: widget.initialTabIndex,
-      child: Scaffold(
-        backgroundColor: Colors.grey[100],
-        appBar: AppBar(
-          title: const Text("Roadmap"),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: "University Plan"),
-              Tab(text: "My Saved Plan"),
-            ],
-          ),
-        ),
-        floatingActionButton: _buildViewFabs(),
-        body: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : TabBarView(
-                children: [
-                  _buildTermList(universityPlan, isStatic: true),
-                  _buildTermList(simulatedPlan, isStatic: false),
-                ],
-              ),
-      ),
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(title: const Text("Roadmap")),
+      floatingActionButton: _buildViewFabs(),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _buildTermList(simulatedPlan, isStatic: true),
     );
   }
 
@@ -286,7 +278,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
       floatingActionButton: _buildSaveFab(),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _buildTermList(editedHistory, isStatic: false),
+          : _buildTermList(simulatedPlan, isStatic: false),
     );
   }
 
@@ -593,25 +585,32 @@ class _RoadmapPageState extends State<RoadmapPage> {
           for (var item in editedHistory) {
             String grade = item['grade'];
 
-            if(!gradeScheme.containsKey(grade)) continue;
+            if (!gradeScheme.containsKey(grade)) continue;
 
             final subject = allSubjects.firstWhere(
               (s) => s.subjectCode == item['subject_code'],
-              orElse: () => SubjectModel(subjectCode: '', subjectName: '', credits: 0, subjectId: 0),
+              orElse: () => SubjectModel(
+                subjectCode: '',
+                subjectName: '',
+                credits: 0,
+                subjectId: 0,
+              ),
             );
 
             totalGradePoints += (gradeScheme[grade]! * subject.credits);
             totalCredits += subject.credits;
 
-            
-            if (item['year'] == selectedYear && item['semester'] == selectedTerm) {
+            if (item['year'] == selectedYear &&
+                item['semester'] == selectedTerm) {
               thisSemGradePoints += (gradeScheme[grade]! * subject.credits);
               thisSemCredits += subject.credits;
             }
           }
 
           var gpax = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
-          var gpa = thisSemCredits > 0 ? thisSemGradePoints / thisSemCredits : 0.0;
+          var gpa = thisSemCredits > 0
+              ? thisSemGradePoints / thisSemCredits
+              : 0.0;
 
           await SendGrade.submitGPAX(gpax, totalCredits, gpa, thisSemCredits);
 
