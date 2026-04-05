@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cn_planner_app/core/constants/app_colors.dart';
@@ -11,6 +13,7 @@ import '../services/roadmap_service.dart';
 import 'academic_history_page.dart';
 import 'simulator_page.dart';
 import '../../manage/views/manage_course_page.dart';
+import 'package:cn_planner_app/services/send_grade.dart';
 
 enum RoadmapMode { view, edit, simulate }
 
@@ -35,6 +38,11 @@ class _RoadmapPageState extends State<RoadmapPage> {
 
   List<SubjectModel> allSubjects = [];
   Map<String, dynamic>? userProfile;
+
+  Map<String, double> gradeScheme = {'A': 4.0, 'B+': 3.5, 'B': 3.0, 'C+': 2.5, 'C': 2.0, 'D+': 1.5, 'D': 1.0, 'F': 0.0};
+
+  double totalGradePoints = 0;
+  double totalCredits = 0;
 
   List<Map<String, dynamic>> academicHistory = [];
   List<Map<String, dynamic>> editedHistory = [];
@@ -513,6 +521,24 @@ class _RoadmapPageState extends State<RoadmapPage> {
       if (user != null) {
         setState(() => isLoading = true);
         try {
+          print("calculating grade");
+          for (var item in editedHistory) {
+            String grade = item['grade'];
+
+            if(!gradeScheme.containsKey(grade)) continue;
+
+            final subject = allSubjects.firstWhere(
+              (s) => s.subjectCode == item['subject_code'],
+              orElse: () => SubjectModel(subjectCode: '', subjectName: '', credits: 0, subjectId: 0),
+            );
+
+            totalGradePoints += (gradeScheme[grade]! * subject.credits);
+            totalCredits += subject.credits;
+          }
+
+          var gpax = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
+          await SendGrade.submitGPAX(gpax, totalCredits);
+
           await _profileService.updateStatus(
             user.uid,
             selectedYear!,
