@@ -7,10 +7,15 @@ class YearCourseBox extends StatefulWidget {
   final List<dynamic> courseSubject;
   final Map<int, bool> checkedMap;
   final Map<int, String> gradeMap;
+  final Map<int, String> sectionMap;
 
   //for backend
   final Function(int, bool) onCheckChanged;
   final Function(int, String) onGradeChanged;
+  final Function(int, String) onSectionChanged;
+  final Map<int, List<String>>
+  sectionOptionsMap; // ✅ เพิ่มแผนที่สำหรับตัวเลือก section
+  final Map<int, Map<String, List<Map>>> scheduleMap;
 
   const YearCourseBox({
     super.key,
@@ -19,9 +24,13 @@ class YearCourseBox extends StatefulWidget {
     required this.courseSubject,
     required this.checkedMap,
     required this.gradeMap,
+    required this.sectionMap,
 
     required this.onCheckChanged,
     required this.onGradeChanged,
+    required this.onSectionChanged,
+    required this.sectionOptionsMap, // ✅ เพิ่มพารามิเตอร์สำหรับตัวเลือก section
+    required this.scheduleMap,
   });
 
   @override
@@ -45,6 +54,49 @@ class _YearCourseBox extends State<YearCourseBox> {
           widget.gradeMap[id] != null &&
           widget.gradeMap[id] != "-";
     }).length;
+  }
+
+  bool isConflict(int newSubjectId, String newSection) {
+    for (var entry in widget.sectionMap.entries) {
+      final oldSubjectId = entry.key;
+      final oldSection = entry.value;
+
+      if (oldSection == "-" || oldSubjectId == newSubjectId) continue;
+
+      if (_checkTimeOverlap(
+        newSubjectId,
+        newSection,
+        oldSubjectId,
+        oldSection,
+      )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _checkTimeOverlap(int s1, String sec1, int s2, String sec2) {
+    final schedule1 = widget.scheduleMap[s1]?[sec1] ?? [];
+    final schedule2 = widget.scheduleMap[s2]?[sec2] ?? [];
+
+    for (var a in schedule1) {
+      for (var b in schedule2) {
+        if (a['day'] == b['day']) {
+          if (a['start'] < b['end'] && b['start'] < a['end']) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  List<String> getAvailableSections(int subjectId) {
+    final all = widget.sectionOptionsMap[subjectId] ?? [];
+
+    return all.where((sec) {
+      return !isConflict(subjectId, sec);
+    }).toList();
   }
 
   @override
@@ -98,6 +150,14 @@ class _YearCourseBox extends State<YearCourseBox> {
                       onCheckChanged: widget.onCheckChanged,
                       onGradeChanged: (grade) =>
                           widget.onGradeChanged(subject['subjectId'], grade),
+                      section:
+                          widget.sectionMap[subject['subjectId']] ??
+                          "-", // ✅ ส่ง section
+                      onSectionChanged: (sec) =>
+                          widget.onSectionChanged(subject['subjectId'], sec),
+                      availableSections: getAvailableSections(
+                        subject['subjectId'],
+                      ),
                     );
                   }).toList(),
                 ),
