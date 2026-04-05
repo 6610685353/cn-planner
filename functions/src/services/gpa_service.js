@@ -18,14 +18,23 @@ async function getGPA(uid) {
 
 async function getThisSem(uid) {
   console.log("calling getThisSem")
+  const cacheKey = `user:${uid}:this_sem`;
+  let flattenedData = cache.get(cacheKey);
   
-  thisSemCourse = await gpaModel.getThisSem(uid);
+  if (!flattenedData) {
+    console.log("getThisSem : pulling from database")
+    thisSemCourse = await gpaModel.getThisSem(uid);
 
-  const flattenedData = thisSemCourse.map(({ Subjects, ...rest }) => ({
-    ...rest,
-    ...Subjects,
-  }));
+    flattenedData = thisSemCourse.map(({ Subjects, ...rest }) => ({
+      ...rest,
+      ...Subjects,
+    }));
+
+    cache.set(cacheKey, flattenedData, 300);
+    return flattenedData; 
+  }
   
+  console.log("getThisSem : using cache")
   return flattenedData; 
 };
 
