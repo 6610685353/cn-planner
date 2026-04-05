@@ -202,6 +202,7 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
     setState(() {
       checkedMap[subjectId] = value;
       gradeMap[subjectId] = "-";
+      gradeMap[subjectId] = "-";
 
       if (!value) {
         gradeMap[subjectId] = "-";
