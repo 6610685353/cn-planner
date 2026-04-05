@@ -12,11 +12,19 @@ class GPACalculatorPage extends StatefulWidget {
 }
 
 class _GPACalculatorPageState extends State<GPACalculatorPage> {
-  double targetGPA = 0;
-  double currentGPAX = 0;
   double predictedGPAX = 0;
-  double predictOnlyThisSem = 0;
+  double currentGPAX = 0;
+
+  double predictedGPA = 0;
+  double currentGPA = 0;
+
+  double creditsGPA = 0;
+  double creditsGPAX = 0;
+
   List<dynamic> currentSemCourses = [];
+  List<dynamic> thisSemSubject = [];
+  // List<dynamic> gradeCred = [];
+  Map<String, dynamic> gradeCred = {};
   String userID = "";
 
   final Map<String, double> gradePoints = {
@@ -32,9 +40,6 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
   };
 
   // List<Map<String, dynamic>> currentSemesterCourses = [];
-
-  double currentGPA = 0.00;
-  double predictedGPA = 0.00;
 
   // Accumulated data from past semesters
   double pastTotalPoints = 0.0;
@@ -52,11 +57,28 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
 
   Future<void> _loadData() async {
     try {  
-      final currentSemCourseF = await DataFetch().fetchCurrentSem(userID);
+      final gradeCredF = await DataFetch().fetchGPAcred(userID);
+      final thisSemSubjectF = await DataFetch().fetchThisSem(userID);
       print("pulling current sem course");
 
       setState(() {
-        currentSemCourses = currentSemCourseF;
+        thisSemSubject = thisSemSubjectF;
+
+        currentSemCourses = thisSemSubject.map((item) {
+          return {
+            ...item,
+            'grade': "-"
+          };
+        }).toList();
+
+        gradeCred = gradeCredF[0] as Map<String, dynamic>;
+        currentGPAX = gradeCred['gpax'].toDouble();
+        predictedGPAX = currentGPAX;
+        currentGPA = gradeCred['gpa'].toDouble();
+        predictedGPA = currentGPA;
+
+        creditsGPA = gradeCred['this_sem_credits'].toDouble();
+        creditsGPAX = gradeCred['earned_credits'].toDouble();
       });
     } catch (e) {
       print("fail get current sem: $e");
@@ -67,36 +89,48 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
   void _updateCourseGrade(int index, String newGrade) {
     setState(() {
       currentSemCourses[index]['grade'] = newGrade;
+      double totalGradePoints = 0;
+      double totalCredits = 0;
+      
+      currentSemCourses.forEach((item)  {
+        totalCredits += item['grade'] != "-" ? item['credits'] : 0;
+        var credits = item['grade'] != "-" ? item['credits'] : 0;
+        var gradePoint = gradePoints[item['grade']] ?? 0.0; 
+        totalGradePoints += credits * gradePoint;
+      });
+
+      predictedGPA = totalCredits > 0 ? (totalGradePoints / totalCredits) : 0;
+      predictedGPAX = totalCredits > 0 ? ((totalGradePoints + (currentGPAX * creditsGPAX)) / (totalCredits + creditsGPAX)) : 0;
     });
   }
 
-  void _calculatePrediction() {
-    double semesterPoints = 0.0;
-    double semesterCredits = 0.0;
+  // void _calculatePrediction() {
+  //   double semesterPoints = 0.0;
+  //   double semesterCredits = 0.0;
 
-    for (var course in currentSemCourses) {
-      double point = gradePoints[course['grade']] ?? 0.0;
-      int credit = 0;
+  //   for (var course in currentSemCourses) {
+  //     double point = gradePoints[course['grade']] ?? 0.0;
+  //     int credit = 0;
 
-      if (course['grade'] != "-") {
-        credit = course['credit'];
-      }
+  //     if (course['grade'] != "-") {
+  //       credit = course['credit'];
+  //     }
 
-      semesterPoints += (point * credit);
-      semesterCredits += credit;
-    }
+  //     semesterPoints += (point * credit);
+  //     semesterCredits += credit;
+  //   }
 
-    double totalPoints = pastTotalPoints + semesterPoints;
-    double totalCredits = pastTotalCredits + semesterCredits;
+  //   double totalPoints = pastTotalPoints + semesterPoints;
+  //   double totalCredits = pastTotalCredits + semesterCredits;
 
-    setState(() {
-      if (totalCredits > 0) {
-        predictedGPA = totalPoints / totalCredits;
-      } else {
-        predictedGPA = 0.0;
-      }
-    });
-  }
+  //   setState(() {
+  //     if (totalCredits > 0) {
+  //       predictedGPA = totalPoints / totalCredits;
+  //     } else {
+  //       predictedGPA = 0.0;
+  //     }
+  //   });
+  // }
 
   // void _showAddCourseDialog() {
   //   String name = "";
@@ -166,7 +200,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
 
   void _deleteCourse(int index) {
     setState(() {
-      // currentSemesterCourses.removeAt(index);
+      currentSemCourses.removeAt(index);
     });
   }
 
@@ -197,7 +231,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
               children: [
                 StatCard(
                   title: "Pred GPAX",
-                  value: targetGPA.toString(),
+                  value: predictedGPAX.toStringAsFixed(2),
                   textColor: const Color(0xffB71C1C), 
                   iconData: Icons.stars_rounded,
                   iconColor: const Color(0xffB71C1C),
@@ -206,7 +240,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                 StatCard(
                   title:
                       "Cur GPAX",
-                  value: currentGPAX.toString(), 
+                  value: currentGPAX.toStringAsFixed(2), 
                   textColor: const Color(0xffFFC107), 
                   iconData: Icons.bar_chart_rounded,
                   iconColor: const Color(0xffFFC107),
@@ -260,7 +294,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                 final course = currentSemCourses[index];
                 return CourseCard(
                   name: course['subjectName'],
-                  credit: course['credit'],
+                  credit: course['credits'],
                   grade: course['grade'],
                   gradeOptions: gradePoints.keys.toList(),
                   onGradeChanged: (newGrade) {
@@ -362,7 +396,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "Pred this sem",
+                      "CURRENT GPA",
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 12,
@@ -379,28 +413,28 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                     ),
                   ],
                 ),
-                ElevatedButton(
-                  onPressed: _calculatePrediction,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xffB71C1C), // Deep Red
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    "Calculate",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
+                // ElevatedButton(
+                //   onPressed: _calculatePrediction,
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: const Color(0xffB71C1C), // Deep Red
+                //     padding: const EdgeInsets.symmetric(
+                //       horizontal: 24,
+                //       vertical: 12,
+                //     ),
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(30),
+                //     ),
+                //     elevation: 0,
+                //   ),
+                //   child: const Text(
+                //     "Calculate",
+                //     style: TextStyle(
+                //       color: Colors.white,
+                //       fontWeight: FontWeight.bold,
+                //       fontSize: 16,
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),

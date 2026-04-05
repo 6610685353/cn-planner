@@ -14,7 +14,7 @@ class DataFetch {
     try {
       final response = await http
           .get(url, headers: {"Content-Type": "application/json"})
-          .timeout(Duration(seconds: 15));
+          .timeout(Duration(seconds: 10));
       print("get Manage Page Data Status: ${response.statusCode}");
 
       return jsonDecode(response.body);
@@ -29,12 +29,46 @@ class DataFetch {
     try {
       final response = await http
           .get(url, headers: {"Content-Type": "application/json"})
-          .timeout(Duration(seconds: 15));
+          .timeout(Duration(seconds: 10));
       print("fetchEnrolled Status: ${response.statusCode}");
 
       return jsonDecode(response.body);
     } catch (e) {
-      throw Exception('Error fetching data, Error message: $e');
+      throw Exception('Error fetching enrolled data, Error message: $e');
+    }
+  }
+
+  Future<List<dynamic>> fetchGPAcred(String uid) async {
+    final url = Uri.parse("${Config.baseUrl}/v1/gpa/fetch").replace(
+      queryParameters: {'uid': uid}
+    );
+    
+    try {
+      final response = await http
+        .get(url, headers: {"Content-Type": "application/json"})
+        .timeout(Duration(seconds: 10));
+      print("fetch GPA Status: ${response.statusCode}");
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      throw Exception('Error fetching gpa data, Error message: $e');
+    }
+  }
+
+  Future<List<dynamic>> fetchThisSem(String uid) async {
+    final url = Uri.parse("${Config.baseUrl}/v1/gpa/this_sem").replace(
+      queryParameters: {'uid': uid}
+    );
+
+    try {
+      final response = await http
+        .get(url, headers: {"Content-Type": "application/json"})
+        .timeout(Duration(seconds: 10));
+
+      print("fetch this sem Status: ${response.statusCode}");
+      return jsonDecode(response.body);
+    } catch (err) {
+      throw Exception('Error fetching this sem data, Error message: $err');
     }
   }
 
