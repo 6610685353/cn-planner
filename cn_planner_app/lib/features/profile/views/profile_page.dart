@@ -1,15 +1,16 @@
 import 'package:cn_planner_app/core/widgets/confirm_dialog.dart';
-import 'package:cn_planner_app/features/profile/controllers/setting_controller.dart';
 import 'package:cn_planner_app/features/profile/widgets/quick_stats.dart';
 import 'package:cn_planner_app/features/profile/widgets/feature_menu.dart';
 import 'package:cn_planner_app/features/profile/widgets/setting_action_tile.dart';
 import 'package:cn_planner_app/route.dart';
+import 'package:cn_planner_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../widgets/profile_image.dart';
 import '../widgets/profile_info.dart';
 import '../widgets/gpa_dashboard.dart';
 import '../controllers/profile_controller.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -19,11 +20,16 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final SettingController _settingController = SettingController();
   final ProfileController _profileController = ProfileController();
 
   ProfileData? _profileData;
   bool _isLoading = true;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadData();
+  }
 
   @override
   void initState() {
@@ -43,123 +49,171 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverAppBar(
-                  backgroundColor: AppColors.background,
-                  automaticallyImplyLeading: false,
-                  floating: true,
-                  pinned: false,
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                    child: Column(
-                      children: [
-                        const ProfileImage(),
-                        const SizedBox(height: 20),
+    return VisibilityDetector(
+      key: const Key('profile-page-key'),
+      onVisibilityChanged: (visibilityInfo) {
+        if (visibilityInfo.visibleFraction > 0.5 && !_isLoading) {
+          _loadData();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                color: Colors.white,
+                backgroundColor: AppColors.accentYellow,
+                onRefresh: _loadData,
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    const SliverAppBar(
+                      backgroundColor: AppColors.background,
+                      automaticallyImplyLeading: false,
+                      floating: true,
+                      pinned: false,
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                        child: Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () async {
+                                await Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.editProfile,
+                                );
 
-                        ProfileInfo(
-                          name: _profileData?.name ?? "",
-                          subtitle:
-                              "@${_profileData?.username ?? ''} | Year ${_profileData?.year ?? 0}",
-                        ),
-                        const SizedBox(height: 20),
-
-                        GpaDashboard(
-                          gpax: _profileData?.gpax ?? 0.0,
-                          gpa: _profileData?.gpa ?? 0.0,
-                        ),
-                        const SizedBox(height: 15),
-
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 10, bottom: 15),
-                            child: Text(
-                              "Quick Stats",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
+                                if (mounted) {
+                                  setState(() {
+                                    _isLoading = true;
+                                  });
+                                  await Future.delayed(
+                                    const Duration(milliseconds: 500),
+                                  );
+                                  await _loadData();
+                                }
+                              },
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  ProfileImage(
+                                    imageUrl: _profileData?.profileImageUrl,
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                        ),
 
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            QuickStats(
-                              title: "Earned",
-                              mainText:
-                                  _profileData?.earned_credits.toString() ??
-                                  "0",
-                              footer: "Credits",
+                            const SizedBox(height: 20),
+
+                            ProfileInfo(
+                              name: _profileData?.name ?? "",
+                              subtitle:
+                                  "@${_profileData?.username ?? ''} | Year ${_profileData?.year ?? 0}",
                             ),
-                            QuickStats(
-                              title: "Remaining",
-                              mainText:
-                                  _profileData?.remaining_credits.toString() ??
-                                  "0",
-                              footer: "Credits",
+                            const SizedBox(height: 20),
+
+                            GpaDashboard(
+                              gpax: _profileData?.gpax ?? 0.0,
+                              gpa: _profileData?.gpa ?? 0.0,
                             ),
-                            QuickStats(
-                              title: "Standing",
-                              mainText: _profileData?.academicStanding ?? "-",
-                              footer: "Academic",
+                            const SizedBox(height: 15),
+
+                            const Align(
+                              alignment: Alignment.centerLeft,
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 10, bottom: 15),
+                                child: Text(
+                                  "Quick Stats",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ),
                             ),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                QuickStats(
+                                  title: "Earned",
+                                  mainText:
+                                      _profileData?.earned_credits.toString() ??
+                                      "0",
+                                  footer: "Credits",
+                                ),
+                                QuickStats(
+                                  title: "Remaining",
+                                  mainText:
+                                      _profileData?.remaining_credits
+                                          .toString() ??
+                                      "0",
+                                  footer: "Credits",
+                                ),
+                                QuickStats(
+                                  title: "Standing",
+                                  mainText:
+                                      _profileData?.academicStanding ?? "-",
+                                  footer: "Academic",
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+
+                            FeatureMenu(
+                              icon: buildIcon(Icons.map_outlined),
+                              title: "Roadmap",
+                              subtitle: "View overall detail",
+                              route: AppRoutes.roadmap,
+                            ),
+                            FeatureMenu(
+                              icon: buildIcon(Icons.calendar_month_outlined),
+                              title: "Schedule",
+                              subtitle: "Check your timetable",
+                              route: AppRoutes.schedule,
+                            ),
+                            FeatureMenu(
+                              icon: buildIcon(Icons.emoji_events_outlined),
+                              title: "Credit Breakdown",
+                              subtitle: "View overall detail",
+                              route: AppRoutes.creditBreakdown,
+                            ),
+                            const SizedBox(height: 30),
+
+                            SettingActionTile(
+                              icon: Icons.logout,
+                              title: "Sign out",
+                              onTap: () {
+                                ConfirmDialog.show(
+                                  context: context,
+                                  title: 'Sign Out',
+                                  content:
+                                      'Are you sure you want to sign out of your account?',
+                                  confirmText: 'Sign out',
+                                  onConfirm: () async {
+                                    await AuthService().logout();
+                                    if (context.mounted) {
+                                      Navigator.pushNamedAndRemoveUntil(
+                                        context,
+                                        AppRoutes.login,
+                                        (route) => false,
+                                      );
+                                    }
+                                  },
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 50),
                           ],
                         ),
-                        const SizedBox(height: 10),
-
-                        FeatureMenu(
-                          icon: buildIcon(Icons.map_outlined),
-                          title: "Roadmap",
-                          subtitle: "View overall detail",
-                          route: AppRoutes.roadmap,
-                        ),
-                        FeatureMenu(
-                          icon: buildIcon(Icons.calendar_month_outlined),
-                          title: "Schedule",
-                          subtitle: "Check your timetable",
-                          route: AppRoutes.schedule,
-                        ),
-                        FeatureMenu(
-                          icon: buildIcon(Icons.emoji_events_outlined),
-                          title: "Credit Breakdown",
-                          subtitle: "View overall detail",
-                          route: AppRoutes.creditBreakdown,
-                        ),
-                        const SizedBox(height: 30),
-
-                        SettingActionTile(
-                          icon: Icons.logout,
-                          title: "Sign out",
-                          onTap: () {
-                            ConfirmDialog.show(
-                              context: context,
-                              title: 'Sign Out',
-                              content:
-                                  'Are you sure you want to sign out of your account?',
-                              confirmText: 'Sign out',
-                              onConfirm: () {
-                                _settingController.handleSignOut(context);
-                              },
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 50),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+      ),
     );
   }
 
@@ -167,141 +221,3 @@ class _ProfilePageState extends State<ProfilePage> {
     return Icon(iconData, color: AppColors.textDarkGrey);
   }
 }
-
-// import 'package:cn_planner_app/features/profile/widgets/quick_stats.dart';
-// import 'package:cn_planner_app/features/profile/widgets/feature_menu.dart';
-// import 'package:cn_planner_app/features/profile/widgets/setting_action_tile.dart';
-// import 'package:cn_planner_app/route.dart';
-// import 'package:flutter/material.dart';
-// import '../../../core/constants/app_colors.dart';
-// import '../widgets/profile_image.dart';
-// import '../widgets/profile_info.dart';
-// import '../widgets/gpa_dashboard.dart';
-
-// class ProfilePage extends StatelessWidget {
-//   const ProfilePage({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: AppColors.background,
-//       body: CustomScrollView(
-//         physics: const BouncingScrollPhysics(),
-//         slivers: [
-//           SliverAppBar(
-//             backgroundColor: AppColors.background,
-//             automaticallyImplyLeading: false,
-//             floating: true,
-//             pinned: false,
-//             actions: [
-//               Padding(
-//                 padding: const EdgeInsets.only(right: 10.0),
-//                 child: IconButton(
-//                   onPressed: () =>
-//                       Navigator.pushNamed(context, AppRoutes.setting),
-//                   icon: const Icon(
-//                     Icons.settings,
-//                     size: 30,
-//                     color: Colors.black,
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//           SliverToBoxAdapter(
-//             child: Padding(
-//               padding: const EdgeInsets.symmetric(horizontal: 10.0),
-//               child: Column(
-//                 children: [
-//                   ProfileImage(),
-
-//                   const SizedBox(height: 20),
-
-//                   ProfileInfo(
-//                     name: "Somchai Thammasat",
-//                     subtitle: "@somchaitu | Year 2",
-//                   ),
-
-//                   const SizedBox(height: 20),
-
-//                   const GpaDashboard(gpax: 3.85, gpa: 4.00),
-
-//                   const SizedBox(height: 15),
-
-//                   Align(
-//                     alignment: Alignment.centerLeft,
-//                     child: Padding(
-//                       padding: const EdgeInsets.only(left: 10, bottom: 15),
-//                       child: Text(
-//                         "Quick Stats",
-//                         style: TextStyle(
-//                           fontWeight: FontWeight.bold,
-//                           fontSize: 18,
-//                         ),
-//                       ),
-//                     ),
-//                   ),
-
-//                   Row(
-//                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//                     children: [
-//                       QuickStats(
-//                         title: "Earned",
-//                         mainText: "72",
-//                         footer: "Credits",
-//                       ),
-//                       QuickStats(
-//                         title: "Remaining",
-//                         mainText: "56",
-//                         footer: "Credits",
-//                       ),
-//                       QuickStats(
-//                         title: "Standing",
-//                         mainText: "Good",
-//                         footer: "Academic",
-//                       ),
-//                     ],
-//                   ),
-
-//                   const SizedBox(height: 10),
-
-//                   FeatureMenu(
-//                     icon: buildIcon(Icons.map_outlined),
-//                     title: "Roadmap",
-//                     subtitle: "View overall detail",
-//                     route: AppRoutes.roadmap,
-//                   ),
-//                   FeatureMenu(
-//                     icon: buildIcon(Icons.calendar_month_outlined),
-//                     title: "Schedule",
-//                     subtitle: "Check your timetable",
-//                     route: AppRoutes.schedule,
-//                   ),
-//                   FeatureMenu(
-//                     icon: buildIcon(Icons.emoji_events_outlined),
-//                     title: "Credit Breakdown",
-//                     subtitle: "View overall detail",
-//                     route: AppRoutes.creditBreakdown,
-//                   ),
-//                   const SizedBox(height: 40),
-
-//                   SettingActionTile(
-//                     icon: Icons.logout,
-//                     title: "Sign out",
-//                     onTap: () {
-//                       // _controller.handleSignOut(context);
-//                     },
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Icon buildIcon(IconData iconData) {
-//     return Icon(iconData, color: AppColors.textDarkGrey);
-//   }
-// }

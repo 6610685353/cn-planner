@@ -4,8 +4,13 @@ import '../../../core/constants/app_colors.dart';
 
 class GpaBanner extends StatelessWidget {
   final double gpa;
+  final String currentAcademicStanding;
 
-  const GpaBanner({super.key, required this.gpa});
+  const GpaBanner({
+    super.key,
+    required this.gpa,
+    required this.currentAcademicStanding,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,8 +45,8 @@ class GpaBanner extends StatelessWidget {
                   height: 1.1,
                 ),
               ),
-              const Text(
-                "Good Job!",
+              Text(
+                currentAcademicStanding,
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ],
