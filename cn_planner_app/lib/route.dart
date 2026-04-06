@@ -10,7 +10,7 @@ import 'features/profile/views/profile_page.dart';
 import 'features/profile/views/edit_profile_page.dart';
 import 'features/profile/views/setting_page.dart';
 import 'features/notification/views/notifications_page.dart';
-import 'features/gpa_calculator/presentation/gpa_calculator_page.dart';
+import 'features/gpa_calculator/views/gpa_calculator_page.dart';
 import 'features/credit_breakdown/views/credit_page.dart';
 
 class AppRoutes {
