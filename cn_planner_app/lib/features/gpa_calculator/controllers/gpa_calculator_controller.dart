@@ -1,26 +1,16 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'package:cn_planner_app/services/api_config.dart';
 import '../models/gpa_course_model.dart';
-import '../../roadmap/services/profile_service.dart';
-import '../../roadmap/services/roadmap_service.dart';
-import '../../roadmap/services/subject_service.dart';
 import '../../roadmap/models/subject_model.dart';
 
 class GPACalculatorController extends ChangeNotifier {
-  final ProfileService _profileService = ProfileService();
-  final RoadmapService _roadmapService = RoadmapService();
-  final SubjectService _subjectService = SubjectService();
-
   // Settings
   final Map<String, double> gradePoints = {
-    "A": 4.0,
-    "B+": 3.5,
-    "B": 3.0,
-    "C+": 2.5,
-    "C": 2.0,
-    "D+": 1.5,
-    "D": 1.0,
-    "F": 0.0,
+    "A": 4.0, "B+": 3.5, "B": 3.0, "C+": 2.5,
+    "C": 2.0, "D+": 1.5, "D": 1.0, "F": 0.0,
   };
 
   // State
@@ -31,9 +21,6 @@ class GPACalculatorController extends ChangeNotifier {
 
   double _pastTotalPoints = 0.0;
   double _pastTotalCredits = 0.0;
-
-  int _currentYear = 1;
-  int _currentSemester = 1;
 
   List<GPACourseModel> currentSemesterCourses = [];
   List<SubjectModel> allSubjects = [];
@@ -51,69 +38,44 @@ class GPACalculatorController extends ChangeNotifier {
         return;
       }
 
-      // 1. Fetch Profile & Master Data
-      final profile = await _profileService.getProfile(user.uid);
-      allSubjects = await _subjectService.fetchSubjects();
-      final history = await _roadmapService.getUserRoadmap(user.uid);
+      // 1. เรียก API Init ทีเดียวจบจาก Backend
+      final url = Uri.parse("${Config.baseUrl}/v1/gpa/init/${user.uid}");
+      final response = await http.get(url);
 
-      if (profile != null) {
-        _currentYear = profile['current_year'] ?? 1;
-        _currentSemester = profile['current_semester'] ?? 1;
-        currentGPA = (profile['gpax'] ?? 0.0).toDouble();
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-        // 2. ดึงค่าสะสมในอดีต (Past Baseline) จาก profiles โดยตรง
-        _pastTotalCredits = (profile['earned_credits'] ?? 0.0).toDouble();
+        currentGPA = (data['currentGPA'] ?? 0.0).toDouble();
+        _pastTotalCredits = (data['pastTotalCredits'] ?? 0.0).toDouble();
         _pastTotalPoints = currentGPA * _pastTotalCredits;
+
+        // รายวิชาที่สอบผ่านแล้ว
+        final List<dynamic> passedList = data['passedSubjects'];
+        passedSubjects = passedList.map((e) => e.toString()).toList();
+
+        // รายวิชา Master ทั้งหมด
+        final List<dynamic> subjectsList = data['allSubjects'];
+        allSubjects = subjectsList.map((s) => SubjectModel(
+          subjectCode: s['subjectCode'],
+          subjectName: s['subjectName'],
+          credits: (s['credits'] ?? 0.0).toDouble(),
+          subjectId: s['subjectId'],
+        )).toList();
+
+        // รายวิชาในเทอมปัจจุบัน (Sandbox เริ่มต้น)
+        final List<dynamic> sandboxList = data['currentSemesterCourses'];
+        currentSemesterCourses = sandboxList.map((c) => GPACourseModel(
+          id: "sandbox_${DateTime.now().millisecondsSinceEpoch}_${c['code']}",
+          code: c['code'],
+          name: c['name'],
+          credits: (c['credits'] ?? 0.0).toDouble(),
+          grade: c['grade'],
+        )).toList();
+
+        calculatePrediction();
+      } else {
+        debugPrint("❌ Error fetching GPA init: ${response.statusCode}");
       }
-
-      // 3. เตรียมวิชาในเทอมปัจจุบัน (Sandbox)
-      passedSubjects = history
-          .where(
-            (e) =>
-                e['grade'] != null &&
-                e['grade'] != '-' &&
-                e['grade'] != 'F' &&
-                e['grade'] != 'W',
-          )
-          .map((e) => e['subject_code'] as String)
-          .toList();
-
-      final currentTermHistory = history
-          .where(
-            (e) =>
-                e['year'] == _currentYear && e['semester'] == _currentSemester,
-          )
-          .toList();
-
-      currentSemesterCourses = currentTermHistory.map((item) {
-        final code = item['subject_code'];
-        final subject = allSubjects.firstWhere(
-          (s) => s.subjectCode == code,
-          orElse: () => SubjectModel(
-            subjectCode: code,
-            subjectName: code,
-            credits: 3.0,
-            subjectId: 0,
-          ),
-        );
-
-        String grade = item['grade'] ?? '-';
-        if (grade == '-' || !gradePoints.containsKey(grade)) {
-          grade = 'A';
-        }
-
-        return GPACourseModel(
-          id:
-              item['id']?.toString() ??
-              "sandbox_${DateTime.now().millisecondsSinceEpoch}_$code",
-          code: code,
-          name: subject.subjectName,
-          credits: subject.credits,
-          grade: grade,
-        );
-      }).toList();
-
-      calculatePrediction();
     } catch (e) {
       debugPrint("Error loading GPA Calculator Data: $e");
     } finally {
@@ -126,7 +88,6 @@ class GPACalculatorController extends ChangeNotifier {
     if (index >= 0 && index < currentSemesterCourses.length) {
       currentSemesterCourses[index].grade = newGrade;
       notifyListeners();
-      // calculatePrediction(); // คำนวณใหม่ทันทีที่เปลี่ยนเกรด
     }
   }
 
@@ -134,7 +95,6 @@ class GPACalculatorController extends ChangeNotifier {
     if (index >= 0 && index < currentSemesterCourses.length) {
       currentSemesterCourses.removeAt(index);
       notifyListeners();
-      // calculatePrediction(); // คำนวณใหม่ทันทีที่ลบ
     }
   }
 
@@ -191,6 +151,5 @@ class GPACalculatorController extends ChangeNotifier {
       }
     }
     notifyListeners();
-    // calculatePrediction(); // คำนวณใหม่ทันทีที่เพิ่มวิชา
   }
 }
