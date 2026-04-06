@@ -21,14 +21,21 @@ class ScheduleService {
       // 2. ดึง Roadmap
       final roadmapResponse = await _supabase
           .from('UserRoadmap')
-          .select('subject_code')
+          .select('subject_code, section')
           .eq('user_id', uid)
           .eq('year', currentYear)
           .eq('semester', currentSemester);
 
-      List<String> myEnrolledCourses = (roadmapResponse as List)
-          .map((item) => item['subject_code'].toString())
-          .toList();
+      final List roadmapList = roadmapResponse as List;
+      if (roadmapList.isEmpty) return [];
+
+      // สร้าง Map เพื่อเก็บว่าวิชานี้ User ลง Section ไหนไว้
+      Map<String, String> userSections = {
+        for (var item in roadmapList)
+          item['subject_code'].toString(): item['section']?.toString() ?? "",
+      };
+
+      List<String> myEnrolledCourses = userSections.keys.toList();
 
       if (myEnrolledCourses.isEmpty) return [];
 
@@ -56,8 +63,14 @@ class ScheduleService {
       Map<String, MasterCourseModel> courseMap = {};
       for (var row in scheduleResponse) {
         final code = row['subject_code'];
-        // 👉 ดึงค่า section จากฐานข้อมูล (ถ้าใน Supabase เพื่อนตั้งชื่อคอลัมน์ว่า sec ก็แก้ตรงนี้นะคะ)
+        // 👉 ดึงค่า section จากฐานข้อมูล
         final sectionFromDB = row['section']?.toString() ?? "01";
+
+        // 👉 กรองให้เหลือแค่ section ที่ user ลงทะเบียนไว้ใน UserRoadmap
+        if (userSections[code] != sectionFromDB) {
+          continue;
+        }
+
         final slot = TimeSlot(
           day: row['day'],
           startTime: row['start_time'],

@@ -12,6 +12,7 @@ import 'package:cn_planner_app/core/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // await Config.init();
 
   // 1. เปิดระบบ Notification & Timezone
   await NotificationService.init();
