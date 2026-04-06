@@ -1,12 +1,14 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // --- 1. สมัครสมาชิก (ตัด Supabase ออกแล้ว) ---
+  // --- 1. สมัครสมาชิก ---
   Future<User?> register({
     required String email,
     required String password,
@@ -40,6 +42,7 @@ class AuthService {
           'lastName': lastName,
           'email': email.trim(),
           'year': year,
+          'profileImageUrl': "", // เตรียมช่องไว้เก็บ URL รูป
           'createdAt': FieldValue.serverTimestamp(),
         });
       }
@@ -50,7 +53,7 @@ class AuthService {
     }
   }
 
-  // --- 2. เข้าสู่ระบบ (รองรับ Email/Username) ---
+  // --- 2. เข้าสู่ระบบ ---
   Future<User?> login(String identifier, String password) async {
     try {
       String email = identifier.trim();
@@ -77,7 +80,7 @@ class AuthService {
     }
   }
 
-  // --- 3. รีเซ็ตรหัสผ่าน (ที่หน้า Forgot Password เรียกใช้) ---
+  // --- 3. รีเซ็ตรหัสผ่าน ---
   Future<void> sendPasswordReset(String identifier) async {
     try {
       String email = identifier.trim();
@@ -102,7 +105,7 @@ class AuthService {
     }
   }
 
-  // --- 4. ดึงข้อมูลโปรไฟล์ (ที่หน้า Home/Profile เรียกใช้) ---
+  // --- 4. ดึงข้อมูลโปรไฟล์ ---
   Future<Map<String, dynamic>?> getUserProfile() async {
     try {
       final user = _auth.currentUser;
@@ -123,6 +126,25 @@ class AuthService {
     await _auth.signOut();
   }
 
-  // Stream สำหรับเช็คสถานะการล็อกอิน
+  // --- 6. อัปโหลดรูปโปรไฟล์ ---
+  Future<String?> uploadProfileImage(File imageFile, String uid) async {
+    try {
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'profile_images/$uid.jpg',
+      );
+      await storageRef.putFile(imageFile);
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      await _firestore.collection('users').doc(uid).update({
+        'profileImageUrl': downloadUrl,
+      });
+
+      return downloadUrl;
+    } catch (e) {
+      debugPrint("Upload Image Error: $e");
+      return null;
+    }
+  }
+
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 }

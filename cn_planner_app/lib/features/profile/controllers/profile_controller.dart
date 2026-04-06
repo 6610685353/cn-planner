@@ -12,6 +12,7 @@ class ProfileData {
   final int earned_credits;
   final int remaining_credits;
   final int total_credits;
+  final String? profileImageUrl;
 
   ProfileData({
     required this.name,
@@ -22,6 +23,7 @@ class ProfileData {
     required this.earned_credits,
     required this.remaining_credits,
     required this.total_credits,
+    this.profileImageUrl,
   });
 
   String get academicStanding {
@@ -29,6 +31,14 @@ class ProfileData {
     if (gpax >= 3.50) return "Excellent";
     if (gpax >= 2.00) return "Normal";
     if (gpax >= 1.50) return "Warning";
+    return "Critical";
+  }
+
+  String get currentAcademicStanding {
+    if (gpa == 0.0) return "N/A";
+    if (gpa >= 3.50) return "Excellent";
+    if (gpa >= 2.00) return "Normal";
+    if (gpa >= 1.50) return "Warning";
     return "Critical";
   }
 }
@@ -48,16 +58,22 @@ class ProfileController {
       double gpax = 0.00;
       int earned_credits = 0;
       int remaining_credits = 0;
+      String? profileImageUrl;
 
-      int total_credits = 146; // total credits required to graduate
+      int total_credits = 146;
 
-      // 1. ดึงข้อมูลส่วนตัวจาก Firebase (Firestore)
       final data = await _authService.getUserProfile();
       if (data != null) {
         final firstName = data['firstName'] ?? "";
         final lastName = data['lastName'] ?? "";
         name = "$firstName $lastName".trim();
         username = data['username'] ?? username;
+
+        profileImageUrl = data['profileImageUrl'];
+
+        if (profileImageUrl != null && profileImageUrl!.isEmpty) {
+          profileImageUrl = null;
+        }
       }
 
       // 2. ดึงข้อมูลผลการเรียนจาก Supabase
@@ -84,9 +100,9 @@ class ProfileController {
         gpa: gpa,
         gpax: gpax,
         earned_credits: earned_credits,
-        remaining_credits:
-            total_credits - earned_credits, // สมมติว่าต้องจบ 146 หน่วยกิต
+        remaining_credits: total_credits - earned_credits,
         total_credits: total_credits,
+        profileImageUrl: profileImageUrl,
       );
     } catch (e) {
       debugPrint('Error in fetchUserData: $e');
