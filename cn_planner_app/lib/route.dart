@@ -35,13 +35,19 @@ class AppRoutes {
     forgotPassword: (context) => const ForgotPasswordPage(),
     main: (context) => const MainWrapper(),
     home: (context) => const HomePage(),
-    roadmap: (context) => const RoadMapPage(),
+    roadmap: (context) =>
+        const RoadmapPage(mode: RoadmapMode.view), // เพิ่ม mode
     schedule: (context) => const SchedulePage(),
     profile: (context) => const ProfilePage(),
     editProfile: (context) => const EditProfilePage(),
     setting: (context) => const SettingPage(),
     notification: (context) => const NotificationsPage(),
-    manage: (context) => const ManageCoursePage(),
+    manage: (context) => const ManageCoursePage(
+      targetTerm: 1,
+      subjects: const [],
+      passedSubjects: const [],
+      alreadyAddedCodes: const [],
+    ),
     gpa: (context) => const GPACalculatorPage(),
     creditBreakdown: (context) => const CreditBreakdownPage(),
   };

@@ -1,3 +1,4 @@
+import 'package:cn_planner_app/core/constants/app_decorations.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
@@ -12,9 +13,9 @@ class GpaBanner extends StatelessWidget {
       width: 358,
       height: 130,
       padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(
+      decoration: AppDecorations.shadowBox(
         color: AppColors.accentYellow,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: 20,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
