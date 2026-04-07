@@ -1,3 +1,4 @@
+import 'package:cn_planner_app/features/impact_analysis/screens/impact_analysis_screen.dart';
 import 'package:cn_planner_app/features/main_wrapper.dart';
 import 'package:cn_planner_app/features/manage/views/manage_course_page.dart';
 import 'features/auth/views/login_page.dart';
@@ -12,6 +13,7 @@ import 'features/profile/views/setting_page.dart';
 import 'features/notification/views/notifications_page.dart';
 import 'features/gpa_calculator/presentation/gpa_calculator_page.dart';
 import 'features/credit_breakdown/views/credit_page.dart';
+import 'features/simulator/screens/simulator_screen.dart';
 
 class AppRoutes {
   static const login = '/login';
@@ -35,7 +37,8 @@ class AppRoutes {
     forgotPassword: (context) => const ForgotPasswordPage(),
     main: (context) => const MainWrapper(),
     home: (context) => const HomePage(),
-    roadmap: (context) => const RoadMapPage(),
+    // roadmap: (context) => const RoadMapPage(),
+    roadmap: (context) => const SimulatorPage(),
     schedule: (context) => const SchedulePage(),
     profile: (context) => const ProfilePage(),
     editProfile: (context) => const EditProfilePage(),

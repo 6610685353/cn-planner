@@ -1,9 +1,13 @@
+import 'package:cn_planner_app/features/impact_analysis/screens/impact_analysis_screen.dart';
 import 'package:flutter/material.dart';
 import '../core/widgets/bottom_nav_bar.dart';
 import 'home/views/home_page.dart';
 import 'roadmap/views/roadmap_page.dart'; // Import หน้าของคุณ
 import 'schedule/views/schedule_page.dart'; // Import หน้าของคุณ
-import 'profile/views/profile_page.dart'; // Import หน้าของคุณ
+import 'profile/views/profile_page.dart';
+import 'simulator/screens/simulator_screen.dart'; // Import หน้าของคุณ
+import 'impact_analysis/screens/impact_analysis_screen.dart';
+import 'simulator/services/simulation_result_model.dart';
 
 class MainWrapper extends StatefulWidget {
   const MainWrapper({super.key});
@@ -18,7 +22,8 @@ class _MainWrapperState extends State<MainWrapper> {
   // รายการหน้าหลักทั้ง 4 หน้า
   final List<Widget> _pages = const [
     HomePage(),
-    RoadMapPage(), // เปลี่ยนเป็น RoadmapPage()
+    // RoadMapPage(),
+    SimulatorPage(), // เปลี่ยนเป็น RoadmapPage()
     SchedulePage(), // เปลี่ยนเป็น SchedulePage()
     ProfilePage(),
   ];
