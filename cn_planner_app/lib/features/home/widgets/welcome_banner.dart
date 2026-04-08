@@ -22,19 +22,33 @@ class WelcomeBanner extends StatelessWidget {
       pinned: false,
       toolbarHeight: 80,
       elevation: 0,
-      // ใช้ title แทน flexibleSpace ถ้าต้องการให้จัดการตำแหน่งง่ายขึ้นในแนวนอน
+
       title: Row(
         children: [
           // --- รูปโปรไฟล์วงกลม ---
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: AppColors.textDarkGrey,
-            backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
-                ? NetworkImage(imageUrl!)
-                : null,
-            child: imageUrl != null && imageUrl!.isNotEmpty
-                ? null
-                : const Icon(Icons.person, size: 40, color: Colors.white),
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: const BoxDecoration(
+              color: AppColors.accentYellow,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 30,
+              backgroundColor: AppColors.borderGrey,
+              backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
+                  ? NetworkImage(imageUrl!)
+                  : null,
+              child: imageUrl != null && imageUrl!.isNotEmpty
+                  ? null
+                  : const Icon(Icons.person, size: 40, color: Colors.white),
+            ),
           ),
           const SizedBox(width: 12),
           _buildTextSection(),
