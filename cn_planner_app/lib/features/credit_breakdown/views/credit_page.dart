@@ -1,14 +1,40 @@
 import 'package:flutter/material.dart';
 import '../widgets/total_credit_card.dart';
 import '../widgets/credit_category_item.dart';
+import 'package:cn_planner_app/features/profile/controllers/profile_controller.dart';
 
-class CreditBreakdownPage extends StatelessWidget {
+class CreditBreakdownPage extends StatefulWidget {
   const CreditBreakdownPage({super.key});
+
+  @override
+  State<CreditBreakdownPage> createState() => _CreditBreakdownPageState();
+}
+
+class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
+  final ProfileController _profileController = ProfileController();
+  ProfileData? _profileData;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final data = await _profileController.fetchUserData();
+    if (mounted) {
+      setState(() {
+        _profileData = data;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     // -----------------------------------------------------------------
-    // Mock Data: เพิ่ม field 'part' เข้ามา
+    // Mock Data: รายวิชาแยกตาม Part (เก็บไว้โชว์ UI ด้านล่าง)
     // -----------------------------------------------------------------
     final List<Map<String, dynamic>> categories = [
       {
@@ -34,16 +60,6 @@ class CreditBreakdownPage extends StatelessWidget {
       },
     ];
 
-    // คำนวณหน่วยกิตรวม
-    final int totalEarned = categories.fold(
-      0,
-      (sum, item) => sum + (item['earned'] as int),
-    );
-    final int totalRequired = categories.fold(
-      0,
-      (sum, item) => sum + (item['required'] as int),
-    );
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
@@ -55,58 +71,57 @@ class CreditBreakdownPage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black87,
-            size: 20,
-          ),
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. การ์ดสรุปรวม
-            TotalCreditCard(
-              earnedCredits: totalEarned,
-              totalCredits: totalRequired,
-              currentGpa: 3.42,
-            ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 10.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. การ์ดสรุปรวม (โยนค่าจาก Controller ใส่ได้เลย)
+                  TotalCreditCard(
+                    earnedCredits: _profileData?.earned_credits ?? 0,
+                    totalCredits: _profileData?.total_credits ?? 146,
+                    currentGpa: _profileData?.gpax ?? 0.00,
+                  ),
 
-            const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-            // 2. หัวข้อ Degree Requirements
-            const Text(
-              'Degree Requirements',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                  const Text(
+                    'Degree Requirements',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      final cat = categories[index];
+                      return CreditCategoryItem(
+                        part: cat['part'],
+                        categoryName: cat['name'],
+                        earned: cat['earned'],
+                        required: cat['required'],
+                        color: cat['color'],
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-
-            // 3. รายการหมวดวิชา (ส่งค่า part ไปด้วย)
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                final cat = categories[index];
-                return CreditCategoryItem(
-                  part: cat['part'], // <-- ส่ง Part
-                  categoryName: cat['name'],
-                  earned: cat['earned'],
-                  required: cat['required'],
-                  color: cat['color'],
-                );
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -1,8 +1,6 @@
 import 'package:cn_planner_app/features/profile/widgets/edit_profile_text_field.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
-import 'package:cn_planner_app/route.dart';
-import 'package:cn_planner_app/core/widgets/top_bar.dart';
 import '../widgets/edit_profile_image.dart';
 import '../widgets/disable_display_field.dart';
 import '../controllers/edit_profile_controller.dart';
@@ -15,73 +13,169 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class EditProfileState extends State<EditProfilePage> {
-  // สร้าง Controller เตรียมไว้สำหรับ TextField
   final _edit = EditProfileController();
 
   @override
+  void initState() {
+    super.initState();
+    _edit.loadInitialData(_updateUI);
+  }
+
+  @override
+  void dispose() {
+    _edit.dispose();
+    super.dispose();
+  }
+
+  void _updateUI() {
+    setState(() {});
+  }
+
+  Future<void> _handleBackNavigation() async {
+    if (!_edit.hasChanges) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          "Unsaved Changes",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          "Are you sure you want to exit? You have unsaved changes.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'discard'),
+            child: const Text(
+              "Discard",
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accentYellow,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () => Navigator.pop(context, 'save'),
+            child: const Text(
+              "Save Change",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (result == 'discard') {
+      if (context.mounted) Navigator.of(context).pop();
+    } else if (result == 'save') {
+      if (context.mounted) _edit.handleEditProfile(context);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: TopBar(header: "Edit Profile", route: AppRoutes.profile),
-      body: SingleChildScrollView(
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 30),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        await _handleBackNavigation();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const Text(
+            "Edit Profile",
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: _handleBackNavigation,
+          ),
+        ),
+        body: SingleChildScrollView(
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 30),
 
-                Center(
-                  child: Column(
-                    children: [
-                      EditProfileImage(),
-                      const SizedBox(height: 10),
-                      buildText("Change Photo"),
-                    ],
+                  Center(
+                    child: GestureDetector(
+                      onTap: () => _edit.pickAndCropImage(_updateUI),
+                      child: Column(
+                        children: [
+                          EditProfileImage(
+                            imageFile: _edit.selectedImageFile,
+                            imageUrl: _edit.profileImageUrl,
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            "Change Photo",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.accentYellow,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                buildTextAtStart("Username"),
-                DisabledDisplayField(value: "@somchaitu"),
-                buildTextAtEnd("Username cannot be changed"),
+                  buildTextAtStart("Username"),
+                  const DisabledDisplayField(value: "@somchaitu"),
+                  buildTextAtEnd("Username cannot be changed"),
 
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-                buildTextAtStart("First Name"),
-                const SizedBox(height: 8),
-                EditProfileTextField(
-                  controller: _edit.firstnameController,
-                  hint: "Enter your First Name",
-                ),
+                  buildTextAtStart("First Name"),
+                  const SizedBox(height: 8),
+                  EditProfileTextField(
+                    controller: _edit.firstnameController,
+                    hint: "Enter your First Name",
+                  ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                buildTextAtStart("Last Name"),
-                const SizedBox(height: 8),
-                EditProfileTextField(
-                  controller: _edit.firstnameController,
-                  hint: "Enter your Last Name",
-                ),
+                  buildTextAtStart("Last Name"),
+                  const SizedBox(height: 8),
+                  EditProfileTextField(
+                    controller: _edit.lastnameController,
+                    hint: "Enter your Last Name",
+                  ),
 
-                const SizedBox(height: 100),
+                  const SizedBox(height: 100),
 
-                buildSaveChangeButton(),
-              ],
+                  buildSaveChangeButton(),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget buildText(String text) {
-    return Text(
-      text,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
     );
   }
 
@@ -97,7 +191,7 @@ class EditProfileState extends State<EditProfilePage> {
 
   Widget buildTextAtEnd(String text) {
     return SizedBox(
-      width: 352,
+      width: double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -115,7 +209,7 @@ class EditProfileState extends State<EditProfilePage> {
       width: double.infinity,
       height: 54,
       child: ElevatedButton.icon(
-        onPressed: _edit.handleEditProfile,
+        onPressed: () => _edit.handleEditProfile(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.accentYellow,
           elevation: 0,
