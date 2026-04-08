@@ -1,3 +1,4 @@
+import 'package:cn_planner_app/core/widgets/confirm_dialog.dart';
 import 'package:cn_planner_app/features/profile/controllers/setting_controller.dart';
 import 'package:cn_planner_app/features/profile/widgets/quick_stats.dart';
 import 'package:cn_planner_app/features/profile/widgets/feature_menu.dart';
@@ -168,10 +169,19 @@ class _ProfilePageState extends State<ProfilePage> {
                     icon: Icons.logout,
                     title: "Sign out",
                     onTap: () {
-                      _settingController.handleSignOut(context);
+                      ConfirmDialog.show(
+                        context: context,
+                        title: 'Sign Out',
+                        content:
+                            'Are you sure you want to sign out of your account?',
+                        confirmText: 'Sign out',
+                        onConfirm: () {
+                          _settingController.handleSignOut(context);
+                        },
+                      );
                     },
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 70),
                 ],
               ),
             ),
