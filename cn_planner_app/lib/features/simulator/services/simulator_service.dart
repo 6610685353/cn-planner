@@ -144,12 +144,12 @@ class SimulatorService {
 
   // ─── Save Simulation Plan → Supabase (simulatorplan table) ───────────────
   //
-  // บันทึกแผนที่ผู้ใช้ตั้งไว้ก่อนกด Simulate:
-  //   - แต่ละเทอม + แต่ละวิชา + status ที่ผู้ใช้เลือก (pass / fail)
-  //   - วิชาที่ยัง notSet ข้ามไป
-  //
-  // ใช้ subjectId จาก CourseModel.subjectId ถ้ามี
-  // ถ้าไม่มีจะ fallback เป็น 0 (backend / DB constraint ต้องรองรับ)
+  // บันทึกแผนของหน้า Simulator เท่านั้น (ไม่กระทบ roadmap)
+  // บันทึก **ทุกวิชาทุก term** เพื่อให้ restore add/drop ได้ถูกต้อง:
+  //   - 'pass' / 'fail'  → วิชาที่ตั้ง outcome แล้ว
+  //   - 'enrolled'       → วิชาที่อยู่ใน term แต่ยังไม่ตัดสิน
+  //                        (รวมถึงวิชาที่ user add เข้ามาใหม่)
+  // วิชาที่ user drop ออกไปจะไม่ถูกบันทึก → โหลดกลับมาก็จะไม่ปรากฏ
   // ─────────────────────────────────────────────────────────────────────────
 
   static Future<void> saveSimulation({required List<TermModel> terms}) async {
@@ -158,30 +158,37 @@ class SimulatorService {
 
     if (uid == null) throw Exception('User not logged in');
 
-    // 1. สร้าง rows จากทุกวิชาที่มี outcome = pass หรือ fail
+    // สร้าง rows จากทุกวิชาทุก term
     final rows = <Map<String, dynamic>>[];
 
     for (final term in terms) {
       for (final course in term.courses) {
-        if (course.outcome == CourseOutcome.pass ||
-            course.outcome == CourseOutcome.fail) {
-          rows.add({
-            'user_id': uid,
-            'year': term.year,
-            'semester': term.term,
-            'subject_id': course.subjectId ?? 0,
-            'subject_code': course.code,
-            'status': _outcomeToString(course.outcome), // 'pass' | 'fail'
-            'updated_at': DateTime.now().toIso8601String(),
-          });
+        // map outcome → status string ที่บันทึกลง DB
+        final String status;
+        if (course.outcome == CourseOutcome.pass) {
+          status = 'pass';
+        } else if (course.outcome == CourseOutcome.fail) {
+          status = 'fail';
+        } else {
+          // notSet / withdraw → ถือว่า enrolled (อยู่ใน term นี้)
+          status = 'enrolled';
         }
+
+        rows.add({
+          'user_id': uid,
+          'year': term.year,
+          'semester': term.term,
+          'subject_id': course.subjectId ?? 0,
+          'subject_code': course.code,
+          'status': status,
+          'updated_at': DateTime.now().toIso8601String(),
+        });
       }
     }
 
-    // 2. ลบแผนเก่าของ user
+    // ลบแผนเก่าของ user แล้ว insert ใหม่ทั้งหมด
     await supabase.from('simulatorplan').delete().eq('user_id', uid);
 
-    // 3. Insert แผนใหม่ (ถ้ามีข้อมูล)
     if (rows.isNotEmpty) {
       await supabase.from('simulatorplan').insert(rows);
     }
@@ -189,11 +196,14 @@ class SimulatorService {
 
   // ─── Load Simulation Plan ← Supabase (simulatorplan table) ───────────────
   //
-  // คืนค่า Map<'subjectCode', CourseOutcome> เพื่อให้ _loadData()
-  // นำไป apply ทับ outcome ของแต่ละวิชาหลังโหลด curriculum
+  // คืนค่า Map<'year_semester', SimulatorTermPlan> เพื่อให้ _loadData()
+  // นำไป:
+  //   1. ตัดวิชาที่ไม่อยู่ใน plan ออก (วิชาที่ user drop)
+  //   2. เพิ่มวิชาที่อยู่ใน plan แต่ไม่มีใน roadmap term นั้น (วิชาที่ user add)
+  //   3. apply outcomes (pass / fail)
   // ─────────────────────────────────────────────────────────────────────────
 
-  static Future<Map<String, CourseOutcome>> loadSimulationPlan() async {
+  static Future<Map<String, SimulatorTermPlan>> loadSimulationPlan() async {
     final supabase = Supabase.instance.client;
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
@@ -201,21 +211,48 @@ class SimulatorService {
 
     final data = await supabase
         .from('simulatorplan')
-        .select('subject_code, status')
+        .select('year, semester, subject_code, status')
         .eq('user_id', uid);
 
-    final result = <String, CourseOutcome>{};
-    for (final row in data as List) {
-      final code = row['subject_code'] as String?;
-      final status = row['status'] as String?;
-      if (code == null || status == null) continue;
-      result[code] = switch (status) {
-        'pass' => CourseOutcome.pass,
-        'fail' => CourseOutcome.fail,
-        'withdraw' => CourseOutcome.withdraw,
-        _ => CourseOutcome.notSet,
-      };
+    if ((data as List).isEmpty) return {};
+
+    // จัด group ตาม "year_semester"
+    final Map<String, SimulatorTermPlan> planByTerm = {};
+
+    for (final row in data) {
+      final year = row['year'] as int;
+      final semester = row['semester'] as int;
+      final code = row['subject_code'] as String? ?? '';
+      final status = row['status'] as String? ?? '';
+
+      if (code.isEmpty) continue;
+
+      final key = '${year}_$semester';
+      planByTerm.putIfAbsent(key, () => SimulatorTermPlan());
+
+      final plan = planByTerm[key]!;
+
+      // เพิ่ม code เข้า set ของ term นี้ (enrolled / pass / fail ล้วน "อยู่ใน term")
+      plan.codes.add(code);
+
+      // map outcome สำหรับ pass / fail เท่านั้น
+      if (status == 'pass') {
+        plan.outcomes[code] = CourseOutcome.pass;
+      } else if (status == 'fail') {
+        plan.outcomes[code] = CourseOutcome.fail;
+      }
+      // 'enrolled' → ไม่ต้อง set outcome (คงเป็น notSet ตามปกติ)
     }
-    return result;
+
+    return planByTerm;
   }
+}
+
+// ─── Helper model สำหรับข้อมูลต่อ term ───────────────────────────────────────
+class SimulatorTermPlan {
+  /// รหัสวิชาทั้งหมดที่ควรอยู่ใน term นี้ (ไม่รวมที่ dropped)
+  final Set<String> codes = {};
+
+  /// outcome ของวิชาที่มีผล (pass / fail เท่านั้น)
+  final Map<String, CourseOutcome> outcomes = {};
 }
