@@ -16,6 +16,7 @@ class YearCourseBox extends StatefulWidget {
   final Map<int, List<String>>
   sectionOptionsMap; // ✅ เพิ่มแผนที่สำหรับตัวเลือก section
   final Map<int, Map<String, List<Map>>> scheduleMap;
+  final Map<int, List<String>> reasonsMap; // ✅ เพิ่มแผนที่สำหรับเหตุผล
 
   const YearCourseBox({
     super.key,
@@ -31,6 +32,7 @@ class YearCourseBox extends StatefulWidget {
     required this.onSectionChanged,
     required this.sectionOptionsMap, // ✅ เพิ่มพารามิเตอร์สำหรับตัวเลือก section
     required this.scheduleMap,
+    required this.reasonsMap, // ✅ เพิ่มพารามิเตอร์สำหรับเหตุผล
   });
 
   @override
@@ -158,6 +160,7 @@ class _YearCourseBox extends State<YearCourseBox> {
                       availableSections: getAvailableSections(
                         subject['subjectId'],
                       ),
+                      reasons: widget.reasonsMap[subject['subjectId']] ?? [],
                     );
                   }).toList(),
                 ),

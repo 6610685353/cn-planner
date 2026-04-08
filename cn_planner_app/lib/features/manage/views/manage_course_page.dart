@@ -293,28 +293,14 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
                         onSectionChanged: updateSection,
                         sectionOptionsMap: sectionOptionsMap, // ✅
                         scheduleMap: scheduleMap, // ✅
-                      ),
-
-                      ...subjects.map((c) {
-                        final subject = subjectMap[c['subjectId']];
-                        if (subject == null) return const SizedBox();
-
-                        if (canTake(subject)) return const SizedBox();
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 2,
-                          ),
-                          child: Text(
-                            "${subject.subjectCode}: ${getReasons(subject).join(', ')}",
-                            style: const TextStyle(
-                              color: Colors.redAccent,
-                              fontSize: 12,
+                        reasonsMap: {
+                          // ✅
+                          for (var c in subjects)
+                            c['subjectId']: getReasons(
+                              subjectMap[c['subjectId']]!,
                             ),
-                          ),
-                        );
-                      }),
+                        },
+                      ),
                     ],
                   );
                 }).toList(),

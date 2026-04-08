@@ -15,6 +15,7 @@ class SubjectBox extends StatefulWidget {
   final Function(int, bool) onCheckChanged;
   final Function(String) onGradeChanged;
   final Function(String) onSectionChanged; // ✅ callback สำหรับ section
+  final List<String> reasons; // ✅ เพิ่มรายการเหตุผลสำหรับแต่ละวิชา
 
   const SubjectBox({
     super.key,
@@ -30,6 +31,7 @@ class SubjectBox extends StatefulWidget {
     required this.onCheckChanged,
     required this.onGradeChanged,
     required this.onSectionChanged, // ✅ เพิ่ม
+    required this.reasons, // ✅ เพิ่ม
   });
 
   @override
@@ -147,6 +149,17 @@ class _SubjectBoxState extends State<SubjectBox> {
                   widget.subtitle,
                   style: TextStyle(color: AppColors.textGrey, fontSize: 13),
                 ),
+                if (widget.reasons.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      widget.reasons.join(", "),
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
