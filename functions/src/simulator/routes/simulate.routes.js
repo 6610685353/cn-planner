@@ -1,83 +1,78 @@
-const router   = require("express").Router();
-const COURSES  = require("../data/courses");
-const SCHEDULE = require("../data/schedule");
-const { runSimulation }  = require("../services/simulatorService");
-const { findConflicts }  = require("../services/scheduleService");
+/**
+ * routes/simulatorplan.routes.js
+ *
+ * POST   /api/simulatorplan/:uid        → บันทึกแผนทั้งหมด
+ * GET    /api/simulatorplan/:uid        → ดึงแผนของ user
+ * DELETE /api/simulatorplan/:uid        → ลบแผนของ user
+ */
 
-// ── POST /api/simulate ──────────────────────────────────────────────────────
-router.post("/", (req, res) => {
-  console.log("SIMULATE BODY =", JSON.stringify(req.body, null, 2));
+const router = require('express').Router();
+const { savePlan, getPlan, deletePlan } = require('../services/simulatorPlanService');
 
-  const { outcomes, simulatedTerms, customCourses, simulatedCurrentTerm } = req.body;
+// ── POST /api/simulatorplan/:uid ─────────────────────────────────────────────
+// Body: { plan: [{ year, semester, subject_id, subject_code, status }] }
+router.post('/:uid', async (req, res) => {
+  const { uid } = req.params;
+  const { plan } = req.body;
 
-  console.log(
-    "SIMULATE parsed =",
-    JSON.stringify(
-      {
-        outcomes,
-        simulatedTerms,
-        customCourses,
-        simulatedCurrentTerm,
-      },
-      null,
-      2,
-    ),
-  );
-
-  if (!outcomes || typeof outcomes !== "object") {
-    return res
-      .status(400)
-      .json({ success: false, message: '"outcomes" object is required' });
+  if (!uid) {
+    return res.status(400).json({ success: false, message: 'uid is required' });
   }
 
-  const result = runSimulation(
-    outcomes,
-    customCourses || {},
-    simulatedTerms || null,
-    simulatedCurrentTerm || null,
-  );
+  if (!Array.isArray(plan)) {
+    return res.status(400).json({ success: false, message: '"plan" array is required' });
+  }
 
-  console.log(
-    "EFFECTIVE CURRENT TERM =",
-    JSON.stringify(result?.effectiveCurrentTerm || null, null, 2),
-  );
-  console.log("CURRENT YEAR =", result?.effectiveCurrentTerm?.year ?? null);
-  console.log("CURRENT TERM =", result?.effectiveCurrentTerm?.term ?? null);
+  // ตรวจ status ต้องเป็นค่าที่กำหนดเท่านั้น
+  // 'pass' | 'fail'     → ผลการเรียน
+  // 'enrolled'          → วิชาที่อยู่ใน term แต่ยังไม่ตัดสิน (add มาหรือ notSet)
+  const VALID_STATUSES = ['pass', 'fail', 'enrolled'];
+  const invalid = plan.find((r) => r.status && !VALID_STATUSES.includes(r.status));
+  if (invalid) {
+    return res.status(400).json({
+      success: false,
+      message: `Invalid status "${invalid.status}" — must be one of: ${VALID_STATUSES.join(', ')}`,
+    });
+  }
 
-  res.json({ success: true, data: result });
+  try {
+    const result = await savePlan(uid, plan);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
-// ── POST /api/simulate/check-schedule ──────────────────────────────────────
-router.post("/check-schedule", (req, res) => {
-  const { courses } = req.body;
+// ── GET /api/simulatorplan/:uid ──────────────────────────────────────────────
+router.get('/:uid', async (req, res) => {
+  const { uid } = req.params;
 
-  if (!Array.isArray(courses) || courses.length === 0) {
-    return res
-      .status(400)
-      .json({ success: false, message: '"courses" array is required' });
+  if (!uid) {
+    return res.status(400).json({ success: false, message: 'uid is required' });
   }
 
-  const raw = findConflicts(courses);
-  const conflicts = raw.map(({ courseA, courseB }) => ({
-    courseA: {
-      code: courseA,
-      name: COURSES[courseA]?.name || courseA,
-      schedule: SCHEDULE[courseA] || [],
-    },
-    courseB: {
-      code: courseB,
-      name: COURSES[courseB]?.name || courseB,
-      schedule: SCHEDULE[courseB] || [],
-    },
-  }));
+  try {
+    const data = await getPlan(uid);
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
-  res.json({
-    success: true,
-    data: {
-      hasConflict: conflicts.length > 0,
-      conflicts,
-    },
-  });
+// ── DELETE /api/simulatorplan/:uid ───────────────────────────────────────────
+router.delete('/:uid', async (req, res) => {
+  const { uid } = req.params;
+
+  if (!uid) {
+    return res.status(400).json({ success: false, message: 'uid is required' })
+  }
+
+  try {
+    const result = await deletePlan(uid);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 module.exports = router;
