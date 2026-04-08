@@ -12,6 +12,8 @@ class SubjectCard extends StatelessWidget {
   final String? grade;
   final Function(String)? onGradeChanged;
   final VoidCallback? onDelete;
+  final String?
+  section; // ✅ เพิ่ม section // ✅ เพิ่มรายการเหตุผลว่าทำไมลงไม่ได้
 
   const SubjectCard({
     super.key,
@@ -23,6 +25,7 @@ class SubjectCard extends StatelessWidget {
     this.grade,
     this.onGradeChanged,
     this.onDelete,
+    this.section, // ✅ เพิ่ม section // ✅ เพิ่ม
   });
 
   @override
@@ -65,6 +68,28 @@ class SubjectCard extends StatelessWidget {
                         fontSize: 15,
                       ),
                     ),
+                    if (section != null &&
+                        (section!.isNotEmpty && section != "-")) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "SEC $section",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(width: 8),
                     // โชว์ Badge เฉพาะในหน้า Simulator
                     if (mode == RoadmapMode.simulate)
@@ -114,6 +139,15 @@ class SubjectCard extends StatelessWidget {
             name,
             style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           ),
+
+          if (isMissingPrereq)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                "Missing Prerequisite",
+                style: TextStyle(color: Colors.red, fontSize: 12),
+              ),
+            ),
 
           // แสดงส่วนจัดการเกรด (เฉพาะโหมด View และ Edit)
           if (mode != RoadmapMode.simulate) _buildGradeSection(),

@@ -1,5 +1,7 @@
+import 'package:cn_planner_app/features/impact_analysis/screens/impact_analysis_screen.dart';
 import 'package:cn_planner_app/features/main_wrapper.dart';
 import 'package:cn_planner_app/features/manage/views/manage_course_page.dart';
+import 'package:cn_planner_app/features/roadmap/views/academic_history_page.dart';
 import 'features/auth/views/login_page.dart';
 import 'features/auth/views/register_page.dart';
 import 'features/auth/views/forgot_password_page.dart';
@@ -12,6 +14,7 @@ import 'features/profile/views/setting_page.dart';
 import 'features/notification/views/notifications_page.dart';
 import 'features/gpa_calculator/views/gpa_calculator_page.dart';
 import 'features/credit_breakdown/views/credit_page.dart';
+import 'features/simulator/screens/simulator_screen.dart';
 
 class AppRoutes {
   static const login = '/login';
@@ -28,6 +31,7 @@ class AppRoutes {
   static const creditBreakdown = '/credit_breakdown';
   static const main = 'main';
   static const gpa = '/gpa';
+  static const academicHistory = '/academic_history';
 
   static final routes = {
     login: (context) => const LoginPage(),
@@ -50,5 +54,6 @@ class AppRoutes {
     ),
     gpa: (context) => const GPACalculatorPage(),
     creditBreakdown: (context) => const CreditBreakdownPage(),
+    academicHistory: (context) => RoadmapPage(mode: RoadmapMode.edit),
   };
 }

@@ -11,7 +11,8 @@ import '../services/profile_service.dart';
 import '../services/roadmap_service.dart';
 // import '../services/validation_service.dart'; // 🔥 Import validation
 import 'academic_history_page.dart';
-import 'simulator_page.dart';
+// import 'simulator_page.dart';
+import '../../simulator/screens/simulator_screen.dart';
 import '../../manage/views/manage_course_page.dart';
 import 'package:cn_planner_app/services/send_grade.dart';
 
@@ -39,7 +40,16 @@ class _RoadmapPageState extends State<RoadmapPage> {
   List<SubjectModel> allSubjects = [];
   Map<String, dynamic>? userProfile;
 
-  Map<String, double> gradeScheme = {'A': 4.0, 'B+': 3.5, 'B': 3.0, 'C+': 2.5, 'C': 2.0, 'D+': 1.5, 'D': 1.0, 'F': 0.0};
+  Map<String, double> gradeScheme = {
+    'A': 4.0,
+    'B+': 3.5,
+    'B': 3.0,
+    'C+': 2.5,
+    'C': 2.0,
+    'D+': 1.5,
+    'D': 1.0,
+    'F': 0.0,
+  };
 
   double totalGradePoints = 0;
   double totalCredits = 0;
@@ -48,7 +58,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
 
   List<Map<String, dynamic>> academicHistory = [];
   List<Map<String, dynamic>> editedHistory = [];
-  List<Map<String, dynamic>> universityPlan = [];
+  List<Map<String, dynamic>> roadmapPlan = [];
   List<Map<String, dynamic>> simulatedPlan = [];
   List<String> getPassedSubjects(List<Map<String, dynamic>> plan) {
     return plan
@@ -115,7 +125,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
 
           maxYear = profile?['max_year'] ?? 4;
 
-          universityPlan = [
+          roadmapPlan = [
             {
               'subject_code': 'CN101',
               'year': 1,
@@ -244,43 +254,84 @@ class _RoadmapPageState extends State<RoadmapPage> {
   }
 
   Widget _buildViewRoadmapLayout() {
-    return DefaultTabController(
-      length: 2,
-      initialIndex: widget.initialTabIndex,
-      child: Scaffold(
-        backgroundColor: Colors.grey[100],
-        appBar: AppBar(
-          title: const Text("Roadmap"),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: "University Plan"),
-              Tab(text: "My Saved Plan"),
-            ],
-          ),
-        ),
-        floatingActionButton: _buildViewFabs(),
-        body: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : TabBarView(
-                children: [
-                  _buildTermList(universityPlan, isStatic: true),
-                  _buildTermList(simulatedPlan, isStatic: false),
-                ],
+    bool canPop = ModalRoute.of(context)?.canPop ?? false;
+
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        automaticallyImplyLeading: canPop,
+        leading: canPop
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.maybePop(context),
+              )
+            : null,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              'ROADMAP',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
               ),
+            ),
+            Text(
+              'Computer Engineering',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
       ),
+      floatingActionButton: _buildViewFabs(),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _buildTermList(roadmapPlan, isStatic: false),
     );
   }
 
   Widget _buildEditHistoryLayout() {
+    bool canPop = ModalRoute.of(context)?.canPop ?? false;
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("Edit Academic History"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () async {
-            if (await _onWillPop()) Navigator.pop(context);
-          },
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        automaticallyImplyLeading: canPop,
+        leading: canPop
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.maybePop(context),
+              )
+            : null,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              'EDIT ACADEMIC HISTORY',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+            ),
+            Text(
+              'Computer Engineering',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: _buildSaveFab(),
@@ -480,16 +531,46 @@ class _RoadmapPageState extends State<RoadmapPage> {
   }
 
   Widget _buildAddYearButton() {
-    return Container(
-      width: 150,
-      margin: const EdgeInsets.only(left: 10, top: 40),
-      child: OutlinedButton.icon(
-        onPressed: () => setState(() {
-          maxYear++;
-          hasChanges = true;
-        }),
-        icon: const Icon(Icons.add),
-        label: const Text("Add Year"),
+    return GestureDetector(
+      onTap: () => setState(() {
+        maxYear++;
+        hasChanges = true;
+      }),
+      child: Container(
+        width: 150,
+        margin: const EdgeInsets.only(left: 10, top: 40),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(50),
+          border: Border.all(color: Colors.grey.shade300),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_circle_outline,
+              color: Colors.grey.shade500,
+              size: 26,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Add Year",
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -593,25 +674,32 @@ class _RoadmapPageState extends State<RoadmapPage> {
           for (var item in editedHistory) {
             String grade = item['grade'];
 
-            if(!gradeScheme.containsKey(grade)) continue;
+            if (!gradeScheme.containsKey(grade)) continue;
 
             final subject = allSubjects.firstWhere(
               (s) => s.subjectCode == item['subject_code'],
-              orElse: () => SubjectModel(subjectCode: '', subjectName: '', credits: 0, subjectId: 0),
+              orElse: () => SubjectModel(
+                subjectCode: '',
+                subjectName: '',
+                credits: 0,
+                subjectId: 0,
+              ),
             );
 
             totalGradePoints += (gradeScheme[grade]! * subject.credits);
             totalCredits += subject.credits;
 
-            
-            if (item['year'] == selectedYear && item['semester'] == selectedTerm) {
+            if (item['year'] == selectedYear &&
+                item['semester'] == selectedTerm) {
               thisSemGradePoints += (gradeScheme[grade]! * subject.credits);
               thisSemCredits += subject.credits;
             }
           }
 
           var gpax = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
-          var gpa = thisSemCredits > 0 ? thisSemGradePoints / thisSemCredits : 0.0;
+          var gpa = thisSemCredits > 0
+              ? thisSemGradePoints / thisSemCredits
+              : 0.0;
 
           await SendGrade.submitGPAX(gpax, totalCredits, gpa, thisSemCredits);
 
