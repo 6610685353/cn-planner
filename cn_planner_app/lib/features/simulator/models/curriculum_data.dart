@@ -1,6 +1,17 @@
-import '../models/course_model.dart';
-import '../models/term_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'course_model.dart';
+import 'term_model.dart';
 
+/// CurriculumData
+///
+/// ดึงข้อมูลหลักสูตรจาก Supabase แทน hardcode:
+///   - profiles       → current_year, current_semester
+///   - UserRoadmap    → วิชาของ user แต่ละเทอม + grade/status
+///   - Subjects       → ชื่อ, credits, prerequisites, offeredSemester
+///   - ClassSchedules → ตารางเรียน
+///
+/// Static constants (ไม่เปลี่ยน) ยังคงอยู่เพื่อใช้กับ logic ส่วนอื่น.
 class CurriculumData {
   static const String programName = 'Computer Engineering';
   static const int totalProgramCredits = 146;
@@ -8,439 +19,239 @@ class CurriculumData {
   static const int maxCreditsPerTerm = 21;
   static const int maxSupportedYear = 8;
 
-  static CourseModel _course({
-    required String code,
-    required String name,
-    required int credits,
-    List<String> prerequisites = const [],
-    List<int> availableTerms = const [1, 2],
-    CourseStatus status = CourseStatus.upcoming,
-    CourseOutcome outcome = CourseOutcome.notSet,
-    String? grade,
-    String? category,
+  // ─── Build CourseModel from Supabase rows ─────────────────────────────────
+
+  static CourseOutcome _gradeToOutcome(String? grade, String? status) {
+    if (grade == 'F') return CourseOutcome.fail;
+    if (grade == 'W') return CourseOutcome.withdraw;
+    if (grade != null && grade != '-' && grade.isNotEmpty)
+      return CourseOutcome.pass;
+    if (status == 'passed') return CourseOutcome.pass;
+    if (status == 'not_pass') return CourseOutcome.fail;
+    return CourseOutcome.notSet;
+  }
+
+  static List<TimeSlot> _slotsFor(
+    String code,
+    List<Map<String, dynamic>> scheduleRows,
+  ) {
+    return scheduleRows
+        .where((r) => r['subject_code'] == code)
+        .map(
+          (r) => TimeSlot(
+            day: r['day'] as String,
+            start: r['start_time'] as String,
+            end: r['end_time'] as String,
+          ),
+        )
+        .toList();
+  }
+
+  static CourseModel _buildCourse({
+    required Map<String, dynamic> subjectRow,
+    required Map<String, dynamic>? roadmapRow, // null = not in user roadmap
+    required List<Map<String, dynamic>> scheduleRows,
+    required CourseStatus courseStatus,
   }) {
+    final code = subjectRow['subjectCode'] as String? ?? '';
+    final name = subjectRow['subjectName'] as String? ?? code;
+    final credits = ((subjectRow['credits'] ?? 0) as num).toInt();
+
+    final prereqs =
+        (subjectRow['require'] as List?)?.map((e) => e.toString()).toList() ??
+        [];
+
+    final offered =
+        (subjectRow['offeredSemester'] as List?)
+            ?.map((e) => (e as num).toInt())
+            .toList() ??
+        [1, 2];
+
+    final grade = roadmapRow?['grade'] as String?;
+    final status = roadmapRow?['status'] as String?;
+    final outcome = _gradeToOutcome(grade, status);
+
     return CourseModel(
       code: code,
       name: name,
       credits: credits,
-      prerequisites: prerequisites,
-      availableTerms: availableTerms,
-      status: status,
+      prerequisites: prereqs,
+      availableTerms: offered,
+      schedule: _slotsFor(code, scheduleRows),
+      status: courseStatus,
       outcome: outcome,
       grade: grade,
-      category: category,
+      subjectId: (subjectRow['subjectId'] as num?)?.toInt(),
     );
   }
 
-  static List<TermModel> getTerms() {
-    return [
-      TermModel(
-        year: 1,
-        term: 1,
-        status: TermStatus.passed,
-        courses: [
-          _course(
-            code: 'CN101',
-            name: 'Programming',
-            credits: 3,
-            availableTerms: [1],
-            status: CourseStatus.passed,
-            outcome: CourseOutcome.pass,
-            grade: 'A',
-          ),
-          _course(
-            code: 'CN102',
-            name: 'Practice',
-            credits: 1,
-            availableTerms: [1],
-            status: CourseStatus.passed,
-            outcome: CourseOutcome.pass,
-            grade: 'A',
-          ),
-          _course(
-            code: 'SC133',
-            name: 'Physics 1',
-            credits: 3,
-            status: CourseStatus.passed,
-            outcome: CourseOutcome.pass,
-            grade: 'B+',
-          ),
-          _course(
-            code: 'SC183',
-            name: 'Physics Lab 1',
-            credits: 1,
-            status: CourseStatus.passed,
-            outcome: CourseOutcome.pass,
-            grade: 'A',
-          ),
-          _course(
-            code: 'MA111',
-            name: 'Calculus 1',
-            credits: 3,
-            status: CourseStatus.passed,
-            outcome: CourseOutcome.pass,
-            grade: 'B',
-          ),
-          _course(
-            code: 'LAS101',
-            name: 'LAS101',
-            credits: 3,
-            status: CourseStatus.passed,
-            outcome: CourseOutcome.pass,
-          ),
-          _course(
-            code: 'TU100',
-            name: 'TU100',
-            credits: 1,
-            status: CourseStatus.passed,
-            outcome: CourseOutcome.pass,
-          ),
-          _course(
-            code: 'TSE100',
-            name: 'TSE100',
-            credits: 0,
-            status: CourseStatus.passed,
-            outcome: CourseOutcome.pass,
-          ),
-        ],
-      ),
-      TermModel(
-        year: 1,
-        term: 2,
-        status: TermStatus.current,
-        courses: [
-          _course(
-            code: 'CN201',
-            name: 'OOP',
-            credits: 3,
-            prerequisites: ['CN101'],
-            availableTerms: [2],
-            status: CourseStatus.current,
-          ),
-          _course(
-            code: 'CN103',
-            name: 'Practice 2',
-            credits: 1,
-            availableTerms: [2],
-            status: CourseStatus.current,
-          ),
-          _course(
-            code: 'MA112',
-            name: 'Calculus 2',
-            credits: 3,
-            prerequisites: ['MA111'],
-            status: CourseStatus.current,
-          ),
-          _course(
-            code: 'SC134',
-            name: 'Physics 2',
-            credits: 3,
-            status: CourseStatus.current,
-          ),
-          _course(
-            code: 'SC184',
-            name: 'Physics Lab 2',
-            credits: 1,
-            status: CourseStatus.current,
-          ),
-          _course(
-            code: 'EL105',
-            name: 'EL105',
-            credits: 3,
-            status: CourseStatus.current,
-          ),
-          _course(
-            code: 'IE121',
-            name: 'IE121',
-            credits: 3,
-            status: CourseStatus.current,
-          ),
-          _course(
-            code: 'ME100',
-            name: 'ME100',
-            credits: 3,
-            status: CourseStatus.current,
-          ),
-          _course(
-            code: 'TSE101',
-            name: 'TSE101',
-            credits: 1,
-            status: CourseStatus.current,
-          ),
-        ],
-      ),
-      TermModel(
-        year: 2,
-        term: 1,
-        courses: [
-          _course(
-            code: 'CN202',
-            name: 'Data Structures & Algo 1',
-            credits: 3,
-            prerequisites: ['CN101', 'CN201'],
-            availableTerms: [1],
-          ),
-          _course(
-            code: 'CN200',
-            name: 'Discrete Math',
-            credits: 3,
-            availableTerms: [1],
-          ),
-          _course(
-            code: 'CN204',
-            name: 'Probability & Statistics',
-            credits: 3,
-            prerequisites: ['MA111'],
-            availableTerms: [1],
-          ),
-          _course(
-            code: 'CN260',
-            name: 'Circuit Theory',
-            credits: 3,
-            availableTerms: [1],
-          ),
-          _course(
-            code: 'CN261',
-            name: 'Circuit Lab',
-            credits: 1,
-            prerequisites: ['CN260'],
-            availableTerms: [1],
-          ),
-          _course(
-            code: 'MA214',
-            name: 'Differential Equations',
-            credits: 3,
-            prerequisites: ['MA111', 'MA112'],
-          ),
-          _course(code: 'TU108', name: 'TU108', credits: 1),
-        ],
-      ),
-      TermModel(
-        year: 2,
-        term: 2,
-        courses: [
-          _course(
-            code: 'CN203',
-            name: 'Data Structures & Algo 2',
-            credits: 3,
-            prerequisites: ['CN202', 'CN201', 'CN101'],
-            availableTerms: [2],
-          ),
-          _course(
-            code: 'CN230',
-            name: 'Database Systems',
-            credits: 3,
-            availableTerms: [2],
-          ),
-          _course(
-            code: 'CN210',
-            name: 'Computer Architecture',
-            credits: 3,
-            availableTerms: [2],
-          ),
-          _course(
-            code: 'CN240',
-            name: 'Data Science',
-            credits: 3,
-            prerequisites: ['CN204', 'MA111'],
-            availableTerms: [2],
-          ),
-          _course(code: 'CN262', name: 'Digital Systems', credits: 3),
-          _course(code: 'TU122', name: 'TU122', credits: 1),
-        ],
-      ),
-      TermModel(
-        year: 3,
-        term: 1,
-        courses: [
-          _course(
-            code: 'CN331',
-            name: 'Software Engineering',
-            credits: 3,
-            prerequisites: ['CN101'],
-            availableTerms: [1],
-          ),
-          _course(
-            code: 'CN361',
-            name: 'CN361',
-            credits: 3,
-            prerequisites: ['CN262'],
-            availableTerms: [1],
-            category: 'Major Elective',
-          ),
-          _course(
-            code: 'CN321',
-            name: 'Data Communications',
-            credits: 3,
-            availableTerms: [1],
-          ),
-          _course(
-            code: 'CN330',
-            name: 'App Development',
-            credits: 3,
-            prerequisites: ['CN101'],
-            availableTerms: [1],
-            category: 'Major Elective',
-          ),
-          _course(
-            code: 'CN310',
-            name: 'Server Technology',
-            credits: 3,
-            availableTerms: [1],
-            category: 'Major Elective',
-          ),
-          _course(
-            code: 'CN320',
-            name: 'Network',
-            credits: 3,
-            availableTerms: [1],
-            category: 'Major Elective',
-          ),
-          _course(
-            code: 'CN340',
-            name: 'Machine Learning',
-            credits: 3,
-            prerequisites: ['CN240'],
-            availableTerms: [1],
-            category: 'Major Elective',
-          ),
-        ],
-      ),
-      TermModel(
-        year: 3,
-        term: 2,
-        courses: [
-          _course(
-            code: 'CN311',
-            name: 'Operating Systems',
-            credits: 3,
-            availableTerms: [2],
-          ),
-          _course(
-            code: 'CN332',
-            name: 'OOAD',
-            credits: 3,
-            prerequisites: ['CN201'],
-            availableTerms: [2],
-          ),
-          _course(
-            code: 'CN333',
-            name: 'Mobile App Dev',
-            credits: 3,
-            availableTerms: [2],
-          ),
-          _course(
-            code: 'CN322',
-            name: 'Network Security',
-            credits: 3,
-            prerequisites: ['CN320'],
-            availableTerms: [2],
-            category: 'Major Elective',
-          ),
-          _course(
-            code: 'CN341',
-            name: 'Deep Learning',
-            credits: 3,
-            prerequisites: ['CN340'],
-            availableTerms: [2],
-            category: 'Major Elective',
-          ),
-          _course(
-            code: 'CN335',
-            name: 'Animation',
-            credits: 3,
-            availableTerms: [2],
-            category: 'Major Elective',
-          ),
-          _course(
-            code: 'CN351',
-            name: 'Web Security',
-            credits: 3,
-            availableTerms: [2],
-            category: 'Major Elective',
-          ),
-          _course(
-            code: 'CN334',
-            name: 'Web Development',
-            credits: 3,
-            prerequisites: ['CN101'],
-            availableTerms: [2],
-            category: 'Major Elective',
-          ),
-        ],
-      ),
-      TermModel(year: 4, term: 1, courses: []),
-      TermModel(year: 4, term: 2, courses: []),
-    ];
-  }
+  // ─── Main loader ──────────────────────────────────────────────────────────
 
-  static List<TermModel> getEmptyYearTerms(int year) {
-    return [
-      TermModel(year: year, term: 1, courses: []),
-      TermModel(year: year, term: 2, courses: []),
-    ];
-  }
+  /// ดึงข้อมูลทั้งหมดจาก Supabase แล้วสร้าง List<TermModel>
+  /// พร้อม currentYear/currentSemester จาก profiles
+  static Future<
+    ({
+      List<TermModel> terms,
+      int currentYear,
+      int currentSemester,
+      Map<String, CourseModel> catalogByCode,
+    })
+  >
+  loadFromSupabase() async {
+    final supabase = Supabase.instance.client;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('User not logged in');
 
-  static List<CourseModel> getAllCourses() {
-    final seen = <String>{};
-    final result = <CourseModel>[];
+    // Parallel fetch
+    final results = await Future.wait([
+      supabase
+          .from('profiles')
+          .select('current_year, current_semester, max_year')
+          .eq('user_id', uid)
+          .single(),
+      supabase
+          .from('UserRoadmap')
+          .select(
+            'subject_code, subjectId, year, semester, grade, status, section',
+          )
+          .eq('user_id', uid)
+          .order('year')
+          .order('semester'),
+      supabase
+          .from('Subjects')
+          .select(
+            'subjectId, subjectCode, subjectName, credits, require, corequisite, offeredSemester',
+          ),
+      supabase
+          .from('ClassSchedules')
+          .select('subject_code, section, day, start_time, end_time'),
+    ]);
 
-    void addIfNeeded(CourseModel course) {
-      if (seen.add(course.code)) {
-        result.add(course);
+    final profile = results[0] as Map<String, dynamic>;
+    final roadmapList = (results[1] as List).cast<Map<String, dynamic>>();
+    final subjectList = (results[2] as List).cast<Map<String, dynamic>>();
+    final scheduleList = (results[3] as List).cast<Map<String, dynamic>>();
+
+    final int currentYear = (profile['current_year'] as num?)?.toInt() ?? 1;
+    final int currentSem = (profile['current_semester'] as num?)?.toInt() ?? 1;
+    final int maxYear = (profile['max_year'] as num?)?.toInt() ?? 4;
+    final int currentIdx = (currentYear - 1) * 2 + currentSem;
+
+    // Build quick-lookup maps
+    final subjectByCode = <String, Map<String, dynamic>>{};
+    for (final s in subjectList) {
+      final code = s['subjectCode'] as String?;
+      if (code != null) subjectByCode[code] = s;
+    }
+
+    // Build roadmap lookup: 'code_year_sem' → row
+    final roadmapByKey = <String, Map<String, dynamic>>{};
+    for (final r in roadmapList) {
+      final key = '${r['subject_code']}_${r['year']}_${r['semester']}';
+      roadmapByKey[key] = r;
+    }
+
+    // Group roadmap by (year, semester)
+    final termKeys = <String, ({int year, int semester})>{};
+    for (final r in roadmapList) {
+      final y = (r['year'] as num).toInt();
+      final s = (r['semester'] as num).toInt();
+      termKeys['${y}_${s}'] = (year: y, semester: s);
+    }
+
+    // Ensure Y4S1 and Y4S2 always exist (and up to maxYear)
+    for (var y = 1; y <= maxYear; y++) {
+      for (var s = 1; s <= 2; s++) {
+        termKeys['${y}_${s}'] ??= (year: y, semester: s);
       }
     }
 
-    for (final term in getTerms()) {
-      for (final course in term.courses) {
-        addIfNeeded(course);
+    final sortedKeys = termKeys.values.toList()
+      ..sort((a, b) {
+        final ia = (a.year - 1) * 2 + a.semester;
+        final ib = (b.year - 1) * 2 + b.semester;
+        return ia.compareTo(ib);
+      });
+
+    // Build TermModel list
+    final terms = <TermModel>[];
+    for (final tk in sortedKeys) {
+      final termIdx = (tk.year - 1) * 2 + tk.semester;
+
+      final TermStatus termStatus;
+      if (termIdx < currentIdx) {
+        termStatus = TermStatus.passed;
+      } else if (termIdx == currentIdx) {
+        termStatus = TermStatus.current;
+      } else {
+        termStatus = TermStatus.upcoming;
       }
+
+      final CourseStatus courseStatus;
+      if (termIdx < currentIdx) {
+        courseStatus = CourseStatus.passed;
+      } else if (termIdx == currentIdx) {
+        courseStatus = CourseStatus.current;
+      } else {
+        courseStatus = CourseStatus.upcoming;
+      }
+
+      // Find courses for this term (from UserRoadmap)
+      final termCourses = roadmapList
+          .where(
+            (r) =>
+                (r['year'] as num).toInt() == tk.year &&
+                (r['semester'] as num).toInt() == tk.semester,
+          )
+          .map((r) {
+            final code = r['subject_code'] as String;
+            final subRow =
+                subjectByCode[code] ??
+                {'subjectCode': code, 'subjectName': code, 'credits': 0};
+            return _buildCourse(
+              subjectRow: subRow,
+              roadmapRow: r,
+              scheduleRows: scheduleList,
+              courseStatus: courseStatus,
+            );
+          })
+          .toList();
+
+      terms.add(
+        TermModel(
+          year: tk.year,
+          term: tk.semester,
+          status: termStatus,
+          courses: termCourses,
+        ),
+      );
     }
 
-    for (final course in [
-      _course(
-        code: 'CN401',
-        name: 'Senior Project 1',
-        credits: 1,
-        availableTerms: [1],
-      ),
-      _course(
-        code: 'CN402',
-        name: 'Senior Project 2',
-        credits: 1,
-        prerequisites: ['CN401'],
-        availableTerms: [2],
-      ),
-      _course(
-        code: 'CN403',
-        name: 'Co-op Preparation',
-        credits: 1,
-        availableTerms: [1],
-      ),
-      _course(
-        code: 'CN404',
-        name: 'Co-operative Education',
-        credits: 6,
-        prerequisites: ['CN403'],
-        availableTerms: [2],
-      ),
-      _course(
-        code: 'CN472',
-        name: 'Research 1',
-        credits: 1,
-        availableTerms: [1],
-      ),
-      _course(
-        code: 'CN473',
-        name: 'Research 2',
-        credits: 6,
-        prerequisites: ['CN472'],
-        availableTerms: [2],
-      ),
-    ]) {
-      addIfNeeded(course);
+    // Build catalog (all subjects from DB)
+    final catalogByCode = <String, CourseModel>{};
+    for (final s in subjectList) {
+      final code = s['subjectCode'] as String? ?? '';
+      if (code.isEmpty) continue;
+      catalogByCode[code] = _buildCourse(
+        subjectRow: s,
+        roadmapRow: null,
+        scheduleRows: scheduleList,
+        courseStatus: CourseStatus.upcoming,
+      );
     }
 
-    return result;
+    return (
+      terms: terms,
+      currentYear: currentYear,
+      currentSemester: currentSem,
+      catalogByCode: catalogByCode,
+    );
   }
+
+  // ─── Static helpers (unchanged) ───────────────────────────────────────────
+
+  static List<TermModel> getEmptyYearTerms(int year) => [
+    TermModel(year: year, term: 1, courses: []),
+    TermModel(year: year, term: 2, courses: []),
+  ];
 }

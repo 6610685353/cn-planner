@@ -1,6 +1,7 @@
 import 'package:cn_planner_app/features/impact_analysis/screens/impact_analysis_screen.dart';
 import 'package:cn_planner_app/features/main_wrapper.dart';
 import 'package:cn_planner_app/features/manage/views/manage_course_page.dart';
+import 'package:cn_planner_app/features/roadmap/views/academic_history_page.dart';
 import 'features/auth/views/login_page.dart';
 import 'features/auth/views/register_page.dart';
 import 'features/auth/views/forgot_password_page.dart';
@@ -30,6 +31,7 @@ class AppRoutes {
   static const creditBreakdown = '/credit_breakdown';
   static const main = 'main';
   static const gpa = '/gpa';
+  static const academicHistory = '/academic_history';
 
   static final routes = {
     login: (context) => const LoginPage(),
@@ -37,15 +39,21 @@ class AppRoutes {
     forgotPassword: (context) => const ForgotPasswordPage(),
     main: (context) => const MainWrapper(),
     home: (context) => const HomePage(),
-    // roadmap: (context) => const RoadMapPage(),
-    roadmap: (context) => const SimulatorPage(),
+    roadmap: (context) =>
+        const RoadmapPage(mode: RoadmapMode.view), // เพิ่ม mode
     schedule: (context) => const SchedulePage(),
     profile: (context) => const ProfilePage(),
     editProfile: (context) => const EditProfilePage(),
     setting: (context) => const SettingPage(),
     notification: (context) => const NotificationsPage(),
-    manage: (context) => const ManageCoursePage(),
+    manage: (context) => const ManageCoursePage(
+      targetTerm: 1,
+      subjects: const [],
+      passedSubjects: const [],
+      alreadyAddedCodes: const [],
+    ),
     gpa: (context) => const GPACalculatorPage(),
     creditBreakdown: (context) => const CreditBreakdownPage(),
+    academicHistory: (context) => RoadmapPage(mode: RoadmapMode.edit),
   };
 }

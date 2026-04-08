@@ -22,6 +22,10 @@ class CourseModel {
   final List<TimeSlot> schedule;
   final String? category;
 
+  /// subjectId จาก Supabase Subjects.subjectId
+  /// ใช้ตอนบันทึก simulatorplan
+  final int? subjectId;
+
   CourseStatus status;
   CourseOutcome outcome;
   String? grade;
@@ -35,6 +39,7 @@ class CourseModel {
     this.isCustom = false,
     this.schedule = const [],
     this.category,
+    this.subjectId,
     this.status = CourseStatus.upcoming,
     this.outcome = CourseOutcome.notSet,
     this.grade,
@@ -66,6 +71,7 @@ class CourseModel {
       isCustom: isCustom,
       schedule: schedule,
       category: category ?? this.category,
+      subjectId: subjectId,
       status: status ?? this.status,
       outcome: outcome ?? this.outcome,
       grade: grade ?? this.grade,

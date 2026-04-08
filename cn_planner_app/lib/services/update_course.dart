@@ -20,7 +20,6 @@ class UpdateCourse {
       }),
     );
 
-    print("submit Status: ${response.statusCode}");
-    print("Body: ${response.body}");
+    print("submit course Status: ${response.statusCode}");
   }
 }

@@ -25,26 +25,17 @@ class _SimulatorScreenState extends State<SimulatorPage> {
     'CN472': 'CN473',
   };
 
-  late List<TermModel> _terms;
-  late Map<String, CourseModel> _catalogByCode;
+  List<TermModel> _terms = [];
+  Map<String, CourseModel> _catalogByCode = {};
   int _selectedTermIndex = 0;
-  bool _isLoading = false;
+  bool _isLoading = true; // loading initial data from Supabase
+  bool _isSimulating = false; // running simulate call
   final PageController _pageController = PageController();
 
   @override
   void initState() {
     super.initState();
-    _terms = CurriculumData.getTerms();
-    _catalogByCode = {
-      for (final course in CurriculumData.getAllCourses()) course.code: course,
-    };
-    _refreshTermStatuses();
-    _selectedTermIndex = _indexOfCurrentTerm();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_pageController.hasClients) {
-        _pageController.jumpToPage(_selectedTermIndex);
-      }
-    });
+    _loadData();
   }
 
   @override
@@ -52,6 +43,51 @@ class _SimulatorScreenState extends State<SimulatorPage> {
     _pageController.dispose();
     super.dispose();
   }
+
+  // ─── Load from Supabase ───────────────────────────────────────────────────
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final loaded = await CurriculumData.loadFromSupabase();
+      final savedPlan = await SimulatorService.loadSimulationPlan();
+
+      setState(() {
+        _terms = loaded.terms;
+        _catalogByCode = loaded.catalogByCode;
+        _refreshTermStatuses(); // ทำก่อน เพื่อ set status ให้ถูกต้อง
+
+        // Apply saved outcomes หลัง _refreshTermStatuses()
+        // เพื่อไม่ให้ถูก override กลับเป็น fail
+        if (savedPlan.isNotEmpty) {
+          for (final term in _terms) {
+            for (var i = 0; i < term.courses.length; i++) {
+              final course = term.courses[i];
+              final savedOutcome = savedPlan[course.code];
+              if (savedOutcome != null) {
+                term.courses[i] = course.copyWith(outcome: savedOutcome);
+              }
+            }
+          }
+        }
+
+        _selectedTermIndex = _indexOfCurrentTerm();
+        _isLoading = false;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(_selectedTermIndex);
+        }
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        _showInfo('Failed to load data: $e', backgroundColor: Colors.red);
+      }
+    }
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
 
   int get _totalEarnedCredits => _terms.fold(
     0,
@@ -69,9 +105,8 @@ class _SimulatorScreenState extends State<SimulatorPage> {
 
   int _termOrder(TermModel term) => (term.year - 1) * 2 + term.term;
 
-  int _findTermIndex(int year, int term) {
-    return _terms.indexWhere((t) => t.year == year && t.term == term);
-  }
+  int _findTermIndex(int year, int term) =>
+      _terms.indexWhere((t) => t.year == year && t.term == term);
 
   CourseStatus _courseStatusForTerm(TermStatus status) {
     switch (status) {
@@ -100,6 +135,7 @@ class _SimulatorScreenState extends State<SimulatorPage> {
       isCustom: course.isCustom,
       schedule: course.schedule,
       category: course.category,
+      subjectId: course.subjectId,
       status: _courseStatusForTerm(term.status),
       outcome: course.outcome,
       grade: course.grade,
@@ -145,17 +181,16 @@ class _SimulatorScreenState extends State<SimulatorPage> {
 
     for (var i = 0; i < _terms.length; i++) {
       final term = _terms[i];
-      if (i == currentIndex) {
-        term.status = TermStatus.current;
-      } else if (i < currentIndex) {
-        term.status = term.allPassed ? TermStatus.passed : TermStatus.upcoming;
-      } else {
-        term.status = TermStatus.upcoming;
-      }
+      final newStatus = i < currentIndex
+          ? TermStatus.passed
+          : i == currentIndex
+          ? TermStatus.current
+          : TermStatus.upcoming;
 
-      final courseStatus = _courseStatusForTerm(term.status);
+      term.status = newStatus;
       for (var j = 0; j < term.courses.length; j++) {
         final course = term.courses[j];
+        final courseStatus = _courseStatusForTerm(newStatus);
         final nextOutcome =
             term.status == TermStatus.current &&
                 course.outcome == CourseOutcome.notSet
@@ -245,7 +280,6 @@ class _SimulatorScreenState extends State<SimulatorPage> {
             );
             continue;
           }
-
           if (!term.courses.any((c) => c.code == action.course.code)) {
             term.courses.add(_copyForTerm(action.course, term));
           }
@@ -318,11 +352,11 @@ class _SimulatorScreenState extends State<SimulatorPage> {
 
   Future<void> _onSimulate() async {
     HapticFeedback.mediumImpact();
-    setState(() => _isLoading = true);
+    setState(() => _isSimulating = true);
     try {
       final result = await SimulatorService.simulate(_terms);
       if (!mounted) return;
-      setState(() => _isLoading = false);
+      setState(() => _isSimulating = false);
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -331,7 +365,7 @@ class _SimulatorScreenState extends State<SimulatorPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
+      setState(() => _isSimulating = false);
       _showInfo('Error: $e', backgroundColor: Colors.red);
     }
   }
@@ -348,6 +382,8 @@ class _SimulatorScreenState extends State<SimulatorPage> {
     return term.term == 2 && termIndex == _terms.length - 1 && term.year >= 5;
   }
 
+  // ─── Build ────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -355,52 +391,54 @@ class _SimulatorScreenState extends State<SimulatorPage> {
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
-          child: Column(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildAppBar(),
-                  const Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: Color(0xFFF0F0F0),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
-                    child: ProgressHeaderWidget(
-                      earnedCredits: _totalEarnedCredits,
-                      totalCredits: CurriculumData.totalProgramCredits,
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildAppBar(),
+                        const Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Color(0xFFF0F0F0),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+                          child: ProgressHeaderWidget(
+                            earnedCredits: _totalEarnedCredits,
+                            totalCredits: CurriculumData.totalProgramCredits,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: TermTabWidget(
+                            terms: _terms,
+                            selectedIndex: _selectedTermIndex,
+                            onChanged: _selectTerm,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: _terms.length,
+                        onPageChanged: (index) =>
+                            setState(() => _selectedTermIndex = index),
+                        itemBuilder: (context, index) =>
+                            _buildTermContent(_terms[index], index),
+                      ),
                     ),
-                    child: TermTabWidget(
-                      terms: _terms,
-                      selectedIndex: _selectedTermIndex,
-                      onChanged: _selectTerm,
-                    ),
-                  ),
-                ],
-              ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: _terms.length,
-                  onPageChanged: (index) =>
-                      setState(() => _selectedTermIndex = index),
-                  itemBuilder: (context, index) =>
-                      _buildTermContent(_terms[index], index),
+                  ],
                 ),
-              ),
-            ],
-          ),
         ),
-        floatingActionButton: _buildSimulateButton(),
+        floatingActionButton: _isLoading ? null : _buildSimulateButton(),
       ),
     );
   }
@@ -426,6 +464,13 @@ class _SimulatorScreenState extends State<SimulatorPage> {
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ],
+          ),
+          const Spacer(),
+          // Reload button
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.grey),
+            tooltip: 'Reload from Supabase',
+            onPressed: _isSimulating ? null : _loadData,
           ),
         ],
       ),
@@ -463,6 +508,7 @@ class _SimulatorScreenState extends State<SimulatorPage> {
           currentYear: term.year,
           currentTerm: term.term,
           currentCourses: term.courses,
+          catalog: _catalogByCode,
           onConfirm: (actions) => _applyActionsToTerm(termIndex, actions),
         ),
         if (_canShowAddYearButton(termIndex) ||
@@ -518,13 +564,13 @@ class _SimulatorScreenState extends State<SimulatorPage> {
         borderRadius: BorderRadius.circular(30),
         child: InkWell(
           borderRadius: BorderRadius.circular(30),
-          onTap: _isLoading ? null : _onSimulate,
+          onTap: _isSimulating ? null : _onSimulate,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (_isLoading)
+                if (_isSimulating)
                   const SizedBox(
                     width: 18,
                     height: 18,
@@ -541,7 +587,7 @@ class _SimulatorScreenState extends State<SimulatorPage> {
                   ),
                 const SizedBox(width: 7),
                 Text(
-                  _isLoading ? 'Analyzing...' : 'Simulate',
+                  _isSimulating ? 'Analyzing...' : 'Simulate',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

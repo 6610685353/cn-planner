@@ -1,6 +1,9 @@
+import 'package:cn_planner_app/core/constants/app_assets.dart';
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/route.dart';
+import 'package:flutter_svg/svg.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/loading_overlay.dart'; // Import Loading กลาง
 import '../controllers/login_controller.dart';
 import '../widgets/login_text_field.dart';
 
@@ -15,6 +18,12 @@ class _LoginPageState extends State<LoginPage> {
   final _controller = LoginController();
 
   @override
+  void initState() {
+    super.initState();
+    _controller.init(); // เรียกตอนเปิดหน้าเพื่อดึงข้อมูล Remember Me
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -22,83 +31,94 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 20),
-                // --- ส่วน Icon และ Header ---
-                const Icon(
-                  Icons.account_circle_rounded,
-                  size: 130,
-                  color: Colors.black87,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  "Welcome Back",
-                  style: TextStyle(fontSize: 33, fontWeight: FontWeight.bold),
-                ),
-                const Text(
-                  "Sign in to your planner account",
-                  style: TextStyle(
-                    color: AppColors.errorRed,
-                    fontSize: 15,
-                  ), // ใช้สี errorRed
-                ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: _controller.isLoading,
+      builder: (context, isLoading, _) {
+        return LoadingOverlay(
+          isLoading: isLoading,
+          child: Scaffold(
+            backgroundColor: Colors.white,
+            body: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 20),
+                      SvgPicture.asset(
+                        AppAssets.logoSvg,
+                        width: 140,
+                        height: 140,
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Welcome Back",
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Text(
+                        "Sign in to your planner account",
+                        style: TextStyle(
+                          color: AppColors.errorRed,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 40),
 
-                const SizedBox(height: 40),
+                      _buildInputLabel("Email / Username"),
+                      LoginTextField(
+                        controller: _controller.identifierController,
+                        hintText: "Enter your email or username",
+                      ),
+                      const SizedBox(height: 20),
 
-                // --- ส่วนฟอร์มกรอกข้อมูล ---
-                _buildInputLabel("Email / Username"),
-                LoginTextField(
-                  controller: _controller.identifierController,
-                  hintText: "Enter your email or username",
-                ),
+                      _buildInputLabel("Password"),
+                      LoginTextField(
+                        controller: _controller.passwordController,
+                        hintText: "Enter your password",
+                        obscureText: true,
+                      ),
 
-                const SizedBox(height: 20),
+                      // --- ส่วน Remember Me & Forgot Password ---
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildRememberMe(),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.forgotPassword,
+                              );
+                            },
+                            child: const Text(
+                              'Forgot password?',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
 
-                _buildInputLabel("Password"),
-                LoginTextField(
-                  controller: _controller.passwordController,
-                  hintText: "Enter your password",
-                  obscureText: true,
-                ),
-
-                // Forgot Password
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.forgotPassword);
-                    },
-                    child: const Text(
-                      'Forgot password?',
-                      style: TextStyle(fontSize: 12, color: Colors.black87),
-                    ),
+                      const SizedBox(height: 20),
+                      _buildSignInButton(),
+                      const SizedBox(height: 20),
+                      _buildSignUpRedirect(),
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
-
-                const SizedBox(height: 20),
-
-                // --- ปุ่ม Sign in ---
-                _buildSignInButton(),
-
-                const SizedBox(height: 20),
-
-                // --- ส่วนย้ายไปหน้าสมัครสมาชิก ---
-                _buildSignUpRedirect(),
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -112,6 +132,31 @@ class _LoginPageState extends State<LoginPage> {
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),
+    );
+  }
+
+  // Widget สำหรับ Remember Me
+  Widget _buildRememberMe() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _controller.rememberMe,
+      builder: (context, isRemembered, _) {
+        return Row(
+          children: [
+            Checkbox(
+              value: isRemembered,
+              onChanged: _controller.toggleRememberMe,
+              activeColor: AppColors.accentYellow,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const Text(
+              'Remember me',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -129,7 +174,6 @@ class _LoginPageState extends State<LoginPage> {
         ],
       ),
       child: ElevatedButton(
-        // onPressed: _controller.handleLogin,
         onPressed: () => _controller.handleLogin(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.accentYellow,
