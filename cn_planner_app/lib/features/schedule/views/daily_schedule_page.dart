@@ -16,7 +16,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
 
   @override
   Widget build(BuildContext context) {
-    // ... (ส่วนจัดการ Date List เหมือนเดิม) ...
     final List<DateTime> nextDays = List.generate(
       5,
       (index) => DateTime.now().add(Duration(days: index)),
@@ -36,68 +35,92 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
       (a, b) => _timeToMinutes(a.start).compareTo(_timeToMinutes(b.start)),
     );
 
-    // --- LOGIC CHANGE: ตรวจสอบ Ongoing และ Next Class ---
     bool isToday = _isSameDate(_selectedDate, DateTime.now());
 
     ClassSession? ongoingClass;
     ClassSession? nextClass;
 
     if (isToday) {
-      // หาคลาสที่กำลังเรียนอยู่ (Ongoing)
       ongoingClass = _findOngoingClass(widget.allClasses);
-
-      // ถ้าไม่มีคลาสที่เรียนอยู่ ให้หาคลาสถัดไป (Next)
       if (ongoingClass == null) {
         nextClass = _findNextClass(widget.allClasses);
       }
     }
 
-    // ตัดสินใจว่าจะโชว์ Banner อันไหน (Ongoing สำคัญกว่า)
     final activeBannerClass = ongoingClass ?? nextClass;
     final isOngoing = ongoingClass != null;
 
+    // --- LOGIC CHANGE: กำหนดคำที่ใช้แสดงแทน Today's Schedule ---
+    String scheduleTitle = "Today's Schedule";
+    if (!isToday) {
+      DateTime tomorrow = DateTime.now().add(const Duration(days: 1));
+      if (_isSameDate(_selectedDate, tomorrow)) {
+        scheduleTitle = "Tomorrow's Schedule";
+      } else {
+        const fullDays = [
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+          'Sunday',
+        ];
+        scheduleTitle = "${fullDays[_selectedDate.weekday - 1]}'s Schedule";
+      }
+    }
+
     return Scaffold(
-      backgroundColor: AppColors.background, // พื้นหลังหลัก
+      backgroundColor: AppColors.background,
       appBar: TopBar(header: "Day Schedule"),
       body: Column(
         children: [
-          // --- Date Selector (โค้ดเดิม) ---
+          // --- Date Selector ---
           SizedBox(
             height: 90,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              // --- FIX: ใช้ Expanded เพื่อให้พื้นที่กดกระจายเต็มช่อง และกดง่ายขึ้น ---
               children: nextDays.map((date) {
                 bool isSelected = _isSameDate(date, _selectedDate);
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedDate = date),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _getWeekdayName(date.weekday),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.black : Colors.grey,
-                        ),
+                return Expanded(
+                  child: GestureDetector(
+                    // --- FIX: บังคับให้รับการกดทั่วทั้งพื้นที่แม้จะเป็นที่ว่าง ---
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => setState(() => _selectedDate = date),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _getWeekdayName(date.weekday),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? Colors.black : Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "${date.day} ${_getMonthName(date.month)}",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isSelected ? Colors.black : Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: 20,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.amber
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "${date.day} ${_getMonthName(date.month)}",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isSelected ? Colors.black : Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: 20,
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color: isSelected ? Colors.amber : Colors.transparent,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 );
               }).toList(),
@@ -112,12 +135,10 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Banner Logic: แสดง Ongoing หรือ Next ---
+                  // --- Banner Logic ---
                   if (activeBannerClass != null) ...[
                     Text(
-                      isOngoing
-                          ? "Happening Now"
-                          : "Next Class", // เปลี่ยนหัวข้อตามสถานะ
+                      isOngoing ? "Happening Now" : "Next Class",
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -128,19 +149,26 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
                     const SizedBox(height: 30),
                   ],
 
-                  const Text(
-                    "Today's Schedule",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  // --- FIX: นำตัวแปร scheduleTitle มาแสดงแทนการ Fix คำว่า Today ---
+                  Text(
+                    scheduleTitle,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 20),
 
                   if (dailyClasses.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 20),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20),
                       child: Center(
                         child: Text(
-                          "No classes for this day!",
-                          style: TextStyle(color: Colors.grey),
+                          // เพิ่มเติมความสมูท: ปรับคำเตือนให้สอดคล้องกับวัน
+                          isToday
+                              ? "No more classes today! 🎉"
+                              : "No classes for this day! 🎉",
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       ),
                     )
@@ -162,13 +190,12 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
     );
   }
 
-  // --- Widget: แถวของ Break Time (แก้ใหม่: Text Only, No Border) ---
+  // --- Widget: แถวของ Break Time ---
   Widget _buildBreakRow(String start, String end) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. เวลา Break (ซ้าย) - ทำให้จางลงหน่อย
           SizedBox(
             width: 60,
             child: Column(
@@ -180,7 +207,7 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
-                    color: Colors.grey.shade400, // สีเทาจาง
+                    color: Colors.grey.shade400,
                   ),
                 ),
                 Text(
@@ -188,23 +215,19 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
-                    color: Colors.grey.shade400, // สีเทาจาง
+                    color: Colors.grey.shade400,
                   ),
                 ),
               ],
             ),
           ),
-
           const SizedBox(width: 10),
-
-          // 2. เส้น Timeline (ยังต้องมีเพื่อให้เส้นเชื่อมต่อกันสวยงาม)
           SizedBox(
             width: 20,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 Container(width: 2, color: Colors.grey.shade200),
-                // จุดเล็กๆ แสดงช่วงพัก (Optional)
                 Container(
                   width: 6,
                   height: 6,
@@ -216,18 +239,13 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
               ],
             ),
           ),
-
-          // 3. เนื้อหา Break (ขวา) - ลบ Container/Shadow ออก เหลือแค่ Text
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 10),
               child: Row(
                 children: [
-                  // จัด Icon และ Text ให้ตรงกลางแนวตั้ง
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16.0,
-                    ), // เพิ่ม Padding บนล่างให้เส้น Timeline ยาวพอดี
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: Icon(
                       Icons.coffee_outlined,
                       size: 18,
@@ -244,7 +262,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
                     ),
                   ),
                   const Spacer(),
-                  // ระยะเวลา
                   Text(
                     _calculateDuration(start, end),
                     style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
@@ -258,9 +275,8 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
     );
   }
 
-  // --- Widget: Banner ด้านบน (รองรับทั้ง Ongoing และ Next) ---
+  // --- Widget: Banner ด้านบน ---
   Widget _buildTopBanner(ClassSession session, {required bool isOngoing}) {
-    // เลือกสีตามสถานะ: Ongoing = เขียว, Next = ฟ้า/ส้ม
     final badgeColor = isOngoing ? Colors.green.shade50 : Colors.blue.shade50;
     final badgeTextColor = isOngoing
         ? Colors.green.shade700
@@ -284,7 +300,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -295,7 +310,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (isOngoing) ...[
-                  // จุดกะพริบหรือ Icon เล็กๆ
                   Container(
                     width: 8,
                     height: 8,
@@ -326,7 +340,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
             ),
           ),
           const SizedBox(height: 20),
-
           Text(
             "${session.code}: ${session.name}",
             style: const TextStyle(
@@ -336,7 +349,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
             ),
           ),
           const SizedBox(height: 8),
-
           Row(
             children: [
               Icon(
@@ -365,8 +377,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
   }
 
   // --- LOGIC FUNCTIONS ---
-
-  // ฟังก์ชันหาคลาสที่ "กำลังเรียนอยู่" (Start <= Now < End)
   ClassSession? _findOngoingClass(List<ClassSession> classes) {
     final now = DateTime.now();
     final timeNow = now.hour * 60 + now.minute;
@@ -380,8 +390,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
     for (var session in todayClasses) {
       final start = _timeToMinutes(session.start);
       final end = _timeToMinutes(session.stop);
-
-      // ถ้าเวลาปัจจุบัน มากกว่าเวลาเริ่ม และ น้อยกว่าเวลาจบ = กำลังเรียน
       if (timeNow >= start && timeNow < end) {
         return session;
       }
@@ -389,7 +397,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
     return null;
   }
 
-  // ฟังก์ชันเดิม หาคลาสถัดไป
   ClassSession? _findNextClass(List<ClassSession> classes) {
     final now = DateTime.now();
     final timeNow = now.hour * 60 + now.minute;
@@ -411,9 +418,7 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
     return null;
   }
 
-  // ... Helper functions อื่นๆ (_buildTimelineItem, _buildClassRow, _timeToMinutes, etc.) เหมือนเดิม ...
   Widget _buildTimelineItem(List<ClassSession> classes, int index) {
-    // ... (เหมือนโค้ดก่อนหน้า) ...
     List<Widget> columnChildren = [];
     bool isLastItemOverall = index == classes.length - 1;
 
@@ -445,7 +450,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
     return Column(children: columnChildren);
   }
 
-  // (Helper functions อื่นๆ: _buildTimelineGap, _buildClassRow, _timeToMinutes ฯลฯ ใช้ของเดิมได้เลยครับ)
   Widget _buildTimelineGap({bool hasLine = true}) {
     return IntrinsicHeight(
       child: Row(
