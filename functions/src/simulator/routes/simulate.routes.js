@@ -75,4 +75,35 @@ router.delete('/:uid', async (req, res) => {
   }
 });
 
+const { runSimulation } = require('../services/simulatorService');
+
+// ── POST /v1/simulate ────────────────────────────────────────────────────────
+// Body: {
+//   outcomes             : { [subject_code]: "pass" | "fail" | "enrolled" },
+//   simulatedTerms       : [{ year, term, status, courses: [...] }],
+//   simulatedCurrentTerm : { year, term },   // optional
+//   customCourses        : { [subject_code]: { ... } }  // optional
+// }
+router.post('/', (req, res) => {
+  const {
+    outcomes = {},
+    customCourses = {},
+    simulatedTerms = null,
+    simulatedCurrentTerm = null,
+  } = req.body;
+
+  try {
+    const result = runSimulation(
+      outcomes,
+      customCourses,
+      simulatedTerms,
+      simulatedCurrentTerm,
+    );
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error('simulate error:', err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
