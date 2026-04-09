@@ -1,8 +1,13 @@
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<String> getHost() async {
+  if (kIsWeb) {
+    return 'localhost';
+  }
+
   final deviceInfo = DeviceInfoPlugin();
 
   if (Platform.isAndroid) {

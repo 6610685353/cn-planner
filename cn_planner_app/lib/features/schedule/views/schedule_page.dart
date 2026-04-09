@@ -1,9 +1,11 @@
 import 'package:cn_planner_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/core/models/class_session.dart';
-import 'schedule_data.dart';
-import '../../../core/widgets/timetable_grid.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cn_planner_app/core/services/notification_service.dart';
+import '../services/schedule_service.dart';
 import 'daily_schedule_page.dart';
+import '../../../core/widgets/timetable_grid.dart';
 import '../../../core/widgets/course_card.dart';
 
 class SchedulePage extends StatefulWidget {
@@ -14,8 +16,8 @@ class SchedulePage extends StatefulWidget {
 }
 
 class _ScheduleScreenState extends State<SchedulePage> {
-  List<ClassSession> myClasses = []; // สำหรับ Grid (แยกวัน)
-  List<ClassSession> uniqueClasses = []; // สำหรับ List Card (รวมวัน)
+  List<ClassSession> myClasses = [];
+  List<ClassSession> uniqueClasses = [];
   bool isLoading = true;
 
   @override
@@ -24,47 +26,91 @@ class _ScheduleScreenState extends State<SchedulePage> {
     _loadData();
   }
 
+  // ... โค้ดส่วนบนเหมือนเดิม ...
   Future<void> _loadData() async {
-    // 1. โหลดข้อมูลดิบ (ซึ่งแยกวันมา เช่น CNXXX มี object วันจันทร์ และ พฤหัส)
-    final classes = await ScheduleDataService.getUserClasses("1");
+    try {
+      // 👉 1. ดึง UID ของคนที่ล็อกอินอยู่จริงๆ
+      String myUid = FirebaseAuth.instance.currentUser?.uid ?? "";
 
-    // 2. สร้างข้อมูลสำหรับ Card โดยการรวมวิชาเดียวกันเข้าด้วยกัน
-    final Map<String, ClassSession> groupedMap = {};
+      // ถ้าไม่ได้ล็อกอิน (หรือ Session หลุด) ให้หยุดการทำงาน
+      if (myUid.isEmpty) {
+        print("❌ ผู้ใช้ยังไม่ได้ล็อกอิน");
+        return;
+      }
 
-    for (var session in classes) {
-      if (groupedMap.containsKey(session.code)) {
-        // ถ้ารหัสวิชานี้มีอยู่แล้ว ให้เอาวันมาต่อท้าย
-        final existing = groupedMap[session.code]!;
+      final service = ScheduleService();
+      final masterCourses = await service.getRealScheduleForUser(myUid);
 
-        // ตัวอย่าง: ของเดิม "MON" ของใหม่ "THU" -> รวมเป็น "MON, THU"
-        final newDays = "${existing.day}, ${session.day}";
+      List<ClassSession> convertedClasses = [];
+      final List<Color> cardColors = [
+        const Color(0xFFC8E6B2),
+        const Color(0xFFC3EEFA),
+        const Color(0xFFFFD8B1),
+        const Color(0xFFE8D1FF),
+      ];
 
-        // อัปเดตข้อมูลใน Map (สร้าง Object ใหม่ที่รวมวันแล้ว)
-        groupedMap[session.code] = ClassSession(
-          code: existing.code,
-          name: existing.name,
-          instructor: existing.instructor,
-          day: newDays, // ใช้วันที่รวมกันแล้ว
-          start: existing.start,
-          stop: existing.stop,
-          section: existing.section,
-          room: existing.room,
-          color: existing.color,
-        );
-      } else {
-        // ถ้ายังไม่มีวิชานี้ ใส่เข้าไปเลย
-        groupedMap[session.code] = session;
+      int colorIndex = 0;
+      for (var course in masterCourses) {
+        for (var slot in course.timeSlots) {
+          convertedClasses.add(
+            ClassSession(
+              code: course.courseCode,
+              name: course.courseName,
+              instructor: course.instructor,
+              day: slot.day,
+              start: slot.startTime,
+              stop: slot.endTime,
+              section: course.section,
+              room: slot.room,
+              color: cardColors[colorIndex % cardColors.length],
+            ),
+          );
+        }
+        colorIndex++;
+      }
+
+      // 👉 2. สั่งตั้งคิวแจ้งเตือนอัตโนมัติ (เอาพวกเช็คปริ้นต์ข้อความออกแล้ว)
+      await NotificationService.autoScheduleAllClasses(convertedClasses);
+
+      final Map<String, ClassSession> groupedMap = {};
+      for (var session in convertedClasses) {
+        if (groupedMap.containsKey(session.code)) {
+          final existing = groupedMap[session.code]!;
+          final newDays = "${existing.day}, ${session.day}";
+          groupedMap[session.code] = ClassSession(
+            code: existing.code,
+            name: existing.name,
+            instructor: existing.instructor,
+            day: newDays,
+            start: existing.start,
+            stop: existing.stop,
+            section: existing.section,
+            room: existing.room,
+            color: existing.color,
+          );
+        } else {
+          groupedMap[session.code] = session;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          myClasses = convertedClasses;
+          uniqueClasses = groupedMap.values.toList();
+        });
+      }
+    } catch (e) {
+      print("🔴 Error ใน _loadData: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
       }
     }
-
-    if (mounted) {
-      setState(() {
-        myClasses = classes; // ส่งให้ Grid แบบเดิม (แยกวัน)
-        uniqueClasses = groupedMap.values.toList(); // ส่งให้ List (รวมวันแล้ว)
-        isLoading = false;
-      });
-    }
   }
+
+  // หมายเหตุ: ตรง Scaffold ด้านล่าง ให้ลบ floatingActionButton ทิ้งไปได้เลยค่ะ ไม่ต้องใช้ปุ่มเทสต์แล้ว!
 
   @override
   Widget build(BuildContext context) {
@@ -118,8 +164,7 @@ class _ScheduleScreenState extends State<SchedulePage> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // 1. ส่วนตารางเรียน (Timetable Grid)
-                // ใช้ myClasses (แบบแยกวัน) เพื่อให้ Grid วาดถูกต้องตามเวลาจริง
+                // ส่วนตารางเรียน
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16.0,
@@ -127,10 +172,8 @@ class _ScheduleScreenState extends State<SchedulePage> {
                   ),
                   child: TimetableGrid(classes: myClasses),
                 ),
-
                 const SizedBox(height: 10),
-
-                // 2. ส่วนรายการด้านล่าง (List รายวิชา)
+                // ส่วนรายการด้านล่าง
                 Expanded(
                   child: Container(
                     width: double.infinity,
@@ -138,17 +181,16 @@ class _ScheduleScreenState extends State<SchedulePage> {
                       color: AppColors.background,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
+                          color: Colors.black.withOpacity(0.1),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
                       ],
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    // ใช้ uniqueClasses (แบบรวมวัน) เพื่อให้ Card แสดงใบเดียวต่อ 1 วิชา
                     child: ListView.builder(
                       padding: const EdgeInsets.all(24),
-                      itemCount: uniqueClasses.length, // จำนวนตามวิชาที่ไม่ซ้ำ
+                      itemCount: uniqueClasses.length,
                       itemBuilder: (context, index) {
                         return CourseCard(session: uniqueClasses[index]);
                       },
@@ -157,7 +199,6 @@ class _ScheduleScreenState extends State<SchedulePage> {
                 ),
               ],
             ),
-      // bottomNavigationBar: BottomNavBar(currentIndex: 3, onTap: onTap),
     );
   }
 }
