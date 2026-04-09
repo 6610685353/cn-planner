@@ -100,103 +100,9 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
       });
 
       predictedGPA = totalCredits > 0 ? (totalGradePoints / totalCredits) : 0;
-      predictedGPAX = totalCredits > 0 ? ((totalGradePoints + (currentGPAX * creditsGPAX)) / (totalCredits + creditsGPAX)) : 0;
+      predictedGPAX = totalCredits > 0 ? ((totalGradePoints + (currentGPAX * creditsGPAX)) / (totalCredits + creditsGPAX)) : currentGPAX;
     });
   }
-
-  // void _calculatePrediction() {
-  //   double semesterPoints = 0.0;
-  //   double semesterCredits = 0.0;
-
-  //   for (var course in currentSemCourses) {
-  //     double point = gradePoints[course['grade']] ?? 0.0;
-  //     int credit = 0;
-
-  //     if (course['grade'] != "-") {
-  //       credit = course['credit'];
-  //     }
-
-  //     semesterPoints += (point * credit);
-  //     semesterCredits += credit;
-  //   }
-
-  //   double totalPoints = pastTotalPoints + semesterPoints;
-  //   double totalCredits = pastTotalCredits + semesterCredits;
-
-  //   setState(() {
-  //     if (totalCredits > 0) {
-  //       predictedGPA = totalPoints / totalCredits;
-  //     } else {
-  //       predictedGPA = 0.0;
-  //     }
-  //   });
-  // }
-
-  // void _showAddCourseDialog() {
-  //   String name = "";
-  //   String creditStr = "3.0";
-
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return AlertDialog(
-  //         shape: RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.circular(16),
-  //         ),
-  //         title: const Text("Add New Course"),
-  //         content: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             TextField(
-  //               decoration: const InputDecoration(
-  //                 labelText: "Subject Name/Code",
-  //                 border: OutlineInputBorder(),
-  //               ),
-  //               onChanged: (v) => name = v,
-  //             ),
-  //             const SizedBox(height: 12),
-  //             TextField(
-  //               decoration: const InputDecoration(
-  //                 labelText: "Credits",
-  //                 border: OutlineInputBorder(),
-  //               ),
-  //               keyboardType: const TextInputType.numberWithOptions(
-  //                 decimal: true,
-  //               ),
-  //               onChanged: (v) => creditStr = v,
-  //             ),
-  //           ],
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context),
-  //             child: const Text(
-  //               "Cancel",
-  //               style: TextStyle(color: Colors.black54),
-  //             ),
-  //           ),
-  //           ElevatedButton(
-  //             onPressed: () {
-  //               if (name.isNotEmpty) {
-  //                 final credit = double.tryParse(creditStr) ?? 3.0;
-  //                 _addNewCourse(name, credit);
-  //                 Navigator.pop(context);
-  //               }
-  //             },
-  //             style: ElevatedButton.styleFrom(
-  //               backgroundColor: AppColors.errorRed,
-  //               foregroundColor: Colors.white,
-  //               shape: RoundedRectangleBorder(
-  //                 borderRadius: BorderRadius.circular(8),
-  //               ),
-  //             ),
-  //             child: const Text("Add"),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 
   void _deleteCourse(int index) {
     setState(() {
@@ -230,8 +136,8 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
             child: Row(
               children: [
                 StatCard(
-                  title: "Pred GPAX",
-                  value: predictedGPAX.toStringAsFixed(2),
+                  title: "Pred GPA",
+                  value: predictedGPA.toStringAsFixed(2),
                   textColor: const Color(0xffB71C1C), 
                   iconData: Icons.stars_rounded,
                   iconColor: const Color(0xffB71C1C),
@@ -239,8 +145,8 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                 const SizedBox(width: 16),
                 StatCard(
                   title:
-                      "Cur GPAX",
-                  value: currentGPAX.toStringAsFixed(2), 
+                      "Pred GPAX",
+                  value: predictedGPAX.toStringAsFixed(2), 
                   textColor: const Color(0xffFFC107), 
                   iconData: Icons.bar_chart_rounded,
                   iconColor: const Color(0xffFFC107),
@@ -256,7 +162,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Current Semester",
+                  "Planned Subjects",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -310,7 +216,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
             ),
           ),
 
-          // 4. Manage Courses Button (Dashed)
+          // Manage Courses Button
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: SizedBox(
@@ -325,7 +231,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                   color: Colors.black87,
                 ),
                 label: const Text(
-                  "Manage Courses",
+                  "Add Planned Course(s)",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -375,7 +281,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "PREDICTED GPA",
+                      "CURRENT GPA",
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 12,
@@ -383,7 +289,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                       ),
                     ),
                     Text(
-                      predictedGPA.toStringAsFixed(2),
+                      currentGPA.toStringAsFixed(2),
                       style: const TextStyle(
                         color: Color(0xffB71C1C), // Deep Red
                         fontSize: 28,
@@ -396,7 +302,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "CURRENT GPA",
+                      "CURRENT GPAX",
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 12,
@@ -404,7 +310,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                       ),
                     ),
                     Text(
-                      currentGPA.toStringAsFixed(2),
+                      currentGPAX.toStringAsFixed(2),
                       style: const TextStyle(
                         color: Colors.black,
                         fontSize: 28,
@@ -413,28 +319,6 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                     ),
                   ],
                 ),
-                // ElevatedButton(
-                //   onPressed: _calculatePrediction,
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor: const Color(0xffB71C1C), // Deep Red
-                //     padding: const EdgeInsets.symmetric(
-                //       horizontal: 24,
-                //       vertical: 12,
-                //     ),
-                //     shape: RoundedRectangleBorder(
-                //       borderRadius: BorderRadius.circular(30),
-                //     ),
-                //     elevation: 0,
-                //   ),
-                //   child: const Text(
-                //     "Calculate",
-                //     style: TextStyle(
-                //       color: Colors.white,
-                //       fontWeight: FontWeight.bold,
-                //       fontSize: 16,
-                //     ),
-                //   ),
-                // ),
               ],
             ),
           ),
