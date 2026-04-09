@@ -52,6 +52,8 @@ const simulateRoutes      = require("./src/simulator/routes/simulate.routes");
 const savedRoutes         = require("./src/simulator/routes/saved.routes");
 const impactRoutes        = require("./src/simulator/routes/impact.routes");
 const simulatorplanRoutes = require("./src/simulator/routes/simulatorplan.routes");
+const userRoadmapRoutes = require("./src/routes/roadmap_routes");
+const scheduleRoutes = require("./src/routes/schedule_routes");
 // ─────────────────────────────────────────────────────
 
 // Function to fetch subjects
@@ -103,6 +105,8 @@ app.use("/v1/impact",        impactRoutes);
 app.use("/v1/simulatorplan", simulatorplanRoutes);
 app.use("/v1/enrolled", userEnrolledRoutes);
 app.use("/v1/gpa", userGPARoutes);
+app.use("/v1/roadmap", userRoadmapRoutes);
+app.use("/v1/schedule", scheduleRoutes);
 
 app.get("/v1/subjects", async (req, res) => {
   const subjects = await fetchSubjects();
