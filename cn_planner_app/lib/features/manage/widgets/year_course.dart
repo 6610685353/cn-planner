@@ -30,9 +30,9 @@ class YearCourseBox extends StatefulWidget {
     required this.onCheckChanged,
     required this.onGradeChanged,
     required this.onSectionChanged,
-    required this.sectionOptionsMap, // ✅ เพิ่มพารามิเตอร์สำหรับตัวเลือก section
+    required this.sectionOptionsMap,
     required this.scheduleMap,
-    required this.reasonsMap, // ✅ เพิ่มพารามิเตอร์สำหรับเหตุผล
+    required this.reasonsMap, 
   });
 
   @override
@@ -139,6 +139,7 @@ class _YearCourseBox extends State<YearCourseBox> {
                   vertical: 10.0,
                 ),
                 child: Column(
+                  spacing: 10.0,
                   children: widget.courseSubject.map((subject) {
                     return SubjectBox(
                       title: subject['subjectCode'],

@@ -46,6 +46,7 @@ const app = express();
 const supabase = createClient('https://your-project-name.supabase.co', 'your-anon-key');
 
 // ── Simulator routes ──────────────────────────────────
+const userEnrolledRoutes  = require("./src/routes/enrolled_routes");
 const curriculumRoutes    = require("./src/simulator/routes/curriculum.routes");
 const simulateRoutes      = require("./src/simulator/routes/simulate.routes");
 const savedRoutes         = require("./src/simulator/routes/saved.routes");
@@ -100,7 +101,8 @@ app.use("/v1/simulate",      simulateRoutes);
 app.use("/v1/simulate",      savedRoutes);
 app.use("/v1/impact",        impactRoutes);
 app.use("/v1/simulatorplan", simulatorplanRoutes);
-// ─────────────────────────────────────────────────────
+app.use("/v1/enrolled", userEnrolledRoutes);
+app.use("/v1/gpa", userGPARoutes);
 
 app.get("/v1/subjects", async (req, res) => {
   const subjects = await fetchSubjects();
@@ -117,7 +119,7 @@ app.get("/v1/roadmap/:userId", async (req, res) => {
   const roadmap = await fetchUserRoadmap(userId);
   res.json(roadmap);
 });
-app.use("/v1/gpa", userGPARoutes);
+
 
 app.use((err, req, res, next) => {
   res.status(500).json({ message: err.message });

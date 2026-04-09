@@ -24,12 +24,28 @@ const getCurSemData = async (req, res) => {
   }
 
   try {
-    console.log("calling getCurSemData");
     const data = await enrolledService.getCurSemData(uid);
     console.log(data);
     res.json(data);
   } catch (err) {
     console.log("get current semester error : ", err);
+  }
+}
+
+const getAllEnrolled = async (req, res) => {
+  console.log("get All Enrolled")
+  const { uid } = req.params;
+  console.log(`UID :`, uid)
+
+  if (!uid) {
+    return res.status(400).json({ message : "error"});
+  }
+
+  try {
+    const data = await enrolledService.getAllEnrolled(uid);
+    res.json(data);
+  } catch (err) {
+    console.log("get user all enrolled error : ", err);
   }
 }
 
@@ -69,4 +85,5 @@ module.exports = {
   getPageData,
   submitGrade,
   getCurSemData,
+  getAllEnrolled,
 }

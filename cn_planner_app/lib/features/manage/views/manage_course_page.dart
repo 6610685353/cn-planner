@@ -6,6 +6,7 @@ import 'package:cn_planner_app/services/data_fetch.dart';
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/features/roadmap/models/subject_model.dart';
 import 'package:cn_planner_app/services/schedule_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ManageCoursePage extends StatefulWidget {
   final int targetTerm;
@@ -32,17 +33,25 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
   bool _isLoading = true;
   String? _errorMessage;
 
+  String userID = "";
+
   Map<int, bool> checkedMap = {};
   Map<int, String> gradeMap = {};
-  Map<int, String> sectionMap = {}; // ✅ กลับมาใช้
+  Map<int, String> sectionMap = {};
   Map<int, Map<String, List<Map>>> scheduleMap = {};
   Map<int, List<String>> sectionOptionsMap = {};
+
+  late Map<String, dynamic> enrolled;
 
   late Map<int, SubjectModel> subjectMap;
 
   @override
   void initState() {
     super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      userID = user.uid;
+    }
     subjectMap = {for (var s in widget.subjects) s.subjectId: s};
     _loadData();
   }
@@ -51,6 +60,7 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
     try {
       final pageDataF = await DataFetch().getManagePageData();
       final scheduleRaw = await DataFetch().getSchedule();
+      final enrolledF = await DataFetch().getAllEnrolled(userID);
       scheduleMap = ScheduleService.buildScheduleMap(scheduleRaw);
       sectionOptionsMap = ScheduleService.buildSectionOptions(scheduleMap);
 
@@ -59,6 +69,7 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
       setState(() {
         _pageData = pageDataF;
         _filteredCourses = _pageData;
+        enrolled = enrolledF;
         _isLoading = false;
       });
     } catch (e) {
@@ -71,7 +82,6 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
     }
   }
 
-  /// 🔍 search
   void onSearch(String query) {
     if (query.isEmpty) {
       setState(() {
@@ -100,7 +110,6 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
     });
   }
 
-  /// ✅ เช็คลงได้ไหม
   bool canTake(SubjectModel subject) {
     final selectedCodes = checkedMap.entries
         .where((e) => e.value)
@@ -142,7 +151,6 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
 
     List<String> reasons = [];
 
-    // ❌ offered
     if (subject.offeredSemester != null &&
         subject.offeredSemester!.isNotEmpty &&
         !subject.offeredSemester!.contains(widget.targetTerm)) {
@@ -175,7 +183,6 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
       }
     }
 
-    // ❌ duplicate
     if (widget.alreadyAddedCodes.contains(subject.subjectCode)) {
       reasons.add("Already added");
     }
@@ -224,7 +231,6 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
     setState(() => sectionMap[subjectId] = section);
   }
 
-  /// 🔥 ส่งกลับพร้อม grade
   void _onConfirm() {
     final selected = checkedMap.entries
         .where((e) => e.value == true)
@@ -260,14 +266,18 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
     }
 
     if (_errorMessage != null) {
-      return Scaffold(body: Center(child: Text('Error : $_errorMessage')));
+      return Scaffold(body: Center(child: Text('Error! : $_errorMessage')));
     }
 
     return Scaffold(
       appBar: TopBar(header: "Select Course (Term ${widget.targetTerm})"),
       body: Column(
         children: [
+          Text(checkedMap.toString()), //debug
+          Text(gradeMap.toString()), //debug
+          Text(enrolled.toString()),
           SearchBox(onChanged: onSearch),
+          // Text(_filteredCourses.toString()), //debug
 
           Expanded(
             child: SingleChildScrollView(
@@ -277,7 +287,7 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
                   final String year = parts[0];
                   final String sem = parts[1];
                   final List<dynamic> subjects = entry.value;
-
+                  
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -295,10 +305,10 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
                         scheduleMap: scheduleMap, // ✅
                         reasonsMap: {
                           // ✅
-                          for (var c in subjects)
-                            c['subjectId']: getReasons(
-                              subjectMap[c['subjectId']]!,
-                            ),
+                          // for (var c in subjects)
+                          //   c['subjectId']: getReasons(
+                          //     subjectMap[c['subjectId']]?
+                          //   ),
                         },
                       ),
                     ],
@@ -318,7 +328,7 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
             backgroundColor: AppColors.accentYellow,
             minimumSize: const Size.fromHeight(56),
           ),
-          child: Text("Confirm ($selectedCount)"),
+          child: Text("Confirm ($selectedCount Selected)"),
         ),
       ),
     );

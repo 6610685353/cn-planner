@@ -72,6 +72,23 @@ class DataFetch {
     }
   }
 
+  Future<Map<String, dynamic>> getAllEnrolled(String uid) async {
+    final url = Uri.parse("${Config.baseUrl}/v1/enrolled/all_enrolled").replace(
+      queryParameters: {'uid': uid}
+    );
+
+    try {
+      final response = await http
+        .get(url, headers: {"Content-Type": "application/json"})
+        .timeout(Duration(seconds: 10));
+
+      print("fetch all enrolled Status: ${response.statusCode}");
+      return jsonDecode(response.body);
+    } catch (err) {
+      throw Exception('Error fetching all enrolled data, Error message: $err');
+    }
+  }
+
   Future<List<dynamic>> getSchedule() async {
     final res = await Supabase.instance.client.from('ClassSchedules').select();
     return res;

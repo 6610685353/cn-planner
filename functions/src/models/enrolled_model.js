@@ -13,10 +13,22 @@ async function getPageData() {
   const supabase = getSupabase();
   const { data , error } = await supabase
     .from('YearCourses')
-    .select(`*, Subjects (*)`);
+    .select(`*, Subjects (subjectCode, subjectName, require, credits, corequisite, offeredSemester)`);
 
   if (error) throw error;
   
+  return data;
+}
+
+async function getAllEnrolled(uid) {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('UserRoadmap')
+    .select('subjectId, year, semester, grade')
+    .eq("uid", uid)
+
+  if(error) throw error;
+
   return data;
 }
 
@@ -42,4 +54,5 @@ module.exports = {
    getUserData,
    getPageData,
    getCurSemData,
+   getAllEnrolled,
    };
