@@ -12,6 +12,7 @@ import '../../simulator/screens/simulator_screen.dart';
 import '../../manage/views/manage_course_page.dart';
 import 'package:cn_planner_app/services/send_grade.dart';
 import '../data/static_roamap_data.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum RoadmapMode { view, edit, simulate }
 
@@ -731,8 +732,16 @@ class _RoadmapPageState extends State<RoadmapPage>
         setState(() => isLoading = true);
         try {
           print("calculating grade");
+
+          // 🌟 1. รีเซ็ตค่าให้เป็น 0 เสมอก่อนคำนวณ (ป้องกันบั๊กเกรดบวกเบิ้ลเวลากดเซฟซ้ำ)
+          totalGradePoints = 0;
+          totalCredits = 0;
+          thisSemCredits = 0;
+          thisSemGradePoints = 0;
+
+          // 🌟 2. คำนวณจากวิชาหลักในแผน (editedHistory)
           for (var item in editedHistory) {
-            String grade = item['grade'];
+            String grade = item['grade'] ?? '-';
 
             if (!gradeScheme.containsKey(grade)) continue;
 
@@ -749,6 +758,7 @@ class _RoadmapPageState extends State<RoadmapPage>
             totalGradePoints += (gradeScheme[grade]! * subject.credits);
             totalCredits += subject.credits;
 
+            // ถ้าเป็นวิชาของเทอมปัจจุบัน ให้บวกเข้า GPA เทอมด้วย
             if (item['year'] == selectedYear &&
                 item['semester'] == selectedTerm) {
               thisSemGradePoints += (gradeScheme[grade]! * subject.credits);
@@ -756,11 +766,30 @@ class _RoadmapPageState extends State<RoadmapPage>
             }
           }
 
+          // 🌟 3. ดึงวิชาเลือก/Gen Ed ที่กรอกเองจาก Supabase มาร่วมคำนวณ
+          final supabase = Supabase.instance.client;
+          final electives = await supabase
+              .from('UserElectives')
+              .select('credits, grade')
+              .eq('user_id', user.uid);
+
+          // ลูปบวกคะแนนวิชาเลือกเข้าไปใน GPAX รวม (ไม่ส่งผลกับ GPA เทอมปัจจุบัน เพราะเราไม่ได้บังคับให้ระบุเทอม)
+          for (var elective in electives) {
+            String grade = elective['grade'] ?? '-';
+            if (!gradeScheme.containsKey(grade)) continue;
+
+            int creds = (elective['credits'] as num?)?.toInt() ?? 0;
+            totalGradePoints += (gradeScheme[grade]! * creds);
+            totalCredits += creds;
+          }
+
+          // 🌟 4. หารหาค่าเฉลี่ยสุดท้าย
           var gpax = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
           var gpa = thisSemCredits > 0
               ? thisSemGradePoints / thisSemCredits
               : 0.0;
 
+          // 🌟 5. ส่งข้อมูลทั้งหมดขึ้น Database
           await SendGrade.submitGPAX(gpax, totalCredits, gpa, thisSemCredits);
 
           await _profileService.updateStatus(
