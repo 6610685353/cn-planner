@@ -40,7 +40,12 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
+
+    // 🌟 ขอสิทธิ์แจ้งเตือนแบบชัดเจนสำหรับ Android 13+
     await androidImplementation?.requestNotificationsPermission();
+
+    // 🌟 ขอสิทธิ์เพื่อตั้งเวลาล่วงหน้าแบบเป๊ะๆ (Exact Alarm)
+    await androidImplementation?.requestExactAlarmsPermission();
   }
 
   static Future<void> scheduleClassReminder({

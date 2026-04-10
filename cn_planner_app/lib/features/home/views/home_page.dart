@@ -3,13 +3,18 @@ import 'package:cn_planner_app/features/home/widgets/academic_progress.dart';
 import 'package:cn_planner_app/features/home/widgets/home_feature.dart';
 import 'package:cn_planner_app/features/home/widgets/welcome_banner.dart';
 import 'package:cn_planner_app/features/home/widgets/gpa_banner.dart';
-import 'package:cn_planner_app/features/home/widgets/schedule_card.dart';
-import 'package:cn_planner_app/features/schedule/views/schedule_data.dart';
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/route.dart';
 import 'package:cn_planner_app/features/schedule/views/daily_schedule_page.dart';
 import 'package:cn_planner_app/features/profile/controllers/profile_controller.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cn_planner_app/features/schedule/services/schedule_service.dart';
+import 'package:cn_planner_app/core/models/class_session.dart';
+
+// 🌟 Import ไฟล์ Section ที่เราเพิ่งสร้าง
+import 'package:cn_planner_app/features/home/widgets/today_schedule_section.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,13 +26,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final ProfileController _profileController = ProfileController();
   ProfileData? _profileData;
+  List<ClassSession> _todayClasses = [];
   bool _isLoading = true;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadData();
-  }
 
   @override
   void initState() {
@@ -36,12 +36,129 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
     final data = await _profileController.fetchUserData();
+    final classes = await _fetchTodayUpcomingClasses();
+
     if (mounted) {
       setState(() {
         _profileData = data;
+        _todayClasses = classes;
         _isLoading = false;
       });
+    }
+  }
+
+  Future<List<ClassSession>> _fetchTodayUpcomingClasses() async {
+    try {
+      String myUid = FirebaseAuth.instance.currentUser?.uid ?? "";
+      if (myUid.isEmpty) return [];
+
+      final service = ScheduleService();
+      final masterCourses = await service.getRealScheduleForUser(myUid);
+
+      List<ClassSession> allRealClasses = [];
+      for (var course in masterCourses) {
+        for (var slot in course.timeSlots) {
+          allRealClasses.add(
+            ClassSession(
+              code: course.courseCode,
+              name: course.courseName,
+              instructor: course.instructor,
+              day: slot.day,
+              start: slot.startTime,
+              stop: slot.endTime,
+              section: course.section,
+              room: slot.room,
+              color: Colors.blue,
+            ),
+          );
+        }
+      }
+
+      final now = DateTime.now();
+      const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+      final todayCode = days[now.weekday - 1];
+
+      final todayClasses = allRealClasses
+          .where((c) => c.day.toLowerCase().contains(todayCode))
+          .toList();
+
+      todayClasses.sort(
+        (a, b) => _timeToMinutes(a.start).compareTo(_timeToMinutes(b.start)),
+      );
+
+      final timeNow = now.hour * 60 + now.minute;
+      final upcomingClasses = todayClasses.where((c) {
+        return _timeToMinutes(c.stop) > timeNow;
+      }).toList();
+
+      return upcomingClasses.take(2).toList();
+    } catch (e) {
+      print("❌ Error fetching today schedule: $e");
+      return [];
+    }
+  }
+
+  int _timeToMinutes(String time) {
+    final parts = time.split(':');
+    if (parts.length != 2) return 0;
+    return int.parse(parts[0]) * 60 + int.parse(parts[1]);
+  }
+
+  // 🌟 Logic การกดปุ่มไปหน้า Daily Schedule ถูกเก็บไว้ที่นี่แทน
+  Future<void> _handleViewDaySchedule() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      String myUid = FirebaseAuth.instance.currentUser?.uid ?? "";
+      final masterCourses = await ScheduleService().getRealScheduleForUser(
+        myUid,
+      );
+
+      List<ClassSession> convertedClasses = [];
+      for (var course in masterCourses) {
+        for (var slot in course.timeSlots) {
+          convertedClasses.add(
+            ClassSession(
+              code: course.courseCode,
+              name: course.courseName,
+              instructor: course.instructor,
+              day: slot.day,
+              start: slot.startTime,
+              stop: slot.endTime,
+              section: course.section,
+              room: slot.room,
+              color: Colors.blue,
+            ),
+          );
+        }
+      }
+
+      if (mounted) {
+        Navigator.pop(context); // ปิด Loading
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                DailySchedulePage(allClasses: convertedClasses),
+          ),
+        );
+        _loadData(); // รีเฟรชข้อมูลเมื่อกลับมา
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
@@ -72,7 +189,6 @@ class _HomePageState extends State<HomePage> {
                       imageUrl: _profileData?.profileImageUrl,
                       route: AppRoutes.notification,
                     ),
-
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -100,8 +216,7 @@ class _HomePageState extends State<HomePage> {
                                         context,
                                         AppRoutes.main,
                                       );
-                                      if (mounted)
-                                        _loadData(); // กลับมาแล้วโหลดใหม่
+                                      if (mounted) _loadData();
                                     },
                                     child: HomeFeature(
                                       icon: Icons.edit_square,
@@ -110,15 +225,13 @@ class _HomePageState extends State<HomePage> {
                                       isLeft: true,
                                     ),
                                   ),
-
                                   GestureDetector(
                                     onTap: () async {
                                       await Navigator.pushNamed(
                                         context,
                                         AppRoutes.gpa,
                                       );
-                                      if (mounted)
-                                        _loadData(); // กลับมาแล้วโหลดใหม่
+                                      if (mounted) _loadData();
                                     },
                                     child: HomeFeature(
                                       icon: Icons.calculate,
@@ -130,35 +243,14 @@ class _HomePageState extends State<HomePage> {
                                 ],
                               ),
                             ),
-
                             const SizedBox(height: 12),
-                            scheduleTitle(context),
-                            const SizedBox(height: 10),
 
-                            // ส่วนแสดง Schedule (Horizontal Scroll)
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              child: Row(
-                                children: const [
-                                  ScheduleCard(
-                                    status: "ONGOING",
-                                    subjectCode: "TU100",
-                                    subjectName: "Civic Education",
-                                    time: "9:30 - 11.00",
-                                    location: "SC3-201",
-                                    isOngoing: true,
-                                  ),
-                                  ScheduleCard(
-                                    status: "NEXT",
-                                    subjectCode: "CN101",
-                                    subjectName: "Introduction to Computer",
-                                    time: "13:30 - 16:30",
-                                    location: "SC3-201",
-                                  ),
-                                ],
-                              ),
+                            // 🌟 เรียกใช้ Widget ที่เราแยกส่วนไว้ โค้ดดูสะอาดตาขึ้นมาก!
+                            TodayScheduleSection(
+                              todayClasses: _todayClasses,
+                              onViewDaySchedule: _handleViewDaySchedule,
                             ),
+
                             const SizedBox(height: 15),
 
                             GpaBanner(
@@ -176,73 +268,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
       ),
-    );
-  }
-
-  Widget scheduleTitle(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(
-          "Today's Schedule",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        InkWell(
-          onTap: () async {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) =>
-                  const Center(child: CircularProgressIndicator()),
-            );
-
-            try {
-              final classes = await ScheduleDataService.getUserClasses("1");
-              if (context.mounted) {
-                Navigator.pop(context); // ปิด Loading
-                // 🌟 จุดที่ 4: เมื่อกลับจากหน้าตารางเรียน
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        DailySchedulePage(allClasses: classes),
-                  ),
-                );
-                if (mounted) _loadData();
-              }
-            } catch (e) {
-              if (context.mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('Error: $e')));
-              }
-            }
-          },
-          borderRadius: BorderRadius.circular(8),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            child: Row(
-              children: [
-                Text(
-                  'View Day Schedule',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.primaryYellow,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_right_alt,
-                  size: 20,
-                  color: AppColors.primaryYellow,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

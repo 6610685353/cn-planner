@@ -26,7 +26,6 @@ class _ScheduleScreenState extends State<SchedulePage> {
     _loadData();
   }
 
-  // ... โค้ดส่วนบนเหมือนเดิม ...
   Future<void> _loadData() async {
     try {
       // 👉 1. ดึง UID ของคนที่ล็อกอินอยู่จริงๆ
@@ -62,15 +61,24 @@ class _ScheduleScreenState extends State<SchedulePage> {
               stop: slot.endTime,
               section: course.section,
               room: slot.room,
-              color: cardColors[colorIndex % cardColors.length],
+              color:
+                  cardColors[colorIndex %
+                      cardColors.length], // สีนี้เอาไว้โชว์แค่ใน TimetableGrid
             ),
           );
         }
         colorIndex++;
       }
 
-      // 👉 2. สั่งตั้งคิวแจ้งเตือนอัตโนมัติ (เอาพวกเช็คปริ้นต์ข้อความออกแล้ว)
-      await NotificationService.autoScheduleAllClasses(convertedClasses);
+      // 👉 2. สั่งตั้งคิวแจ้งเตือนอัตโนมัติ
+      // 👉 2. สั่งตั้งคิวแจ้งเตือนอัตโนมัติ (ใส่ Try-Catch ดักไว้ กันแอปพัง!)
+      try {
+        await NotificationService.autoScheduleAllClasses(convertedClasses);
+      } catch (notiError) {
+        print(
+          "⚠️ ระบบแจ้งเตือนมีปัญหา แต่ไม่เป็นไร ข้ามไปแสดงตารางเรียนต่อ: $notiError",
+        );
+      }
 
       final Map<String, ClassSession> groupedMap = {};
       for (var session in convertedClasses) {
@@ -110,8 +118,6 @@ class _ScheduleScreenState extends State<SchedulePage> {
     }
   }
 
-  // หมายเหตุ: ตรง Scaffold ด้านล่าง ให้ลบ floatingActionButton ทิ้งไปได้เลยค่ะ ไม่ต้องใช้ปุ่มเทสต์แล้ว!
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,11 +141,30 @@ class _ScheduleScreenState extends State<SchedulePage> {
         actions: [
           TextButton(
             onPressed: () {
+              // 🌟 จุดที่แก้ไข: สร้างลิสต์จำลองที่เปลี่ยนสีเป็น Colors.blue ก่อนส่งไป
+              List<ClassSession> safeClasses = myClasses
+                  .map(
+                    (c) => ClassSession(
+                      code: c.code,
+                      name: c.name,
+                      instructor: c.instructor,
+                      day: c.day,
+                      start: c.start,
+                      stop: c.stop,
+                      section: c.section,
+                      room: c.room,
+                      color: Colors
+                          .blue, // 🌟 บังคับสีให้เหมือนตอนเข้าจากหน้า Home
+                    ),
+                  )
+                  .toList();
+
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      DailySchedulePage(allClasses: myClasses),
+                  builder: (context) => DailySchedulePage(
+                    allClasses: safeClasses,
+                  ), // ส่ง safeClasses ไปแทน
                 ),
               );
             },
