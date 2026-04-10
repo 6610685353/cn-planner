@@ -16,6 +16,7 @@ Future<void> main() async {
 
   // 1. เปิดระบบ Notification & Timezone
   await NotificationService.init();
+  await NotificationService.requestPermission();
 
   // 2. เปิดระบบ Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
