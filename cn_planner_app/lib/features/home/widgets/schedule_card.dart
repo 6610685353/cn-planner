@@ -42,21 +42,42 @@ class ScheduleCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                status,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                  color: Colors.black,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isOngoing ? Colors.green.shade50 : Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    if (isOngoing) ...[
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade700,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Text(
+                      status,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                        color: isOngoing
+                            ? Colors.green.shade700
+                            : Colors.blue.shade700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              // const Icon(Icons.more_horiz, color: AppColors.textGrey, size: 20),
             ],
           ),
-
           const SizedBox(height: 12),
-
           Text(
             "$subjectCode: $subjectName",
             style: const TextStyle(
@@ -67,7 +88,6 @@ class ScheduleCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-
           const Spacer(),
           _buildInfoRow(Icons.access_time, time),
           const SizedBox(height: 6),
@@ -80,7 +100,7 @@ class ScheduleCard extends StatelessWidget {
   Widget _buildInfoRow(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.black),
+        Icon(icon, size: 16, color: Colors.black54),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
