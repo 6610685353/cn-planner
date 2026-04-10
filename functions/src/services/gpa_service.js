@@ -1,10 +1,14 @@
 const gpaModel = require("../models/gpa_model");
 const cache = require('../utils/cache');
 
-async function getGPA(uid) {
-  console.log("calling getGPA in Service")
+async function getGPA(uid, isUsingCache) {
+  console.log("calling getGPA Service")
   const cacheKey = `user:${uid}:gpa_cred`;
-  let GPAcred = cache.get(cacheKey);  
+  let GPAcred = null;
+
+  if (isUsingCache) {
+    GPAcred = cache.get(cacheKey);  
+  }
 
   if(!GPAcred) {
     console.log('GPAcred : Pulling from database')
@@ -16,11 +20,15 @@ async function getGPA(uid) {
   return GPAcred;
 };
 
-async function getThisSem(uid) {
-  console.log("calling getThisSem")
+async function getThisSem(uid, isUsingCache) {
+  console.log("calling getThisSem Service")
   const cacheKey = `user:${uid}:this_sem`;
-  let flattenedData = cache.get(cacheKey);
-  
+  let flattenedData = null;
+
+  if (isUsingCache) {
+    flattenedData = cache.get(cacheKey);
+  }
+
   if (!flattenedData) {
     console.log("getThisSem : pulling from database")
     thisSemCourse = await gpaModel.getThisSem(uid);

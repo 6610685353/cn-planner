@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cn_planner_app/services/api_config.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7,8 +8,8 @@ import '../models/term_model.dart';
 import 'simulation_result_model.dart';
 
 class SimulatorService {
-  static const String _baseUrl =
-      'http://10.0.2.2:5001/cn-planner-app/asia-southeast1/api/v1';
+  // static const String _baseUrl = 'http://10.0.2.2:5001/cn-planner-app/asia-southeast1/api/v1';
+  static final String _baseUrl = "${Config.baseUrl}/v1";
 
   // ─── Outcome / status helpers ──────────────────────────────────────────────
 

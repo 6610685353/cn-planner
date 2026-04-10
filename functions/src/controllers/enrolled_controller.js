@@ -32,23 +32,6 @@ const getCurSemData = async (req, res) => {
   }
 }
 
-const getAllEnrolled = async (req, res) => {
-  console.log("get All Enrolled")
-  const { uid } = req.params;
-  console.log(`UID :`, uid)
-
-  if (!uid) {
-    return res.status(400).json({ message : "error"});
-  }
-
-  try {
-    const data = await enrolledService.getAllEnrolled(uid);
-    res.json(data);
-  } catch (err) {
-    console.log("get user all enrolled error : ", err);
-  }
-}
-
 const getPageData = async (req, res) => {
   try {
     const data = await enrolledService.getPageData();
@@ -85,5 +68,4 @@ module.exports = {
   getPageData,
   submitGrade,
   getCurSemData,
-  getAllEnrolled,
 }

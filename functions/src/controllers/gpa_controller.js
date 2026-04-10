@@ -2,9 +2,10 @@ const gpaService = require("../services/gpa_service");
 
 const getGPA = async (req, res, next) => {
   try {
-    const { uid } = req.query;
+    const { uid , useCache } = req.query;
+    const isUsingCache = useCache === 'true';
 
-    const result = await gpaService.getGPA(uid);
+    const result = await gpaService.getGPA(uid, isUsingCache);
 
     res.status(200).json(result);
   } catch (err) {
@@ -15,9 +16,10 @@ const getGPA = async (req, res, next) => {
 
 const getThisSem = async (req, res, next) => {
   try {
-    const { uid } = req.query;
+    const { uid, useCache } = req.query;
+    const isUsingCache = useCache === 'true';
     
-    const result = await gpaService.getThisSem(uid);
+    const result = await gpaService.getThisSem(uid, isUsingCache);
 
     res.status(200).json(result);
   } catch (err) {

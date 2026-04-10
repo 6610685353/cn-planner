@@ -38,9 +38,9 @@ class DataFetch {
     }
   }
 
-  Future<List<dynamic>> fetchGPAcred(String uid) async {
+  Future<List<dynamic>> fetchGPAcred(String uid, {bool isUseCache = true}) async {
     final url = Uri.parse("${Config.baseUrl}/v1/gpa/fetch").replace(
-      queryParameters: {'uid': uid}
+      queryParameters: {'uid': uid, 'useCache' : isUseCache.toString()}
     );
     
     try {
@@ -55,9 +55,10 @@ class DataFetch {
     }
   }
 
-  Future<List<dynamic>> fetchThisSem(String uid) async {
+  Future<List<dynamic>> fetchThisSem(String uid, {bool isUseCache = true}) async {
+    print("calling fetch this sem");
     final url = Uri.parse("${Config.baseUrl}/v1/gpa/this_sem").replace(
-      queryParameters: {'uid': uid}
+      queryParameters: {'uid': uid, 'useCache' : isUseCache.toString()}
     );
 
     try {
@@ -69,23 +70,6 @@ class DataFetch {
       return jsonDecode(response.body);
     } catch (err) {
       throw Exception('Error fetching this sem data, Error message: $err');
-    }
-  }
-
-  Future<Map<String, dynamic>> getAllEnrolled(String uid) async {
-    final url = Uri.parse("${Config.baseUrl}/v1/enrolled/all_enrolled").replace(
-      queryParameters: {'uid': uid}
-    );
-
-    try {
-      final response = await http
-        .get(url, headers: {"Content-Type": "application/json"})
-        .timeout(Duration(seconds: 10));
-
-      print("fetch all enrolled Status: ${response.statusCode}");
-      return jsonDecode(response.body);
-    } catch (err) {
-      throw Exception('Error fetching all enrolled data, Error message: $err');
     }
   }
 

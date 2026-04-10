@@ -55,11 +55,10 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
     _loadData();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool useCache = true}) async {
     try {  
-      final gradeCredF = await DataFetch().fetchGPAcred(userID);
-      final thisSemSubjectF = await DataFetch().fetchThisSem(userID);
-      print("pulling current sem course");
+      final gradeCredF = await DataFetch().fetchGPAcred(userID, isUseCache: useCache);
+      final thisSemSubjectF = await DataFetch().fetchThisSem(userID, isUseCache: useCache);
 
       setState(() {
         thisSemSubject = thisSemSubjectF;
@@ -86,6 +85,16 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
     }
   }
 
+  void goToEditAcademic() async {
+    await Navigator.pushNamed(context, '/academic_history');
+
+    if (mounted) {
+      setState(() {
+        _loadData(useCache: false);
+      });
+    }
+  }
+
   void _updateCourseGrade(int index, String newGrade) {
     setState(() {
       currentSemCourses[index]['grade'] = newGrade;
@@ -99,7 +108,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
         totalGradePoints += credits * gradePoint;
       });
 
-      predictedGPA = totalCredits > 0 ? (totalGradePoints / totalCredits) : 0;
+      predictedGPA = totalCredits > 0 ? ((totalGradePoints + (currentGPA * creditsGPA)) / (totalCredits + creditsGPA)) : currentGPA;
       predictedGPAX = totalCredits > 0 ? ((totalGradePoints + (currentGPAX * creditsGPAX)) / (totalCredits + creditsGPAX)) : currentGPAX;
     });
   }
@@ -110,7 +119,6 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
     });
   }
 
-  //main page
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,7 +224,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
             ),
           ),
 
-          // Manage Courses Button
+          // Edit Acadedmic Button
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: SizedBox(
@@ -224,7 +232,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/manage');
+                  goToEditAcademic();
                 },
                 icon: const Icon(
                   Icons.add_circle_outline,

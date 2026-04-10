@@ -61,13 +61,6 @@ async function getCurSemData(uid) {
   return curSemData;
 }
 
-async function getAllEnrolled(uid) {
-  const allEnrolled = await enrolledModel.getAllEnrolled(uid);
-  
-  console.log("getUserAllEnrolled : get")
-  return allEnrolled;
-}
-
 // post
 const updateGrade = async (uid, gradeList) => {
   // for debug
@@ -111,5 +104,4 @@ module.exports = {
   getUserData,
   getPageData,
   getCurSemData,
-  getAllEnrolled,
   };
