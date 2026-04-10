@@ -32,6 +32,10 @@ class SubjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // เช็คว่าวิชานี้ติดตัวต่อหรือไม่
     bool isMissingPrereq = state == "missing_prereq";
+    bool isViewMode = mode == RoadmapMode.view;
+
+    Color borderColor = Colors.transparent;
+    Color backgroundColor = Colors.white;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -46,9 +50,12 @@ class SubjectCard extends StatelessWidget {
             offset: const Offset(0, 2),
           ),
         ],
+
         // ถ้าติดตัวต่อให้ขึ้นขอบแดงจางๆ
         border: Border.all(
-          color: isMissingPrereq ? Colors.red.shade200 : Colors.transparent,
+          color: !isViewMode && isMissingPrereq
+              ? Colors.red.shade200
+              : Colors.transparent,
           width: 1.5,
         ),
       ),
@@ -73,7 +80,7 @@ class SubjectCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
+                          horizontal: 4,
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
@@ -102,12 +109,14 @@ class SubjectCard extends StatelessWidget {
                   Text(
                     "$credits Cr.",
                     style: TextStyle(
-                      color: isMissingPrereq ? Colors.red : Colors.green,
+                      color: !isViewMode && isMissingPrereq
+                          ? Colors.red
+                          : Colors.green,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 2),
                   // แสดงไอคอนสถานะ (ผ่านแล้ว / ติดล็อค)
                   if (state == "passed" || state == "Passed")
                     const Icon(
@@ -115,7 +124,7 @@ class SubjectCard extends StatelessWidget {
                       color: Colors.green,
                       size: 14,
                     ),
-                  if (isMissingPrereq)
+                  if (!isViewMode && isMissingPrereq)
                     const Icon(Icons.lock, color: Colors.red, size: 14),
 
                   // 🔥 ปุ่มลบ: จะโชว์เฉพาะโหมด Edit และ Simulate เท่านั้น
@@ -140,7 +149,7 @@ class SubjectCard extends StatelessWidget {
             style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           ),
 
-          if (isMissingPrereq)
+          if (!isViewMode && isMissingPrereq)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
@@ -150,7 +159,8 @@ class SubjectCard extends StatelessWidget {
             ),
 
           // แสดงส่วนจัดการเกรด (เฉพาะโหมด View และ Edit)
-          if (mode != RoadmapMode.simulate) _buildGradeSection(),
+          if (mode != RoadmapMode.view && mode != RoadmapMode.simulate)
+            _buildGradeSection(),
 
           // แสดงปุ่มจำลอง PASS/FAIL (เฉพาะโหมด Simulate)
           if (mode == RoadmapMode.simulate) _buildSimulateActions(),
