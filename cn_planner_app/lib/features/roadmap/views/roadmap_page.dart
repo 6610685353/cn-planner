@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cn_planner_app/core/constants/app_colors.dart';
@@ -9,12 +7,11 @@ import '../models/subject_model.dart';
 import '../services/subject_service.dart';
 import '../services/profile_service.dart';
 import '../services/roadmap_service.dart';
-// import '../services/validation_service.dart'; // 🔥 Import validation
 import 'academic_history_page.dart';
-// import 'simulator_page.dart';
 import '../../simulator/screens/simulator_screen.dart';
 import '../../manage/views/manage_course_page.dart';
 import 'package:cn_planner_app/services/send_grade.dart';
+import '../data/static_roamap_data.dart';
 
 enum RoadmapMode { view, edit, simulate }
 
@@ -28,10 +25,14 @@ class RoadmapPage extends StatefulWidget {
   State<RoadmapPage> createState() => _RoadmapPageState();
 }
 
-class _RoadmapPageState extends State<RoadmapPage> {
+class _RoadmapPageState extends State<RoadmapPage>
+    with SingleTickerProviderStateMixin {
   final SubjectService _subjectService = SubjectService();
   final ProfileService _profileService = ProfileService();
   final RoadmapService _roadmapService = RoadmapService();
+
+  late TabController _tabController;
+  String selectedPlanType = RoadmapTemplate.PLAN_INTERNSHIP;
 
   int? selectedYear;
   int? selectedTerm;
@@ -97,7 +98,64 @@ class _RoadmapPageState extends State<RoadmapPage> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_handleTabSelection);
     loadAllData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_handleTabSelection);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _handleTabSelection() {
+    if (_tabController.indexIsChanging) return;
+    String newPlan = RoadmapTemplate.PLAN_INTERNSHIP;
+    if (_tabController.index == 1) newPlan = RoadmapTemplate.PLAN_COOP;
+    if (_tabController.index == 2) newPlan = RoadmapTemplate.PLAN_RESEARCH;
+
+    setState(() {
+      selectedPlanType = newPlan;
+      _buildRoadmapData();
+    });
+  }
+
+  void _buildRoadmapData() {
+    final template = RoadmapTemplate.getTemplate();
+
+    final filteredTemplate = template.where((item) {
+      return item['plan'] == 'all' || item['plan'] == selectedPlanType;
+    }).toList();
+
+    roadmapPlan = filteredTemplate.map((item) {
+      String code = item['subject_code'];
+      String displayName = "";
+
+      if (code.contains('X')) {
+        displayName = item['subject_name'] ?? "Elective Course";
+      } else {
+        try {
+          final match = allSubjects.firstWhere((s) => s.subjectCode == code);
+          displayName = match.subjectName;
+        } catch (e) {
+          displayName = item['subject_name'] ?? code;
+        }
+      }
+
+      final historyItem = academicHistory.firstWhere(
+        (h) => h['subject_code'] == code,
+        orElse: () => {},
+      );
+
+      return {
+        ...item,
+        'subject_name': displayName,
+        'status': historyItem.isNotEmpty ? 'passed' : 'planned',
+        'grade': historyItem['grade'] ?? '-',
+      };
+    }).toList();
   }
 
   Future<void> loadAllData() async {
@@ -125,26 +183,14 @@ class _RoadmapPageState extends State<RoadmapPage> {
 
           maxYear = profile?['max_year'] ?? 4;
 
-          roadmapPlan = [
-            {
-              'subject_code': 'CN101',
-              'year': 1,
-              'semester': 1,
-              'status': 'passed',
-            },
-            {
-              'subject_code': 'MA111',
-              'year': 1,
-              'semester': 1,
-              'status': 'passed',
-            },
-            {
-              'subject_code': 'CN201',
-              'year': 1,
-              'semester': 2,
-              'status': 'planned',
-            },
-          ];
+          String userPlan =
+              profile?['plan_type'] ?? RoadmapTemplate.PLAN_INTERNSHIP;
+          selectedPlanType = userPlan;
+          if (userPlan == RoadmapTemplate.PLAN_COOP) _tabController.index = 1;
+          if (userPlan == RoadmapTemplate.PLAN_RESEARCH)
+            _tabController.index = 2;
+
+          _buildRoadmapData();
 
           // 🔥 Mock ข้อมูลแผนจำลอง (หรือดึงจาก DB simulated_plans ถ้ามี)
           simulatedPlan = List<Map<String, dynamic>>.from(history);
@@ -255,7 +301,6 @@ class _RoadmapPageState extends State<RoadmapPage> {
 
   Widget _buildViewRoadmapLayout() {
     bool canPop = ModalRoute.of(context)?.canPop ?? false;
-
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -281,12 +326,19 @@ class _RoadmapPageState extends State<RoadmapPage> {
             ),
             Text(
               'Computer Engineering',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-              ),
+              style: TextStyle(color: Colors.grey, fontSize: 12),
             ),
+          ],
+        ),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: AppColors.primaryBlue,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: AppColors.primaryBlue,
+          tabs: const [
+            Tab(text: "Internship"),
+            Tab(text: "Coop"),
+            Tab(text: "Research"),
           ],
         ),
       ),
@@ -343,16 +395,26 @@ class _RoadmapPageState extends State<RoadmapPage> {
 
   Widget _buildTermList(
     List<Map<String, dynamic>> roadmapSource, {
-    bool isStatic = false,
+    required bool isStatic,
   }) {
-    final int termCount = isStatic ? 8 : maxYear * 2;
-    final terms = List.generate(termCount, (index) {
-      int year = (index ~/ 2) + 1;
-      int term = (index % 2) + 1;
-      return {"title": "Year $year / Term $term", "year": year, "term": term};
-    });
+    final List<Map<String, int>> terms = [];
+    int loopMaxYear = isStatic ? 4 : maxYear;
 
-    double allCredits = _calculateAllTotalCredits(roadmapSource);
+    for (int y = 1; y <= loopMaxYear; y++) {
+      terms.add({"year": y, "term": 1});
+      terms.add({"year": y, "term": 2});
+      if (roadmapSource.any((e) => e['year'] == y && e['semester'] == 3)) {
+        terms.add({"year": y, "term": 3});
+      }
+    }
+
+    double allCredits;
+
+    if (widget.mode == RoadmapMode.edit) {
+      allCredits = _calculateAllTotalCredits(editedHistory);
+    } else {
+      allCredits = _calculateAllTotalCredits(academicHistory);
+    }
 
     return Column(
       children: [
@@ -374,24 +436,22 @@ class _RoadmapPageState extends State<RoadmapPage> {
                       .toList();
 
                   return TermColumn(
-                    title: term["title"] as String,
+                    title:
+                        "Year ${term['year']} / ${term['term'] == 3 ? 'Summer' : 'Term ${term['term']}'}",
                     allSubjects: allSubjects,
                     mode: widget.mode,
                     userProfile: userProfile,
                     initialCourses: termCourses,
                     allPlanCourses: editedHistory,
-
                     onRefresh: loadAllData,
-
                     isSelected:
                         selectedYear == term['year'] &&
                         selectedTerm == term['term'],
-
                     onSelect: () {
                       if (widget.mode == RoadmapMode.edit) {
                         setState(() {
-                          selectedYear = term['year'] as int;
-                          selectedTerm = term['term'] as int;
+                          selectedYear = term['year'];
+                          selectedTerm = term['term'];
                           hasChanges = true;
                         });
                       }

@@ -183,12 +183,16 @@ class _TermColumnState extends State<TermColumn> {
               padding: EdgeInsets.zero,
               children: [
                 ...widget.initialCourses.map((data) {
+                  // ค้นหาใน DB
                   final subject = widget.allSubjects.firstWhere(
                     (s) => s.subjectCode == data['subject_code'],
                     orElse: () => SubjectModel(
                       subjectCode: data['subject_code'],
-                      subjectName: "Unknown",
-                      credits: 0,
+                      subjectName:
+                          data['subject_name'] ??
+                          "Unknown", // ✨ ใช้ชื่อจาก Template ถ้าหาใน DB ไม่เจอ
+                      credits: (data['credit'] ?? 0)
+                          .toDouble(), // ✨ ใช้หน่วยกิตจาก Template
                       subjectId: 0,
                     ),
                   );
