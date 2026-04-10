@@ -48,15 +48,15 @@ class _YearCourseBox extends State<YearCourseBox> {
     });
   }
 
-  int get selectedCount {
-    return widget.courseSubject.where((subject) {
-      final id = subject['subjectId'];
+  // int get selectedCount {
+  //   return widget.courseSubject.where((subject) {
+  //     final id = subject['subjectId'];
 
-      return widget.gradeMap.containsKey(id) &&
-          widget.gradeMap[id] != null &&
-          widget.gradeMap[id] != "-";
-    }).length;
-  }
+  //     return widget.gradeMap.containsKey(id) &&
+  //         widget.gradeMap[id] != null &&
+  //         widget.gradeMap[id] != "-";
+  //   }).length;
+  // }
 
   bool isConflict(int newSubjectId, String newSection) {
     for (var entry in widget.sectionMap.entries) {
@@ -105,7 +105,7 @@ class _YearCourseBox extends State<YearCourseBox> {
   Widget build(BuildContext context) {
     return Card(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20), // ปรับค่าตัวเลขความโค้งที่นี่
+        borderRadius: BorderRadius.circular(20),
       ),
       color: Colors.white,
       margin: const EdgeInsets.all(10),
@@ -118,7 +118,7 @@ class _YearCourseBox extends State<YearCourseBox> {
                 "Year ${widget.year} Semester ${widget.semester}",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: Text('Progress Bar: $selectedCount'),
+              // subtitle: Text('Progress Bar: $selectedCount'),
               trailing: IconButton(
                 icon: Icon(
                   _isExpanded

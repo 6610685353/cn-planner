@@ -20,18 +20,6 @@ async function getPageData() {
   return data;
 }
 
-async function getAllEnrolled(uid) {
-  const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from('UserRoadmap')
-    .select('subjectId, year, semester, grade')
-    .eq("uid", uid)
-
-  if(error) throw error;
-
-  return data;
-}
-
 async function getCurSemData(uid) {
   const supabase = getSupabase();
   const { data , error } = await supabase
@@ -54,5 +42,4 @@ module.exports = {
    getUserData,
    getPageData,
    getCurSemData,
-   getAllEnrolled,
    };

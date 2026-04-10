@@ -41,8 +41,6 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
   Map<int, Map<String, List<Map>>> scheduleMap = {};
   Map<int, List<String>> sectionOptionsMap = {};
 
-  late Map<String, dynamic> enrolled;
-
   late Map<int, SubjectModel> subjectMap;
 
   @override
@@ -60,7 +58,6 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
     try {
       final pageDataF = await DataFetch().getManagePageData();
       final scheduleRaw = await DataFetch().getSchedule();
-      final enrolledF = await DataFetch().getAllEnrolled(userID);
       scheduleMap = ScheduleService.buildScheduleMap(scheduleRaw);
       sectionOptionsMap = ScheduleService.buildSectionOptions(scheduleMap);
 
@@ -69,7 +66,6 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
       setState(() {
         _pageData = pageDataF;
         _filteredCourses = _pageData;
-        enrolled = enrolledF;
         _isLoading = false;
       });
     } catch (e) {
@@ -273,11 +269,7 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
       appBar: TopBar(header: "Select Course (Term ${widget.targetTerm})"),
       body: Column(
         children: [
-          Text(checkedMap.toString()), //debug
-          Text(gradeMap.toString()), //debug
-          Text(enrolled.toString()),
           SearchBox(onChanged: onSearch),
-          // Text(_filteredCourses.toString()), //debug
 
           Expanded(
             child: SingleChildScrollView(
