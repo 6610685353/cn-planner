@@ -18,12 +18,16 @@ class ScheduleService {
             courseName: json['courseName'],
             instructor: json['instructor'],
             section: json['section'],
-            timeSlots: slots.map((s) => TimeSlot(
-              day: s['day'],
-              startTime: s['startTime'],
-              endTime: s['endTime'],
-              room: s['room'],
-            )).toList(),
+            timeSlots: slots
+                .map(
+                  (s) => TimeSlot(
+                    day: s['day'],
+                    startTime: s['startTime'],
+                    endTime: s['endTime'],
+                    room: s['room'],
+                  ),
+                )
+                .toList(),
           );
         }).toList();
       } else {

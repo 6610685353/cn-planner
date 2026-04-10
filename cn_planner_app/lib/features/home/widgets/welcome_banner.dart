@@ -93,7 +93,7 @@ class WelcomeBanner extends StatelessWidget {
         Text(
           'Welcome, $fname!',
           style: const TextStyle(
-            fontSize: 20,
+            fontSize: 17,
             fontWeight: FontWeight.bold,
             color: Colors.black,
             height: 1.2,
