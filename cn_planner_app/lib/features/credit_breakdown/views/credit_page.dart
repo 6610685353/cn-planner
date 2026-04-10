@@ -1,6 +1,17 @@
+import 'package:cn_planner_app/features/roadmap/models/subject_model.dart';
+import 'package:cn_planner_app/features/roadmap/services/roadmap_service.dart';
+import 'package:cn_planner_app/features/roadmap/services/subject_service.dart';
+import 'package:cn_planner_app/services/profile_service.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:cn_planner_app/services/send_grade.dart';
+
 import '../widgets/total_credit_card.dart';
 import '../widgets/credit_category_item.dart';
+import '../widgets/expandable_elective_card.dart';
+import '../widgets/add_elective_dialog.dart';
 import 'package:cn_planner_app/features/profile/controllers/profile_controller.dart';
 
 class CreditBreakdownPage extends StatefulWidget {
@@ -12,8 +23,27 @@ class CreditBreakdownPage extends StatefulWidget {
 
 class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
   final ProfileController _profileController = ProfileController();
+  final _supabase = Supabase.instance.client;
+
   ProfileData? _profileData;
   bool _isLoading = true;
+
+  List<dynamic> _genEdCourses = [];
+  List<dynamic> _freeElectiveCourses = [];
+
+  // 🌟 ตัวแปรใหม่สำหรับเก็บหน่วยกิตวิชาหลัก (Major)
+  int _majorEarnedCredits = 0;
+
+  final Map<String, double> gradeScheme = {
+    'A': 4.0,
+    'B+': 3.5,
+    'B': 3.0,
+    'C+': 2.5,
+    'C': 2.0,
+    'D+': 1.5,
+    'D': 1.0,
+    'F': 0.0,
+  };
 
   @override
   void initState() {
@@ -22,7 +52,54 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
   }
 
   Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    final user = FirebaseAuth.instance.currentUser;
     final data = await _profileController.fetchUserData();
+
+    if (user != null) {
+      // 1. ดึงวิชา Gen Ed และ Free Elective (ที่ User กรอกเอง)
+      final response = await _supabase
+          .from('UserElectives')
+          .select()
+          .eq('user_id', user.uid);
+
+      _genEdCourses = response.where((c) => c['category'] == 'gen_ed').toList();
+      _freeElectiveCourses = response
+          .where((c) => c['category'] == 'free_elective')
+          .toList();
+
+      // 🌟 2. ดึงวิชาหลัก (Major) มาคำนวณ
+      try {
+        final subjectService = SubjectService();
+        final roadmapService = RoadmapService();
+        final allSubjects = await subjectService.fetchSubjects();
+        final history = await roadmapService.getUserRoadmap(user.uid);
+
+        int majorEarned = 0;
+
+        for (var item in history) {
+          String grade = item['grade'] ?? '-';
+
+          // ถ้านับเฉพาะวิชาที่ผ่าน (ไม่เป็น '-', 'F', 'W')
+          if (grade != '-' && grade != 'F' && grade != 'W') {
+            final subject = allSubjects.firstWhere(
+              (s) => s.subjectCode == item['subject_code'],
+              orElse: () => SubjectModel(
+                subjectCode: '',
+                subjectName: '',
+                credits: 0,
+                subjectId: 0,
+              ),
+            );
+            majorEarned += subject.credits.toInt(); // นำหน่วยกิตมาบวกสะสม
+          }
+        }
+        _majorEarnedCredits = majorEarned; // อัปเดตตัวแปร
+      } catch (e) {
+        print("❌ Error คำนวณหน่วยกิต Major: $e");
+      }
+    }
+
     if (mounted) {
       setState(() {
         _profileData = data;
@@ -31,35 +108,121 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
     }
   }
 
+  Future<void> _recalculateOverallGPA() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final subjectService = SubjectService();
+      final roadmapService = RoadmapService();
+      final profileService = ProfileService();
+
+      final profile = await profileService.getProfile(user.uid);
+      final allSubjects = await subjectService.fetchSubjects();
+      final history = await roadmapService.getUserRoadmap(user.uid);
+      final electives = await _supabase
+          .from('UserElectives')
+          .select()
+          .eq('user_id', user.uid);
+
+      double totalGradePoints = 0;
+      double totalCreditsForGPA = 0; // เครดิตสำหรับหารเกรด (รวม F ด้วย)
+
+      for (var item in history) {
+        String grade = item['grade'] ?? '-';
+        if (!gradeScheme.containsKey(grade)) continue;
+
+        final subject = allSubjects.firstWhere(
+          (s) => s.subjectCode == item['subject_code'],
+          orElse: () => SubjectModel(
+            subjectCode: '',
+            subjectName: '',
+            credits: 0,
+            subjectId: 0,
+          ),
+        );
+
+        totalGradePoints += (gradeScheme[grade]! * subject.credits);
+        totalCreditsForGPA += subject.credits;
+      }
+
+      for (var elective in electives) {
+        String grade = elective['grade'] ?? '-';
+        if (!gradeScheme.containsKey(grade)) continue;
+
+        int creds = (elective['credits'] as num?)?.toInt() ?? 0;
+        totalGradePoints += (gradeScheme[grade]! * creds);
+        totalCreditsForGPA += creds;
+      }
+
+      double gpax = totalCreditsForGPA > 0
+          ? totalGradePoints / totalCreditsForGPA
+          : 0.0;
+
+      double currentGpa = (profile?['gpa'] ?? 0.0).toDouble();
+      double currentThisSemCred = (profile?['this_sem_credits'] ?? 0.0)
+          .toDouble();
+
+      await SendGrade.submitGPAX(
+        gpax,
+        totalCreditsForGPA,
+        currentGpa,
+        currentThisSemCred,
+      );
+    } catch (e) {
+      print("❌ Error คำนวณเกรด: $e");
+    }
+  }
+
+  Future<void> _handleAddCourse(String category) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => AddElectiveDialog(
+        categoryName: category == 'gen_ed'
+            ? 'General Education'
+            : 'Free Elective',
+      ),
+    );
+
+    if (result != null) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      setState(() => _isLoading = true);
+
+      await _supabase.from('UserElectives').insert({
+        'user_id': user.uid,
+        'category': category,
+        'subject_code': result['subject_code'],
+        'credits': result['credits'],
+        'grade': result['grade'],
+      });
+
+      await _recalculateOverallGPA();
+      await _loadData();
+    }
+  }
+
+  Future<void> _handleDeleteCourse(String id) async {
+    setState(() => _isLoading = true);
+    await _supabase.from('UserElectives').delete().eq('id', id);
+    await _recalculateOverallGPA();
+    await _loadData();
+  }
+
+  int _calculateEarned(List<dynamic> courses) {
+    // นับเฉพาะวิชาที่เกรดผ่าน (ป้องกัน User กรอกเกรด F เล่นๆ ในวิชาเลือก)
+    return courses.fold(0, (sum, item) {
+      String grade = item['grade'] ?? '-';
+      if (grade != 'F' && grade != 'W' && grade != '-') {
+        return sum + (item['credits'] as int);
+      }
+      return sum;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // -----------------------------------------------------------------
-    // Mock Data: รายวิชาแยกตาม Part (เก็บไว้โชว์ UI ด้านล่าง)
-    // -----------------------------------------------------------------
-    final List<Map<String, dynamic>> categories = [
-      {
-        'part': 'Part I',
-        'name': 'General Education Courses',
-        'earned': 24,
-        'required': 30,
-        'color': Colors.grey.shade800,
-      },
-      {
-        'part': 'Part II',
-        'name': 'Major Courses',
-        'earned': 45,
-        'required': 94,
-        'color': Colors.grey.shade800,
-      },
-      {
-        'part': 'Part III',
-        'name': 'Free Elective Courses',
-        'earned': 6,
-        'required': 6,
-        'color': Colors.grey.shade800,
-      },
-    ];
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
@@ -85,15 +248,12 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. การ์ดสรุปรวม (โยนค่าจาก Controller ใส่ได้เลย)
                   TotalCreditCard(
                     earnedCredits: _profileData?.earned_credits ?? 0,
                     totalCredits: _profileData?.total_credits ?? 146,
                     currentGpa: _profileData?.gpax ?? 0.00,
                   ),
-
                   const SizedBox(height: 30),
-
                   const Text(
                     'Degree Requirements',
                     style: TextStyle(
@@ -104,20 +264,35 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: categories.length,
-                    itemBuilder: (context, index) {
-                      final cat = categories[index];
-                      return CreditCategoryItem(
-                        part: cat['part'],
-                        categoryName: cat['name'],
-                        earned: cat['earned'],
-                        required: cat['required'],
-                        color: cat['color'],
-                      );
-                    },
+                  ExpandableElectiveCard(
+                    part: 'Part I',
+                    categoryName: 'General Education Courses',
+                    earned: _calculateEarned(_genEdCourses),
+                    required: 12,
+                    color: Colors.grey.shade800,
+                    addedCourses: _genEdCourses,
+                    onAddPressed: () => _handleAddCourse('gen_ed'),
+                    onDeletePressed: _handleDeleteCourse,
+                  ),
+
+                  // 🌟 อัปเดตส่วนนี้: โยนค่าตัวแปร _majorEarnedCredits เข้ามาแสดงผล
+                  CreditCategoryItem(
+                    part: 'Part II',
+                    categoryName: 'Major Courses',
+                    earned: _majorEarnedCredits,
+                    required: 128,
+                    color: Colors.grey.shade800,
+                  ),
+
+                  ExpandableElectiveCard(
+                    part: 'Part III',
+                    categoryName: 'Free Elective Courses',
+                    earned: _calculateEarned(_freeElectiveCourses),
+                    required: 6,
+                    color: Colors.grey.shade800,
+                    addedCourses: _freeElectiveCourses,
+                    onAddPressed: () => _handleAddCourse('free_elective'),
+                    onDeletePressed: _handleDeleteCourse,
                   ),
                 ],
               ),

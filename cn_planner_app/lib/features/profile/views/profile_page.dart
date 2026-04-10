@@ -1,4 +1,5 @@
 import 'package:cn_planner_app/core/widgets/confirm_dialog.dart';
+import 'package:cn_planner_app/features/credit_breakdown/views/credit_page.dart';
 import 'package:cn_planner_app/features/profile/widgets/quick_stats.dart';
 import 'package:cn_planner_app/features/profile/widgets/feature_menu.dart';
 import 'package:cn_planner_app/features/profile/widgets/setting_action_tile.dart';
@@ -177,8 +178,21 @@ class _ProfilePageState extends State<ProfilePage> {
                             FeatureMenu(
                               icon: buildIcon(Icons.emoji_events_outlined),
                               title: "Credit Breakdown",
-                              subtitle: "View overall detail",
-                              route: AppRoutes.creditBreakdown,
+                              subtitle: "View your progress",
+                              route: AppRoutes
+                                  .creditBreakdown, // ปล่อยไว้เฉยๆ ก็ได้ถ้าใช้ onTap ทับ
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const CreditBreakdownPage(),
+                                  ),
+                                ).then((_) {
+                                  // 🌟 พอกดกลับมาจากหน้า Credit Breakdown ให้โหลดข้อมูล Profile ใหม่!
+                                  _loadData();
+                                });
+                              },
                             ),
                             const SizedBox(height: 30),
 

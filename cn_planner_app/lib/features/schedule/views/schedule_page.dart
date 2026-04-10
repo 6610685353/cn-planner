@@ -70,8 +70,6 @@ class _ScheduleScreenState extends State<SchedulePage> {
         colorIndex++;
       }
 
-      // 👉 2. สั่งตั้งคิวแจ้งเตือนอัตโนมัติ
-      // 👉 2. สั่งตั้งคิวแจ้งเตือนอัตโนมัติ (ใส่ Try-Catch ดักไว้ กันแอปพัง!)
       try {
         await NotificationService.autoScheduleAllClasses(convertedClasses);
       } catch (notiError) {
@@ -120,16 +118,22 @@ class _ScheduleScreenState extends State<SchedulePage> {
 
   @override
   Widget build(BuildContext context) {
+    // 🌟 เช็คว่ามีหน้าจออยู่ก่อนหน้านี้ให้สามารถ pop (ย้อนกลับ) ไปได้หรือไม่
+    bool canPop = ModalRoute.of(context)?.canPop ?? false;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.maybePop(context),
-        ),
+        automaticallyImplyLeading: canPop, // 🌟 เปลี่ยนตามสถานะ canPop
+        leading:
+            canPop // 🌟 โชว์ปุ่มก็ต่อเมื่อย้อนกลับได้เท่านั้น
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.maybePop(context),
+              )
+            : null,
         title: const Text(
           'CLASS',
           style: TextStyle(
