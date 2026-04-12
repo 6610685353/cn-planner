@@ -442,13 +442,14 @@ class _SimulatorScreenState extends State<SimulatorPage> {
 
       await Future.delayed(const Duration(milliseconds: 600));
       if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const RoadmapPage(mode: RoadmapMode.view),
-        ),
-        (route) => false,
-      );
+      // Navigator.pushAndRemoveUntil(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (_) => const RoadmapPage(mode: RoadmapMode.view),
+      //   ),
+      //   (route) => false,
+      // );
+      Navigator.pop(context);
     } catch (e) {
       setState(() => _isSaving = false);
       if (mounted) {
