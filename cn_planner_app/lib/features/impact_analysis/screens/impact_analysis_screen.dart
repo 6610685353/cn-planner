@@ -55,13 +55,19 @@ class _ImpactAnalysisPageState extends State<ImpactAnalysisPage> {
       if (!mounted) return;
 
       // ✅ [#7] หลัง save → navigate ไป roadmap แทน Navigator.pop
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const RoadmapPage(mode: RoadmapMode.view),
-        ),
-        (route) => false,
-      );
+      // Navigator.pushAndRemoveUntil(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (_) => const RoadmapPage(mode: RoadmapMode.view),
+      //   ),
+      //   (route) => false,
+      // );
+
+      // ถอยหลังก้าวที่ 1: ปิดหน้า Impact Analysis
+      Navigator.pop(context);
+
+      // ถอยหลังก้าวที่ 2: ปิดหน้า Simulator (กลับไปเจอ Roadmap พอดี!)
+      Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSaving = false);
