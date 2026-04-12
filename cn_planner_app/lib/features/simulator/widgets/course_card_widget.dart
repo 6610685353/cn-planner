@@ -18,9 +18,17 @@ class CourseCardWidget extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        // ✅ เทอม passed → พื้นหลัง Modern Soft Cool Gray
+        color: course.status == CourseStatus.passed
+            ? const Color(0xFFF8F9FA)
+            : Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE0E0E0), width: 1.2),
+        border: Border.all(
+          color: course.status == CourseStatus.passed
+              ? const Color(0xFFEDEEF1)
+              : const Color(0xFFE0E0E0),
+          width: 1.2,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 15),
@@ -32,10 +40,12 @@ class CourseCardWidget extends StatelessWidget {
               children: [
                 Text(
                   course.code,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1A1A1A),
+                    color: course.status == CourseStatus.passed
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF1A1A1A),
                     height: 1.8,
                   ),
                 ),
@@ -52,6 +62,8 @@ class CourseCardWidget extends StatelessWidget {
                         ? const Color(0xFF00C853)
                         : course.outcome == CourseOutcome.fail
                         ? const Color(0xFFE53935)
+                        : course.outcome == CourseOutcome.withdraw
+                        ? const Color(0xFFFF9800)
                         : const Color(0xFF9E9E9E),
                     fontWeight: FontWeight.w900,
                   ),
@@ -63,16 +75,18 @@ class CourseCardWidget extends StatelessWidget {
             const SizedBox(height: 0),
             Text(
               course.name,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF616161),
+                color: course.status == CourseStatus.passed
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF616161),
                 fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 8),
-            _OutcomeSegmentedControl(
-              outcome: course.outcome,
-              isClickable: isEditable,
+            _OutcomeControl(
+              course: course,
+              isEditable: isEditable,
               onChanged: onOutcomeChanged,
             ),
           ],
@@ -107,57 +121,153 @@ class CourseCardWidget extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// Sliding Segmented Control
-// ─────────────────────────────────────────────
-// ค้นหาคลาส _OutcomeSegmentedControl ในไฟล์ course_card_widget.dart
-// ค้นหาคลาส _OutcomeSegmentedControl ในไฟล์ course_card_widget.dart
-class _OutcomeSegmentedControl extends StatelessWidget {
-  final CourseOutcome outcome;
-  final bool isClickable;
+class _OutcomeControl extends StatelessWidget {
+  final CourseModel course;
+  final bool isEditable;
   final ValueChanged<CourseOutcome>? onChanged;
 
-  const _OutcomeSegmentedControl({
-    required this.outcome,
-    required this.isClickable,
+  const _OutcomeControl({
+    required this.course,
+    required this.isEditable,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    // ---------------------------------------------------------
-    // 1. กรณีเทอม UPCOMING (ล็อก) -> แสดงแค่ Pending Enrollment
-    // ---------------------------------------------------------
-    if (!isClickable) {
-      return Container(
-        height: 43,
-        decoration: BoxDecoration(
-          color: const Color(0xFFBDBDBD),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock_outline_rounded, size: 16, color: Colors.white),
-              SizedBox(width: 8),
-              Text(
-                'Pending Enrollment',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
+    if (course.status == CourseStatus.upcoming) {
+      return _LockedBadge();
+    }
+    if (course.status == CourseStatus.passed) {
+      return _PassedOutcomeBadge(outcome: course.outcome);
+    }
+    return _OutcomeSegmentedControl(
+      outcome: course.outcome,
+      onChanged: onChanged,
+    );
+  }
+}
+
+// ✅ Upcoming - Modern Locked Badge
+class _LockedBadge extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 43,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
+      ),
+      child: const Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.lock_outline_rounded,
+              size: 16,
+              color: Color(0xFF9CA3AF),
+            ),
+            SizedBox(width: 8),
+            Text(
+              'Pending Enrollment',
+              style: TextStyle(
+                color: Color(0xFF6B7280),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                letterSpacing: 0.3,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
+}
+
+// ✅ Passed - Modern Badge (Removed "From transcript")
+class _PassedOutcomeBadge extends StatelessWidget {
+  final CourseOutcome outcome;
+  const _PassedOutcomeBadge({required this.outcome});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isPassed = outcome == CourseOutcome.pass;
+    final bool isFail = outcome == CourseOutcome.fail;
+    final bool isWithdraw = outcome == CourseOutcome.withdraw;
+
+    Color bgColor;
+    Color textColor;
+    Color borderColor;
+    IconData icon;
+    String label;
+
+    if (isPassed) {
+      bgColor = const Color(0xFFDCFCE7);
+      textColor = const Color(0xFF166534);
+      borderColor = const Color(0xFFBBF7D0);
+      icon = Icons.check_circle_rounded;
+      label = 'PASS';
+    } else if (isFail) {
+      bgColor = const Color(0xFFFEE2E2);
+      textColor = const Color(0xFF991B1B);
+      borderColor = const Color(0xFFFECACA);
+      icon = Icons.cancel_rounded;
+      label = 'Grade F';
+    } else if (isWithdraw) {
+      bgColor = const Color(0xFFFFEDD5);
+      textColor = const Color(0xFF9A3412);
+      borderColor = const Color(0xFFFED7AA);
+      icon = Icons.remove_circle_rounded;
+      label = 'Withdrawn';
+    } else {
+      bgColor = const Color(0xFFF3F4F6);
+      textColor = const Color(0xFF6B7280);
+      borderColor = const Color(0xFFE5E7EB);
+      icon = Icons.help_outline_rounded;
+      label = 'Unknown';
     }
 
-    // ---------------------------------------------------------
-    // 2. กรณีเทอมปกติ (กดได้) -> แสดง Toggle PASS / Grade: F/W
-    // ---------------------------------------------------------
+    return Container(
+      height: 43,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor, width: 1.2),
+      ),
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: textColor),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ⛔ Current Term - No changes made
+class _OutcomeSegmentedControl extends StatelessWidget {
+  final CourseOutcome outcome;
+  final ValueChanged<CourseOutcome>? onChanged;
+
+  const _OutcomeSegmentedControl({
+    required this.outcome,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final bool isPassed = outcome == CourseOutcome.pass;
 
     return GestureDetector(
@@ -166,15 +276,14 @@ class _OutcomeSegmentedControl extends StatelessWidget {
       child: Container(
         height: 43,
         decoration: BoxDecoration(
-          color: const Color(0xFFBDBDBD), // สีเทาเดิม
+          color: const Color(0xFFBDBDBD),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Stack(
           children: [
-            // แถบสีที่จะเลื่อน (Green หรือ Red)
             AnimatedAlign(
               duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut, // ใช้ค่าที่ถูกต้องเพื่อไม่ให้ Error
+              curve: Curves.easeInOut,
               alignment: isPassed
                   ? Alignment.centerLeft
                   : Alignment.centerRight,
@@ -198,7 +307,6 @@ class _OutcomeSegmentedControl extends StatelessWidget {
                 ),
               ),
             ),
-            // ข้อความ PASS และ Grade: F/W (จะแสดงเฉพาะในโหมดที่กดได้เท่านั้น)
             const Row(
               children: [
                 Expanded(
@@ -235,9 +343,6 @@ class _OutcomeSegmentedControl extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// Prereq Badge
-// ─────────────────────────────────────────────
 class _PrereqBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -248,9 +353,9 @@ class _PrereqBadge extends StatelessWidget {
         border: Border.all(color: const Color(0xFF66BB6A), width: 1),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
+      child: const Row(
         mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
           Icon(
             Icons.check_circle_outline_rounded,
             size: 11,

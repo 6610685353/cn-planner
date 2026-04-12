@@ -1,19 +1,20 @@
 import 'package:cn_planner_app/features/roadmap/views/course_selection_page.dart';
 import 'package:cn_planner_app/features/roadmap/models/subject_model.dart';
 import 'package:flutter/material.dart';
-import '../views/roadmap_page.dart'; // 🔥 สำหรับการเรียกใช้ RoadmapMode
+import '../views/roadmap_page.dart';
 
 class SubjectCard extends StatelessWidget {
   final String code;
   final String name;
   final int credits;
-  final String state; // "passed", "planned", "simulated", "missing_prereq"
+  final String state; // "passed", "planned", "failed", "missing_prereq"
   final RoadmapMode mode;
   final String? grade;
   final Function(String)? onGradeChanged;
   final VoidCallback? onDelete;
-  final String?
-  section; // ✅ เพิ่ม section // ✅ เพิ่มรายการเหตุผลว่าทำไมลงไม่ได้
+  final String? section;
+  // [#2] true = วิชานี้ fail เพราะ prereq ของมัน fail (ตัวต่อ)
+  final bool isBlockedByFail;
 
   const SubjectCard({
     super.key,
@@ -25,39 +26,46 @@ class SubjectCard extends StatelessWidget {
     this.grade,
     this.onGradeChanged,
     this.onDelete,
-    this.section, // ✅ เพิ่ม section // ✅ เพิ่ม
+    this.section,
+    this.isBlockedByFail = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    // เช็คว่าวิชานี้ติดตัวต่อหรือไม่
     bool isMissingPrereq = state == "missing_prereq";
+    // [#2] "failed" = วิชาที่ user กด fail ใน simulator
+    bool isFailed = state == "failed";
     bool isViewMode = mode == RoadmapMode.view;
 
-    Color borderColor = Colors.transparent;
-    Color backgroundColor = Colors.white;
+    // [#2] กำหนดสีพื้นหลังและขอบตามสถานะ
+    Color cardColor;
+    Border cardBorder;
+
+    if (isFailed) {
+      cardColor = Colors.red.shade50;
+      cardBorder = Border.all(color: Colors.red.shade400, width: 2.0);
+    } else if (!isViewMode && isMissingPrereq) {
+      cardColor = Colors.white;
+      cardBorder = Border.all(color: Colors.red.shade200, width: 1.5);
+    } else {
+      cardColor = Colors.white;
+      cardBorder = Border.all(color: Colors.transparent, width: 1.5);
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(isFailed ? 0.08 : 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
         ],
-
-        // ถ้าติดตัวต่อให้ขึ้นขอบแดงจางๆ
-        border: Border.all(
-          color: !isViewMode && isMissingPrereq
-              ? Colors.red.shade200
-              : Colors.transparent,
-          width: 1.5,
-        ),
+        border: cardBorder,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,9 +78,11 @@ class SubjectCard extends StatelessWidget {
                   children: [
                     Text(
                       code,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
+                        // [#2] ชื่อวิชาที่ fail → สีแดง
+                        color: isFailed ? Colors.red.shade700 : Colors.black,
                       ),
                     ),
                     if (section != null &&
@@ -98,9 +108,10 @@ class SubjectCard extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(width: 8),
-                    // โชว์ Badge เฉพาะในหน้า Simulator
                     if (mode == RoadmapMode.simulate)
                       _buildStatusBadge(isMissingPrereq),
+                    // [#2] badge สำหรับวิชาที่ fail ใน view mode
+                    if (isViewMode && isFailed) _buildFailedBadge(),
                   ],
                 ),
               ),
@@ -109,7 +120,9 @@ class SubjectCard extends StatelessWidget {
                   Text(
                     "$credits Cr.",
                     style: TextStyle(
-                      color: !isViewMode && isMissingPrereq
+                      color: isFailed
+                          ? Colors.red.shade600
+                          : (!isViewMode && isMissingPrereq)
                           ? Colors.red
                           : Colors.green,
                       fontSize: 12,
@@ -117,17 +130,17 @@ class SubjectCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 2),
-                  // แสดงไอคอนสถานะ (ผ่านแล้ว / ติดล็อค)
                   if (state == "passed" || state == "Passed")
                     const Icon(
                       Icons.check_circle,
                       color: Colors.green,
                       size: 14,
                     ),
-                  if (!isViewMode && isMissingPrereq)
+                  // [#2] icon X สำหรับวิชาที่ fail
+                  if (isFailed)
+                    Icon(Icons.cancel, color: Colors.red.shade400, size: 14),
+                  if (!isViewMode && isMissingPrereq && !isFailed)
                     const Icon(Icons.lock, color: Colors.red, size: 14),
-
-                  // 🔥 ปุ่มลบ: จะโชว์เฉพาะโหมด Edit และ Simulate เท่านั้น
                   if (mode != RoadmapMode.view)
                     IconButton(
                       padding: EdgeInsets.zero,
@@ -146,10 +159,13 @@ class SubjectCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             name,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            style: TextStyle(
+              color: isFailed ? Colors.red.shade400 : Colors.grey.shade600,
+              fontSize: 13,
+            ),
           ),
 
-          if (!isViewMode && isMissingPrereq)
+          if (!isViewMode && isMissingPrereq && !isFailed)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
@@ -158,18 +174,31 @@ class SubjectCard extends StatelessWidget {
               ),
             ),
 
-          // แสดงส่วนจัดการเกรด (เฉพาะโหมด View และ Edit)
+          // [#2] label ใต้ชื่อวิชา — แยก F/W เอง vs ตัวต่อถูกบล็อก
+          if (isFailed && isViewMode)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                isBlockedByFail
+                    ? "Prerequisite received F/W — blocked"
+                    : "Received F/W in simulation — needs retake",
+                style: TextStyle(
+                  color: Colors.red.shade400,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+
           if (mode != RoadmapMode.view && mode != RoadmapMode.simulate)
             _buildGradeSection(),
 
-          // แสดงปุ่มจำลอง PASS/FAIL (เฉพาะโหมด Simulate)
           if (mode == RoadmapMode.simulate) _buildSimulateActions(),
         ],
       ),
     );
   }
 
-  // Badge บอกว่าผ่านเงื่อนไขวิชาตัวต่อหรือยัง
   Widget _buildStatusBadge(bool isMissing) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -178,7 +207,7 @@ class SubjectCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
-        isMissing ? "⚠️ Missing Prereq" : "∞ Prereq Met",
+        isMissing ? "⚠️ Missing Prereq" : "✓ Prereq Met",
         style: TextStyle(
           color: isMissing ? Colors.red : Colors.green,
           fontSize: 9,
@@ -188,7 +217,29 @@ class SubjectCard extends StatelessWidget {
     );
   }
 
-  // ส่วนแสดงเกรดหรือดรอปดาวน์เลือกเกรด
+  // [#2] badge: "F/W" สำหรับวิชาที่ fail เอง, "BLOCKED" สำหรับตัวต่อ
+  Widget _buildFailedBadge() {
+    final label = isBlockedByFail ? "BLOCKED" : "F/W";
+    final bg = isBlockedByFail ? Colors.orange.shade100 : Colors.red.shade100;
+    final fg = isBlockedByFail ? Colors.orange.shade800 : Colors.red.shade700;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: fg,
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
   Widget _buildGradeSection() {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0),
@@ -236,7 +287,6 @@ class SubjectCard extends StatelessWidget {
     );
   }
 
-  // ปุ่มกดสำหรับโหมด Simulator
   Widget _buildSimulateActions() {
     return Padding(
       padding: const EdgeInsets.only(top: 12.0),
@@ -262,9 +312,7 @@ class SubjectCard extends StatelessWidget {
     return SizedBox(
       height: 32,
       child: ElevatedButton(
-        onPressed: () {
-          // Logic การจำลองจะถูกจัดการที่ Parent (SimulatorPage)
-        },
+        onPressed: () {},
         style: ElevatedButton.styleFrom(
           backgroundColor: bg,
           foregroundColor: fg,
@@ -296,7 +344,6 @@ class AddCourseButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.grey.shade100.withOpacity(0.5),
           borderRadius: BorderRadius.circular(12),
-          // แสดงขอบเป็นเส้นประจางๆ (ใช้เส้นทึบสีอ่อนแทนเพื่อประสิทธิภาพ)
           border: Border.all(color: Colors.grey.shade300),
         ),
         child: Center(

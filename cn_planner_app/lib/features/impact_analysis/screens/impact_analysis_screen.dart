@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import '../../simulator/models/term_model.dart';
 import '../../simulator/services/simulator_service.dart';
 import '../../simulator/services/simulation_result_model.dart';
+import '../../roadmap/views/roadmap_page.dart'; // ✅ [#7]
 import '../widgets/risk_indicator.dart';
 import '../widgets/year_path_visualizer.dart';
 
 class ImpactAnalysisPage extends StatefulWidget {
   final List<TermModel> terms;
   final SimulationResult result;
+  final String planType; // ✅ [#6]
 
   const ImpactAnalysisPage({
     super.key,
     required this.terms,
     required this.result,
+    this.planType = 'Internship',
   });
 
   @override
@@ -26,7 +29,11 @@ class _ImpactAnalysisPageState extends State<ImpactAnalysisPage> {
   Future<void> _onSave() async {
     setState(() => _isSaving = true);
     try {
-      await SimulatorService.saveSimulation(terms: widget.terms);
+      // ✅ [#6] ส่ง planType ไปบันทึกด้วย
+      await SimulatorService.saveSimulation(
+        terms: widget.terms,
+        planType: widget.planType,
+      );
       if (!mounted) return;
       setState(() {
         _isSaving = false;
@@ -39,14 +46,22 @@ class _ImpactAnalysisPageState extends State<ImpactAnalysisPage> {
             '✅ Simulation saved',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          backgroundColor: Color(0xFF1565C0),
+          backgroundColor: Color(0xFF166534),
           behavior: SnackBarBehavior.floating,
         ),
       );
 
       await Future.delayed(const Duration(milliseconds: 800));
       if (!mounted) return;
-      Navigator.pop(context);
+
+      // ✅ [#7] หลัง save → navigate ไป roadmap แทน Navigator.pop
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const RoadmapPage(mode: RoadmapMode.view),
+        ),
+        (route) => false,
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSaving = false);

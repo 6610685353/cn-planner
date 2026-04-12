@@ -8,10 +8,7 @@ import '../models/term_model.dart';
 import 'simulation_result_model.dart';
 
 class SimulatorService {
-  // static const String _baseUrl = 'http://10.0.2.2:5001/cn-planner-app/asia-southeast1/api/v1';
   static final String _baseUrl = "${Config.baseUrl}/v1";
-
-  // ─── Outcome / status helpers ──────────────────────────────────────────────
 
   static String _outcomeToString(CourseOutcome o) => switch (o) {
     CourseOutcome.pass => 'pass',
@@ -25,8 +22,6 @@ class SimulatorService {
     TermStatus.current => 'current',
     TermStatus.upcoming => 'upcoming',
   };
-
-  // ─── Build payloads for the simulate endpoint ──────────────────────────────
 
   static Map<String, String> _buildOutcomes(List<TermModel> terms) {
     final map = <String, String>{};
@@ -45,7 +40,6 @@ class SimulatorService {
 
   static Map<String, int>? _buildSimulatedCurrentTerm(List<TermModel> terms) {
     TermModel? latestWithPass;
-
     for (final term in terms) {
       if (_termHasAtLeastOnePass(term.courses)) {
         if (latestWithPass == null ||
@@ -56,7 +50,6 @@ class SimulatorService {
         }
       }
     }
-
     if (latestWithPass == null) {
       final actualCurrent =
           terms.where((t) => t.status == TermStatus.current).toList()
@@ -67,7 +60,6 @@ class SimulatorService {
       if (actualCurrent.isEmpty) return null;
       latestWithPass = actualCurrent.last;
     }
-
     return {'year': latestWithPass.year, 'term': latestWithPass.term};
   }
 
@@ -114,6 +106,33 @@ class SimulatorService {
     return map;
   }
 
+  // ─── Check if saved plan exists for a specific planType ──────────────────
+
+  static Future<bool> hasSavedPlanForType(String planType) async {
+    final supabase = Supabase.instance.client;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return false;
+    final data = await supabase
+        .from('simulatorplan')
+        .select('id')
+        .eq('user_id', uid)
+        .eq('plan_type', planType)
+        .limit(1);
+    return (data as List).isNotEmpty;
+  }
+
+  static Future<bool> hasSavedPlan() async {
+    final supabase = Supabase.instance.client;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return false;
+    final data = await supabase
+        .from('simulatorplan')
+        .select('id')
+        .eq('user_id', uid)
+        .limit(1);
+    return (data as List).isNotEmpty;
+  }
+
   // ─── Simulate (calls backend) ─────────────────────────────────────────────
 
   static Future<SimulationResult> simulate(List<TermModel> terms) async {
@@ -139,121 +158,178 @@ class SimulatorService {
     if (response.statusCode != 200) {
       throw Exception('Simulate failed: ${response.statusCode}');
     }
-
     return SimulationResult.fromJson(jsonDecode(response.body));
   }
 
-  // ─── Save Simulation Plan → Supabase (simulatorplan table) ───────────────
-  //
-  // บันทึกแผนของหน้า Simulator เท่านั้น (ไม่กระทบ roadmap)
-  // บันทึก **ทุกวิชาทุก term** เพื่อให้ restore add/drop ได้ถูกต้อง:
-  //   - 'pass' / 'fail'  → วิชาที่ตั้ง outcome แล้ว
-  //   - 'enrolled'       → วิชาที่อยู่ใน term แต่ยังไม่ตัดสิน
-  //                        (รวมถึงวิชาที่ user add เข้ามาใหม่)
-  // วิชาที่ user drop ออกไปจะไม่ถูกบันทึก → โหลดกลับมาก็จะไม่ปรากฏ
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─── Save Simulation Plan → Supabase ─────────────────────────────────────
+  // [#2 FIX] บันทึกวิชาที่ไม่มี subjectId (custom/elective) ด้วย
+  //          โดยใช้ subject_id = null (DB schema ต้อง nullable)
+  // [#1 FIX] ลบเฉพาะ plan_type นี้ก่อน insert ใหม่
 
-  static Future<void> saveSimulation({required List<TermModel> terms}) async {
+  static Future<void> saveSimulation({
+    required List<TermModel> terms,
+    String planType = 'Internship',
+  }) async {
     final supabase = Supabase.instance.client;
     final uid = FirebaseAuth.instance.currentUser?.uid;
-
     if (uid == null) throw Exception('User not logged in');
 
-    // สร้าง rows จากทุกวิชาทุก term
     final rows = <Map<String, dynamic>>[];
 
     for (final term in terms) {
+      final seenCodes = <String>{};
+
       for (final course in term.courses) {
-        // map outcome → status string ที่บันทึกลง DB
         final String status;
         if (course.outcome == CourseOutcome.pass) {
           status = 'pass';
-        } else if (course.outcome == CourseOutcome.fail) {
+        } else if (course.outcome == CourseOutcome.fail ||
+            course.outcome == CourseOutcome.withdraw) {
           status = 'fail';
-        } else {
-          // notSet / withdraw → ถือว่า enrolled (อยู่ใน term นี้)
+        } else if (course.outcome == CourseOutcome.notSet &&
+            term.status == TermStatus.upcoming) {
+          // บันทึกวิชา upcoming ที่ user add มาด้วย status = 'enrolled'
+          // (วิชาที่มาจาก static template จะมี notSet เหมือนกัน
+          //  ต้องเช็คว่าเป็นวิชาที่ add เพิ่มมาจริงๆ — ตรวจจาก subjectId ก็ได้
+          //  แต่ง่ายกว่าคือ save ทั้งหมดแล้วกรองตอน load)
           status = 'enrolled';
+        } else {
+          continue; // skip notSet ของ current term (default F ที่ไม่ได้ตั้ง)
         }
+
+        final key = course.code;
+        if (seenCodes.contains(key)) continue;
+        seenCodes.add(key);
+
+        final subjectId = course.subjectId;
 
         rows.add({
           'user_id': uid,
           'year': term.year,
           'semester': term.term,
-          'subject_id': course.subjectId ?? 0,
+          // [#2 FIX] null ถ้าไม่มี subjectId (custom/elective)
+          'subject_id': (subjectId != null && subjectId > 0) ? subjectId : null,
           'subject_code': course.code,
+          'subject_name': course.name, // [#2 FIX] เก็บชื่อวิชาด้วยสำหรับ custom
+          'credits': course.credits, // [#2 FIX] เก็บ credits ด้วย
           'status': status,
+          'plan_type': planType,
           'updated_at': DateTime.now().toIso8601String(),
         });
       }
     }
 
-    // ลบแผนเก่าของ user แล้ว insert ใหม่ทั้งหมด
-    await supabase.from('simulatorplan').delete().eq('user_id', uid);
+    // ลบเฉพาะ plan_type นี้ ไม่กระทบ plan อื่น
+    await supabase
+        .from('simulatorplan')
+        .delete()
+        .eq('user_id', uid)
+        .eq('plan_type', planType);
 
     if (rows.isNotEmpty) {
       await supabase.from('simulatorplan').insert(rows);
     }
   }
 
-  // ─── Load Simulation Plan ← Supabase (simulatorplan table) ───────────────
-  //
-  // คืนค่า Map<'year_semester', SimulatorTermPlan> เพื่อให้ _loadData()
-  // นำไป:
-  //   1. ตัดวิชาที่ไม่อยู่ใน plan ออก (วิชาที่ user drop)
-  //   2. เพิ่มวิชาที่อยู่ใน plan แต่ไม่มีใน roadmap term นั้น (วิชาที่ user add)
-  //   3. apply outcomes (pass / fail)
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─── Load outcomes for a specific planType ────────────────────────────────
+  // [#1 FIX] โหลดเฉพาะ plan_type ที่ตรงกัน
+  // [#1 FIX] match ด้วย subject_code ด้วย (ไม่ใช่แค่ subject_id)
 
-  static Future<Map<String, SimulatorTermPlan>> loadSimulationPlan() async {
+  static Future<({Map<String, CourseOutcome> outcomes, String planType})>
+  loadSimulationPlanWithType(String planType) async {
     final supabase = Supabase.instance.client;
     final uid = FirebaseAuth.instance.currentUser?.uid;
-
-    if (uid == null) return {};
+    if (uid == null) {
+      return (outcomes: <String, CourseOutcome>{}, planType: planType);
+    }
 
     final data = await supabase
         .from('simulatorplan')
-        .select('year, semester, subject_code, status')
-        .eq('user_id', uid);
+        .select('subject_code, status, plan_type')
+        .eq('user_id', uid)
+        .eq('plan_type', planType);
 
-    if ((data as List).isEmpty) return {};
-
-    // จัด group ตาม "year_semester"
-    final Map<String, SimulatorTermPlan> planByTerm = {};
-
-    for (final row in data) {
-      final year = row['year'] as int;
-      final semester = row['semester'] as int;
-      final code = row['subject_code'] as String? ?? '';
-      final status = row['status'] as String? ?? '';
-
-      if (code.isEmpty) continue;
-
-      final key = '${year}_$semester';
-      planByTerm.putIfAbsent(key, () => SimulatorTermPlan());
-
-      final plan = planByTerm[key]!;
-
-      // เพิ่ม code เข้า set ของ term นี้ (enrolled / pass / fail ล้วน "อยู่ใน term")
-      plan.codes.add(code);
-
-      // map outcome สำหรับ pass / fail เท่านั้น
-      if (status == 'pass') {
-        plan.outcomes[code] = CourseOutcome.pass;
-      } else if (status == 'fail') {
-        plan.outcomes[code] = CourseOutcome.fail;
-      }
-      // 'enrolled' → ไม่ต้อง set outcome (คงเป็น notSet ตามปกติ)
+    if ((data as List).isEmpty) {
+      return (outcomes: <String, CourseOutcome>{}, planType: planType);
     }
 
-    return planByTerm;
+    final Map<String, CourseOutcome> planOutcomes = {};
+    for (final row in data) {
+      final code = row['subject_code'] as String? ?? '';
+      final status = row['status'] as String? ?? '';
+      if (code.isEmpty) continue;
+      // [#1 FIX] key คือ subject_code เสมอ (ใช้ได้กับทั้งวิชา DB และ custom)
+      if (status == 'pass') {
+        planOutcomes[code] = CourseOutcome.pass;
+      } else if (status == 'fail') {
+        planOutcomes[code] = CourseOutcome.fail;
+      }
+    }
+    return (outcomes: planOutcomes, planType: planType);
   }
-}
 
-// ─── Helper model สำหรับข้อมูลต่อ term ───────────────────────────────────────
-class SimulatorTermPlan {
-  /// รหัสวิชาทั้งหมดที่ควรอยู่ใน term นี้ (ไม่รวมที่ dropped)
-  final Set<String> codes = {};
+  // ─── Load as roadmap format for RoadmapPage ───────────────────────────────
+  // [#2 NEW] โหลดข้อมูลจาก simulatorplan ในรูปแบบที่ RoadmapPage ใช้ได้
+  // คืนค่า List<Map> เหมือน roadmapPlan ใน RoadmapPage
+  // พร้อม 'sim_status': 'pass' | 'fail' สำหรับแสดงกรอบแดงใน roadmap
 
-  /// outcome ของวิชาที่มีผล (pass / fail เท่านั้น)
-  final Map<String, CourseOutcome> outcomes = {};
+  static Future<List<Map<String, dynamic>>> loadAsRoadmapPlan(
+    String planType,
+  ) async {
+    final supabase = Supabase.instance.client;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return [];
+
+    final data = await supabase
+        .from('simulatorplan')
+        .select(
+          'subject_code, subject_name, credits, year, semester, status, plan_type',
+        )
+        .eq('user_id', uid)
+        .eq('plan_type', planType);
+
+    if ((data as List).isEmpty) return [];
+
+    return data.map<Map<String, dynamic>>((row) {
+      final status = row['status'] as String? ?? 'pass';
+      // enrolled = upcoming ที่ user add มา → แสดงเป็น planned (Pending Enrollment)
+      final isEnrolled = status == 'enrolled';
+      final isFail = status == 'fail';
+      return {
+        'subject_code': row['subject_code'] as String? ?? '',
+        'subject_name': row['subject_name'] as String? ?? '',
+        'credit': row['credits'] as int? ?? 0,
+        'year': row['year'] as int? ?? 1,
+        'semester': row['semester'] as int? ?? 1,
+        'plan': planType,
+        // sim_status: enrolled → null (ไม่แสดงกรอบแดง), fail/pass → ใช้ปกติ
+        'sim_status': isEnrolled ? null : status,
+        'status': isEnrolled ? 'planned' : (isFail ? 'failed' : 'passed'),
+        'grade': isEnrolled ? null : (isFail ? 'F' : 'S'),
+      };
+    }).toList();
+  }
+
+  // ─── backward compat ────────────────────────────────────────────────────
+  static Future<Map<String, CourseOutcome>> loadSimulationPlan() async {
+    final supabase = Supabase.instance.client;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return {};
+    final data = await supabase
+        .from('simulatorplan')
+        .select('subject_code, status')
+        .eq('user_id', uid);
+    if ((data as List).isEmpty) return {};
+    final Map<String, CourseOutcome> planOutcomes = {};
+    for (final row in data) {
+      final code = row['subject_code'] as String? ?? '';
+      final status = row['status'] as String? ?? '';
+      if (code.isEmpty) continue;
+      if (status == 'pass')
+        planOutcomes[code] = CourseOutcome.pass;
+      else if (status == 'fail')
+        planOutcomes[code] = CourseOutcome.fail;
+    }
+    return planOutcomes;
+  }
 }
