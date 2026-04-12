@@ -206,14 +206,27 @@ class _TermColumnState extends State<TermColumn> {
                     allSubjects: widget.allSubjects,
                   );
 
+                  // [#2] เช็ค sim_status จาก simulatedPlan ก่อน
+                  final simStatus = data['sim_status'] as String?;
+                  final isBlockedByFail = data['is_blocked_by_fail'] == true;
+                  // ถ้ามี sim_status → ใช้ state จาก simulator
+                  // ถ้า fail/blocked → "failed", ถ้า pass → "passed"
+                  // ถ้าไม่มี sim_status → ใช้ validation เหมือนเดิม
+                  final String cardState;
+                  if (simStatus == 'fail') {
+                    cardState = 'failed';
+                  } else if (!validation['isValid'] && simStatus == null) {
+                    cardState = 'missing_prereq';
+                  } else {
+                    cardState = data['status'] ?? 'passed';
+                  }
+
                   return SubjectCard(
                     code: subject.subjectCode,
                     name: subject.subjectName,
                     credits: subject.credits.toInt(),
-                    // 🔥 ถ้าไม่ผ่านเงื่อนไข ให้โชว์ missing_prereq
-                    state: validation['isValid']
-                        ? (data['status'] ?? "passed")
-                        : "missing_prereq",
+                    state: cardState,
+                    isBlockedByFail: isBlockedByFail,
                     mode: widget.mode,
                     grade: data['grade'],
                     onGradeChanged: (newGrade) {

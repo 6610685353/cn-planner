@@ -13,6 +13,7 @@ import '../../manage/views/manage_course_page.dart';
 import 'package:cn_planner_app/services/send_grade.dart';
 import '../data/static_roamap_data.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../simulator/services/simulator_service.dart';
 
 enum RoadmapMode { view, edit, simulate }
 
@@ -62,6 +63,7 @@ class _RoadmapPageState extends State<RoadmapPage>
   List<Map<String, dynamic>> editedHistory = [];
   List<Map<String, dynamic>> roadmapPlan = [];
   List<Map<String, dynamic>> simulatedPlan = [];
+  Set<String> _failedCodesForRoadmap = {};
   List<String> getPassedSubjects(List<Map<String, dynamic>> plan) {
     return plan
         .where(
@@ -201,11 +203,140 @@ class _RoadmapPageState extends State<RoadmapPage>
           hasChanges = false;
           isLoading = false;
         });
+
+        // [#2] Load simulator plan and merge with roadmap display
+        await _loadSimulatorPlan();
       }
     } catch (e) {
       debugPrint("Error loading data: $e");
     } finally {
       setState(() => isLoading = false);
+    }
+  }
+
+  // [#2] โหลด simulatorplan และสร้าง simulatedPlan สำหรับแสดงใน roadmap
+  // วิชาที่ fail → sim_status = 'fail' → SubjectCard แสดงกรอบแดง
+  Future<void> _loadSimulatorPlan() async {
+    try {
+      final hasSaved = await SimulatorService.hasSavedPlanForType(
+        selectedPlanType,
+      );
+      if (!hasSaved) {
+        // ไม่มี saved plan → ใช้ roadmapPlan ปกติ
+        setState(() {
+          simulatedPlan = [];
+        });
+        return;
+      }
+
+      final simRows = await SimulatorService.loadAsRoadmapPlan(
+        selectedPlanType,
+      );
+      if (simRows.isEmpty) {
+        setState(() {
+          simulatedPlan = [];
+        });
+        return;
+      }
+
+      // [Fix #3] key ด้วย code|year|semester รองรับวิชาซ้ำต่างเทอม
+      final simByKey = <String, Map<String, dynamic>>{};
+      for (final row in simRows) {
+        final key = '${row['subject_code']}|${row['year']}|${row['semester']}';
+        simByKey[key] = row;
+      }
+
+      // หา failed codes เพื่อ mark วิชาตัวต่อด้วย
+      final failedCodes = simRows
+          .where((r) => r['sim_status'] == 'fail')
+          .map((r) => r['subject_code'] as String)
+          .toSet();
+
+      // สร้าง merged plan จาก roadmapPlan (match ด้วย code+year+semester)
+      final merged = roadmapPlan.map((item) {
+        final code = item['subject_code'] as String;
+        final year = item['year'];
+        final sem = item['semester'];
+        final simRow = simByKey['$code|$year|$sem'];
+        if (simRow != null) {
+          return {
+            ...item,
+            'status': simRow['sim_status'] == 'fail' ? 'failed' : 'passed',
+            'grade': simRow['grade'],
+            'sim_status': simRow['sim_status'],
+          };
+        }
+        // วิชาที่ไม่อยู่ใน simulatorplan → คงสถานะเดิม
+        return item;
+      }).toList();
+
+      // [Fix #1 & #3] เพิ่มวิชาใน simulatorplan ที่ไม่มีใน roadmapPlan
+      // ตรวจสอบด้วย code+year+semester → รองรับวิชาซ้ำ + upcoming ที่ user add มา
+      for (final simRow in simRows) {
+        final code = simRow['subject_code'] as String;
+        final year = simRow['year'];
+        final sem = simRow['semester'];
+        final alreadyIn = merged.any(
+          (m) =>
+              m['subject_code'] == code &&
+              m['year'] == year &&
+              m['semester'] == sem,
+        );
+        if (!alreadyIn) {
+          final rowSimStatus = simRow['sim_status'] as String?;
+          merged.add({
+            ...simRow,
+            'status': rowSimStatus == null
+                ? 'planned'
+                : rowSimStatus == 'fail'
+                ? 'failed'
+                : 'passed',
+          });
+        }
+      }
+
+      // [Fix #2] Recursive propagation ของ failedCodes ทุกทอด
+      final expandedFailed = Set<String>.from(failedCodes);
+      bool changed = true;
+      while (changed) {
+        changed = false;
+        for (final subject in allSubjects) {
+          if (expandedFailed.contains(subject.subjectCode)) continue;
+          final hasFailedPrereq =
+              subject.require?.any((req) => expandedFailed.contains(req)) ??
+              false;
+          if (hasFailedPrereq) {
+            expandedFailed.add(subject.subjectCode);
+            changed = true;
+          }
+        }
+      }
+
+      // Mark วิชาตัวต่อทุกทอดด้วย 'failed' state
+      final finalPlan = merged.map((item) {
+        final code = item['subject_code'] as String;
+        if (item['sim_status'] == 'fail') return item;
+
+        if (expandedFailed.contains(code)) {
+          return {
+            ...item,
+            'status': 'failed',
+            'sim_status': 'fail',
+            'is_blocked_by_fail': true,
+          };
+        }
+        return item;
+      }).toList();
+
+      setState(() {
+        simulatedPlan = finalPlan;
+        _failedCodesForRoadmap = expandedFailed;
+      });
+    } catch (e) {
+      debugPrint("Error loading simulator plan: \$e");
+      setState(() {
+        simulatedPlan = [];
+      });
     }
   }
 
@@ -346,7 +477,10 @@ class _RoadmapPageState extends State<RoadmapPage>
       floatingActionButton: _buildViewFabs(),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _buildTermList(roadmapPlan, isStatic: false),
+          : _buildTermList(
+              simulatedPlan.isNotEmpty ? simulatedPlan : roadmapPlan,
+              isStatic: false,
+            ),
     );
   }
 

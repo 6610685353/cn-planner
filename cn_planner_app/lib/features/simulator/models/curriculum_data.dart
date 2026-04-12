@@ -1,17 +1,10 @@
+import 'package:cn_planner_app/features/roadmap/data/static_roamap_data.dart';
+import 'package:cn_planner_app/features/roadmap/models/subject_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'course_model.dart';
 import 'term_model.dart';
 
-/// CurriculumData
-///
-/// ดึงข้อมูลหลักสูตรจาก Supabase แทน hardcode:
-///   - profiles       → current_year, current_semester
-///   - UserRoadmap    → วิชาของ user แต่ละเทอม + grade/status
-///   - Subjects       → ชื่อ, credits, prerequisites, offeredSemester
-///   - ClassSchedules → ตารางเรียน
-///
-/// Static constants (ไม่เปลี่ยน) ยังคงอยู่เพื่อใช้กับ logic ส่วนอื่น.
 class CurriculumData {
   static const String programName = 'Computer Engineering';
   static const int totalProgramCredits = 146;
@@ -19,13 +12,14 @@ class CurriculumData {
   static const int maxCreditsPerTerm = 21;
   static const int maxSupportedYear = 8;
 
-  // ─── Build CourseModel from Supabase rows ─────────────────────────────────
+  static int _termOrder(int year, int semester) => (year - 1) * 10 + semester;
 
   static CourseOutcome _gradeToOutcome(String? grade, String? status) {
     if (grade == 'F') return CourseOutcome.fail;
     if (grade == 'W') return CourseOutcome.withdraw;
-    if (grade != null && grade != '-' && grade.isNotEmpty)
+    if (grade != null && grade != '-' && grade.isNotEmpty) {
       return CourseOutcome.pass;
+    }
     if (status == 'passed') return CourseOutcome.pass;
     if (status == 'not_pass') return CourseOutcome.fail;
     return CourseOutcome.notSet;
@@ -49,28 +43,24 @@ class CurriculumData {
 
   static CourseModel _buildCourse({
     required Map<String, dynamic> subjectRow,
-    required Map<String, dynamic>? roadmapRow, // null = not in user roadmap
+    required Map<String, dynamic>? roadmapRow,
     required List<Map<String, dynamic>> scheduleRows,
     required CourseStatus courseStatus,
   }) {
     final code = subjectRow['subjectCode'] as String? ?? '';
     final name = subjectRow['subjectName'] as String? ?? code;
     final credits = ((subjectRow['credits'] ?? 0) as num).toInt();
-
     final prereqs =
         (subjectRow['require'] as List?)?.map((e) => e.toString()).toList() ??
         [];
-
     final offered =
         (subjectRow['offeredSemester'] as List?)
             ?.map((e) => (e as num).toInt())
             .toList() ??
         [1, 2];
-
     final grade = roadmapRow?['grade'] as String?;
     final status = roadmapRow?['status'] as String?;
     final outcome = _gradeToOutcome(grade, status);
-
     return CourseModel(
       code: code,
       name: name,
@@ -85,10 +75,234 @@ class CurriculumData {
     );
   }
 
-  // ─── Main loader ──────────────────────────────────────────────────────────
+  // ─── Load from STATIC ROADMAP TEMPLATE ────────────────────────────────────
+  // ✅ [#2] รับ planType จากภายนอก (ส่งมาจาก roadmap page)
+  //        ถ้าไม่ส่งมา จะ fallback ไป detect จาก UserRoadmap เหมือนเดิม
+  // ✅ [#1] เทอม passed → ดึง grade จาก UserRoadmap:
+  //        - ไม่มี F/W = pass (fixed, ไม่ toggle ได้)
+  //        - มี F หรือ W = fail/withdraw (fixed, ไม่ toggle ได้)
+  //   เทอม current → default fail (toggle ได้)
+  //   เทอม upcoming → notSet (locked)
 
-  /// ดึงข้อมูลทั้งหมดจาก Supabase แล้วสร้าง List<TermModel>
-  /// พร้อม currentYear/currentSemester จาก profiles
+  static Future<
+    ({
+      List<TermModel> terms,
+      int currentYear,
+      int currentSemester,
+      Map<String, CourseModel> catalogByCode,
+      String detectedPlanType,
+    })
+  >
+  loadFromStaticData({String? planType}) async {
+    final supabase = Supabase.instance.client;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('User not logged in');
+
+    final results = await Future.wait<dynamic>([
+      supabase
+          .from('profiles')
+          .select('current_year, current_semester, max_year')
+          .eq('user_id', uid)
+          .single(),
+      supabase
+          .from('Subjects')
+          .select(
+            'subjectId, subjectCode, subjectName, credits, require, corequisite, offeredSemester',
+          ),
+      supabase
+          .from('ClassSchedules')
+          .select('subject_code, section, day, start_time, end_time'),
+      supabase
+          .from('UserRoadmap')
+          .select('subject_code, year, semester, grade, status')
+          .eq('user_id', uid),
+    ]);
+
+    final profile = results[0] as Map<String, dynamic>;
+    final subjectList = (results[1] as List).cast<Map<String, dynamic>>();
+    final scheduleList = (results[2] as List).cast<Map<String, dynamic>>();
+    final roadmapList = (results[3] as List).cast<Map<String, dynamic>>();
+
+    final int currentYear = (profile['current_year'] as num?)?.toInt() ?? 1;
+    final int currentSem = (profile['current_semester'] as num?)?.toInt() ?? 1;
+    final int currentIdx = _termOrder(currentYear, currentSem);
+
+    final subjectByCode = <String, Map<String, dynamic>>{};
+    for (final s in subjectList) {
+      final code = s['subjectCode'] as String?;
+      if (code != null) subjectByCode[code] = s;
+    }
+
+    // Historical grade lookup (latest per code, from UserRoadmap)
+    final roadmapGrade = <String, Map<String, dynamic>>{};
+    for (final r in roadmapList) {
+      final code = r['subject_code'] as String?;
+      if (code != null) roadmapGrade[code] = r;
+    }
+
+    // ✅ [#2] ถ้าส่ง planType มา ใช้เลย; ถ้าไม่ส่ง detect จาก UserRoadmap
+    String selectedPlan = planType ?? RoadmapTemplate.PLAN_INTERNSHIP;
+    if (planType == null) {
+      for (final r in roadmapList) {
+        final code = r['subject_code'] as String?;
+        if (code == 'CN403' || code == 'CN404') {
+          selectedPlan = RoadmapTemplate.PLAN_COOP;
+          break;
+        }
+        if (code == 'CN471' || code == 'CN472' || code == 'CN473') {
+          selectedPlan = RoadmapTemplate.PLAN_RESEARCH;
+          break;
+        }
+      }
+    }
+
+    final allSubjectModels = subjectList
+        .map(
+          (s) => SubjectModel(
+            subjectId: (s['subjectId'] as num?)?.toInt() ?? 0,
+            subjectCode: s['subjectCode'] as String? ?? '',
+            subjectName: s['subjectName'] as String? ?? '',
+            credits: ((s['credits'] ?? 0) as num).toDouble(),
+          ),
+        )
+        .toList();
+
+    final templateItems = RoadmapTemplate.getPlanForUser(
+      selectedPlan: selectedPlan,
+      allSubjects: allSubjectModels,
+    );
+
+    final termItemsMap = <String, List<Map<String, dynamic>>>{};
+    for (final item in templateItems) {
+      termItemsMap
+          .putIfAbsent('${item['year']}_${item['semester']}', () => [])
+          .add(item);
+    }
+
+    final sortedKeys = termItemsMap.keys.toList()
+      ..sort((a, b) {
+        final pa = a.split('_').map(int.parse).toList();
+        final pb = b.split('_').map(int.parse).toList();
+        return _termOrder(pa[0], pa[1]).compareTo(_termOrder(pb[0], pb[1]));
+      });
+
+    final terms = <TermModel>[];
+
+    for (final key in sortedKeys) {
+      final parts = key.split('_').map(int.parse).toList();
+      final y = parts[0];
+      final s = parts[1];
+      final termIdx = _termOrder(y, s);
+
+      final termStatus = termIdx < currentIdx
+          ? TermStatus.passed
+          : termIdx == currentIdx
+          ? TermStatus.current
+          : TermStatus.upcoming;
+      final courseStatus = termIdx < currentIdx
+          ? CourseStatus.passed
+          : termIdx == currentIdx
+          ? CourseStatus.current
+          : CourseStatus.upcoming;
+
+      final termCourses = <CourseModel>[];
+      for (final item in termItemsMap[key]!) {
+        final code = item['subject_code'] as String;
+        final templateCredits = (item['credit'] as num).toInt();
+        final displayName = item['display_name'] as String? ?? code;
+
+        if (code.contains('X')) {
+          // Elective placeholder
+          // ✅ [#1] passed term: pass fixed; current: default fail; upcoming: notSet
+          final outcome = termStatus == TermStatus.passed
+              ? CourseOutcome.pass
+              : termStatus == TermStatus.current
+              ? CourseOutcome.fail
+              : CourseOutcome.notSet;
+          termCourses.add(
+            CourseModel(
+              code: code,
+              name: displayName,
+              credits: templateCredits,
+              status: courseStatus,
+              outcome: outcome,
+            ),
+          );
+          continue;
+        }
+
+        final subRow = subjectByCode[code];
+        CourseOutcome outcome;
+
+        if (termStatus == TermStatus.passed) {
+          // ✅ [#1] ดึงจาก UserRoadmap จริง ๆ
+          final grade = roadmapGrade[code]?['grade'] as String?;
+          final rmStatus = roadmapGrade[code]?['status'] as String?;
+          outcome = _gradeToOutcome(grade, rmStatus);
+          // ถ้าไม่มีใน UserRoadmap เลย → ถือว่า pass
+          if (outcome == CourseOutcome.notSet) outcome = CourseOutcome.pass;
+        } else if (termStatus == TermStatus.current) {
+          outcome = CourseOutcome.fail; // default F for current term
+        } else {
+          outcome = CourseOutcome.notSet;
+        }
+
+        final prereqs =
+            (subRow?['require'] as List?)?.map((e) => e.toString()).toList() ??
+            [];
+        final offered =
+            (subRow?['offeredSemester'] as List?)
+                ?.map((e) => (e as num).toInt())
+                .toList() ??
+            [1, 2];
+
+        termCourses.add(
+          CourseModel(
+            code: code,
+            name: subRow != null
+                ? (subRow['subjectName'] as String? ?? displayName)
+                : displayName,
+            credits: subRow != null
+                ? ((subRow['credits'] ?? templateCredits) as num).toInt()
+                : templateCredits,
+            prerequisites: prereqs,
+            availableTerms: offered,
+            schedule: _slotsFor(code, scheduleList),
+            status: courseStatus,
+            outcome: outcome,
+            subjectId: (subRow?['subjectId'] as num?)?.toInt(),
+          ),
+        );
+      }
+
+      terms.add(
+        TermModel(year: y, term: s, status: termStatus, courses: termCourses),
+      );
+    }
+
+    final catalogByCode = <String, CourseModel>{};
+    for (final s in subjectList) {
+      final code = s['subjectCode'] as String? ?? '';
+      if (code.isEmpty) continue;
+      catalogByCode[code] = _buildCourse(
+        subjectRow: s,
+        roadmapRow: null,
+        scheduleRows: scheduleList,
+        courseStatus: CourseStatus.upcoming,
+      );
+    }
+
+    return (
+      terms: terms,
+      currentYear: currentYear,
+      currentSemester: currentSem,
+      catalogByCode: catalogByCode,
+      detectedPlanType: selectedPlan,
+    );
+  }
+
+  // ─── Load from UserRoadmap (Original) ─────────────────────────────────────
+
   static Future<
     ({
       List<TermModel> terms,
@@ -102,8 +316,7 @@ class CurriculumData {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) throw Exception('User not logged in');
 
-    // Parallel fetch
-    final results = await Future.wait([
+    final results = await Future.wait<dynamic>([
       supabase
           .from('profiles')
           .select('current_year, current_semester, max_year')
@@ -135,31 +348,20 @@ class CurriculumData {
     final int currentYear = (profile['current_year'] as num?)?.toInt() ?? 1;
     final int currentSem = (profile['current_semester'] as num?)?.toInt() ?? 1;
     final int maxYear = (profile['max_year'] as num?)?.toInt() ?? 4;
-    final int currentIdx = (currentYear - 1) * 2 + currentSem;
+    final int currentIdx = _termOrder(currentYear, currentSem);
 
-    // Build quick-lookup maps
     final subjectByCode = <String, Map<String, dynamic>>{};
     for (final s in subjectList) {
       final code = s['subjectCode'] as String?;
       if (code != null) subjectByCode[code] = s;
     }
 
-    // Build roadmap lookup: 'code_year_sem' → row
-    final roadmapByKey = <String, Map<String, dynamic>>{};
-    for (final r in roadmapList) {
-      final key = '${r['subject_code']}_${r['year']}_${r['semester']}';
-      roadmapByKey[key] = r;
-    }
-
-    // Group roadmap by (year, semester)
     final termKeys = <String, ({int year, int semester})>{};
     for (final r in roadmapList) {
       final y = (r['year'] as num).toInt();
       final s = (r['semester'] as num).toInt();
       termKeys['${y}_${s}'] = (year: y, semester: s);
     }
-
-    // Ensure Y4S1 and Y4S2 always exist (and up to maxYear)
     for (var y = 1; y <= maxYear; y++) {
       for (var s = 1; s <= 2; s++) {
         termKeys['${y}_${s}'] ??= (year: y, semester: s);
@@ -167,36 +369,27 @@ class CurriculumData {
     }
 
     final sortedKeys = termKeys.values.toList()
-      ..sort((a, b) {
-        final ia = (a.year - 1) * 2 + a.semester;
-        final ib = (b.year - 1) * 2 + b.semester;
-        return ia.compareTo(ib);
-      });
+      ..sort(
+        (a, b) => _termOrder(
+          a.year,
+          a.semester,
+        ).compareTo(_termOrder(b.year, b.semester)),
+      );
 
-    // Build TermModel list
     final terms = <TermModel>[];
     for (final tk in sortedKeys) {
-      final termIdx = (tk.year - 1) * 2 + tk.semester;
+      final termIdx = _termOrder(tk.year, tk.semester);
+      final termStatus = termIdx < currentIdx
+          ? TermStatus.passed
+          : termIdx == currentIdx
+          ? TermStatus.current
+          : TermStatus.upcoming;
+      final courseStatus = termIdx < currentIdx
+          ? CourseStatus.passed
+          : termIdx == currentIdx
+          ? CourseStatus.current
+          : CourseStatus.upcoming;
 
-      final TermStatus termStatus;
-      if (termIdx < currentIdx) {
-        termStatus = TermStatus.passed;
-      } else if (termIdx == currentIdx) {
-        termStatus = TermStatus.current;
-      } else {
-        termStatus = TermStatus.upcoming;
-      }
-
-      final CourseStatus courseStatus;
-      if (termIdx < currentIdx) {
-        courseStatus = CourseStatus.passed;
-      } else if (termIdx == currentIdx) {
-        courseStatus = CourseStatus.current;
-      } else {
-        courseStatus = CourseStatus.upcoming;
-      }
-
-      // Find courses for this term (from UserRoadmap)
       final termCourses = roadmapList
           .where(
             (r) =>
@@ -227,7 +420,6 @@ class CurriculumData {
       );
     }
 
-    // Build catalog (all subjects from DB)
     final catalogByCode = <String, CourseModel>{};
     for (final s in subjectList) {
       final code = s['subjectCode'] as String? ?? '';
@@ -247,8 +439,6 @@ class CurriculumData {
       catalogByCode: catalogByCode,
     );
   }
-
-  // ─── Static helpers (unchanged) ───────────────────────────────────────────
 
   static List<TermModel> getEmptyYearTerms(int year) => [
     TermModel(year: year, term: 1, courses: []),
