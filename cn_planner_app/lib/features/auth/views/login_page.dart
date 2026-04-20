@@ -47,11 +47,11 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: 20),
-                      // SvgPicture.asset(
-                      //   AppAssets.logoSvg,
-                      //   width: 140,
-                      //   height: 140,
-                      // ),
+                      SvgPicture.asset(
+                        AppAssets.logoSvg,
+                        width: 140,
+                        height: 140,
+                      ),
                       const SizedBox(height: 20),
                       const Text(
                         "Welcome Back",
