@@ -33,6 +33,8 @@ class _RoadmapPageState extends State<RoadmapPage>
   final ProfileService _profileService = ProfileService();
   final RoadmapService _roadmapService = RoadmapService();
 
+  bool _isAlreadyNoti = false;
+
   late TabController _tabController;
   String selectedPlanType = RoadmapTemplate.PLAN_INTERNSHIP;
 
@@ -601,72 +603,93 @@ class _RoadmapPageState extends State<RoadmapPage>
 
                     /// 🔥 ADD COURSE (ใช้ Manage ใหม่)
                     onAddPressed: (result, year, termIdx) {
-                      setState(() {
-                        final isCurrentTerm =
-                            year == userProfile?['current_year'] &&
-                            termIdx == userProfile?['current_semester'];
-                        // คำนวณจำนวนเครดิตปัจจุบันของเทอมนี้
-                        double currentCredits = 0;
-                        final termCourses = editedHistory.where(
-                          (e) => e['year'] == year && e['semester'] == termIdx,
+                      _isAlreadyNoti = false;
+                      final isCurrentTerm =
+                          year == userProfile?['current_year'] &&
+                          termIdx == userProfile?['current_semester'];
+
+                      // ✅ 1. snapshot วิชาในเทอมนี้ที่มีอยู่แล้ว (หลังลบแล้ว)
+                      final existingInTerm = editedHistory
+                          .where(
+                            (e) =>
+                                e['year'] == year && e['semester'] == termIdx,
+                          )
+                          .toList();
+
+                      // ✅ 2. กรองเฉพาะวิชาใน result ที่ยังไม่ซ้ำกับที่มีอยู่
+                      final toAdd = result.where((item) {
+                        final subject = item['subject'] as SubjectModel;
+                        return !existingInTerm.any(
+                          (e) =>
+                              e['subject_code'] == subject.subjectCode &&
+                              e['subjectId'] == subject.subjectId,
                         );
-                        for (var item in termCourses) {
-                          final subject = allSubjects.firstWhere(
-                            (s) => s.subjectCode == item['subject_code'],
-                            orElse: () => SubjectModel(
-                              subjectCode: '',
-                              subjectName: '',
-                              credits: 0,
-                              subjectId: 0,
-                            ),
-                          );
-                          currentCredits += subject.credits;
-                        }
+                      }).toList();
 
-                        // คำนวณเครดิตของวิชาที่กำลังจะเพิ่ม
-                        double newCredits = 0;
-                        for (var item in result) {
-                          final subject = item['subject'] as SubjectModel;
-                          newCredits += subject.credits;
-                        }
+                      if (toAdd.isEmpty) return;
 
-                        // ตรวจสอบว่าเกิน 22 หน่วยกิตหรือไม่
-                        if (currentCredits + newCredits > 22) {
+                      // ✅ 3. คำนวณ credit รวมครั้งเดียว (existing + toAdd ทั้งก้อน)
+                      final existingCredits = existingInTerm.fold<double>(0, (
+                        sum,
+                        item,
+                      ) {
+                        final subject = allSubjects.firstWhere(
+                          (s) => s.subjectCode == item['subject_code'],
+                          orElse: () => SubjectModel(
+                            subjectCode: '',
+                            subjectName: '',
+                            credits: 0,
+                            subjectId: 0,
+                          ),
+                        );
+                        return sum + subject.credits;
+                      });
+
+                      final addingCredits = toAdd.fold<double>(
+                        0,
+                        (sum, item) =>
+                            sum + (item['subject'] as SubjectModel).credits,
+                      );
+
+                      // ✅ 4. เตือนครั้งเดียว แล้ว return เลย
+                      if (existingCredits + addingCredits > 22) {
+                        if (!_isAlreadyNoti) {
+                          _isAlreadyNoti = true;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text(
-                                "Cannot add courses: exceeding 22 credits per term.",
+                                "Cannot add: total would be ${(existingCredits + addingCredits).toStringAsFixed(1)} credits (max 22).",
                               ),
                               backgroundColor: Colors.redAccent,
                             ),
                           );
-                          return; // ❌ ไม่เพิ่มวิชา
                         }
+                        return;
+                      }
 
-                        // เพิ่มวิชาได้
-                        for (var item in result) {
+                      // ✅ 5. เช็ค section ครั้งเดียวก่อน setState
+                      if (isCurrentTerm) {
+                        final missSection = toAdd.any((item) {
+                          final section = item['section'];
+                          return section == null ||
+                              section == "-" ||
+                              section == "";
+                        });
+                        if (missSection) {
+                          _showErrorDialog(
+                            "Section Required",
+                            "You must select a section for current semester courses.",
+                          );
+                          return;
+                        }
+                      }
+
+                      // ✅ 6. ผ่านทุกเช็คแล้ว เพิ่มทั้งก้อนใน setState ครั้งเดียว
+                      setState(() {
+                        for (var item in toAdd) {
                           final subject = item['subject'] as SubjectModel;
                           final grade = item['grade'];
                           final section = item['section'];
-                          if (isCurrentTerm &&
-                              (section == null ||
-                                  section == "-" ||
-                                  section == "")) {
-                            _showErrorDialog(
-                              "Section Required",
-                              "You must select a section for current semester courses.",
-                            );
-                            return; // ❌ หยุดทันที
-                          }
-
-                          final exists = editedHistory.any(
-                            (e) =>
-                                e['subject_code'] == subject.subjectCode &&
-                                e['subjectId'] == subject.subjectId &&
-                                e['year'] == year &&
-                                e['semester'] == termIdx,
-                          );
-                          if (exists) continue;
 
                           editedHistory.add({
                             'id':
