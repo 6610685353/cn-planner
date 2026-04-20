@@ -481,9 +481,9 @@ class RoadmapTemplate {
         'subject_code': 'CN472',
         'year': 4,
         'semester': 1,
-        'credit': 1,
+        'credit': 7,
         'plan': PLAN_RESEARCH,
-      }, // โครงงานวิจัย 2 (7 หน่วยกิต)
+      },
       {
         'subject_code': 'CN4XX',
         'subject_name': 'Major Electives',
@@ -491,7 +491,7 @@ class RoadmapTemplate {
         'semester': 1,
         'credit': 3,
         'plan': PLAN_RESEARCH,
-      }, // วิชาเลือกเฉพาะรูปแบบ 1
+      }, 
       {
         'subject_code': 'CN4XX',
         'subject_name': 'Major Electives',
