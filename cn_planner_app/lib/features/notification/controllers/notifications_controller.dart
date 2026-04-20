@@ -45,9 +45,9 @@ class NotificationController {
               NotificationsModel(
                 id: "${course.courseCode}-${slot.day}-${slot.startTime}",
                 category: "CLASS REMINDER",
-                title: "แจ้งเตือนคลาสเรียน",
+                title: "Class Reminder",
                 subtitle:
-                    "วิชา ${course.courseCode} เริ่มเวลา ${slot.startTime} น. ที่ห้อง ${slot.room}",
+                    "Course ${course.courseCode} starts at ${slot.startTime} in room ${slot.room}",
                 time: label,
                 timestamp: sortTime,
                 isRead: false,
