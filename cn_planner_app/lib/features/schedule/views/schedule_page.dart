@@ -191,20 +191,25 @@ class _ScheduleScreenState extends State<SchedulePage> {
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // ส่วนตารางเรียน
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 10,
+          : RefreshIndicator(
+              color: AppColors.primaryYellow,
+              onRefresh: _loadData, // 🔥 จุดสำคัญ
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  // 🌟 ตารางเรียน
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 10,
+                    ),
+                    child: TimetableGrid(classes: myClasses),
                   ),
-                  child: TimetableGrid(classes: myClasses),
-                ),
-                const SizedBox(height: 10),
-                // ส่วนรายการด้านล่าง
-                Expanded(
-                  child: Container(
+
+                  const SizedBox(height: 10),
+
+                  // 🌟 list container
+                  Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: AppColors.background,
@@ -218,6 +223,8 @@ class _ScheduleScreenState extends State<SchedulePage> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: ListView.builder(
+                      shrinkWrap: true, // 🔥 สำคัญ
+                      physics: const NeverScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(24),
                       itemCount: uniqueClasses.length,
                       itemBuilder: (context, index) {
@@ -225,8 +232,10 @@ class _ScheduleScreenState extends State<SchedulePage> {
                       },
                     ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 30),
+                ],
+              ),
             ),
     );
   }
