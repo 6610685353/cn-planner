@@ -66,7 +66,7 @@ class NotificationService {
         android: AndroidNotificationDetails(
           'class_reminder_channel',
           'Class Reminders',
-          channelDescription: 'แจ้งเตือนก่อนถึงเวลาเรียน',
+          channelDescription: 'Reminder before class starts',
           importance: Importance.max,
           priority: Priority.high,
         ),
@@ -86,7 +86,7 @@ class NotificationService {
       android: AndroidNotificationDetails(
         'test_channel',
         'Test Notifications',
-        channelDescription: 'สำหรับการทดสอบ',
+        channelDescription: 'For testing',
         importance: Importance.max,
         priority: Priority.high,
       ),
@@ -98,8 +98,8 @@ class NotificationService {
     );
     await _notificationsPlugin.show(
       id: 999,
-      title: '🔔 สำเร็จแล้ว!',
-      body: 'ระบบ Notification ทำงานได้ 100% 🎉',
+      title: '🔔 Success!',
+      body: 'Notification system is working 100% 🎉',
       notificationDetails: platformChannelSpecifics,
     );
   }
@@ -144,11 +144,10 @@ class NotificationService {
         String roomText =
             (session.room == '-' || session.room.toUpperCase() == 'TBA')
             ? '!'
-            : ' ที่ห้อง ${session.room}!';
-
-        String titleMsg = '🚨 แจ้งเตือนคลาสเรียน';
+            : ' in Room ${session.room}!';
+        String titleMsg = '🚨 Class Reminder';
         String bodyMsg =
-            'วิชา ${session.code} กำลังจะเริ่มในอีก 15 นาที$roomText';
+            'Course ${session.code} is starting in 15 minutes$roomText';
 
         await scheduleClassReminder(
           id: notiId++,
