@@ -1,3 +1,4 @@
+import 'package:cn_planner_app/features/profile/controllers/profile_controller.dart';
 import 'package:cn_planner_app/features/profile/widgets/edit_profile_text_field.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
@@ -14,11 +15,16 @@ class EditProfilePage extends StatefulWidget {
 
 class EditProfileState extends State<EditProfilePage> {
   final _edit = EditProfileController();
+  final ProfileController _profileController = ProfileController();
+
+  ProfileData? _profileData;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _edit.loadInitialData(_updateUI);
+    _loadData();
   }
 
   @override
@@ -29,6 +35,16 @@ class EditProfileState extends State<EditProfilePage> {
 
   void _updateUI() {
     setState(() {});
+  }
+
+  Future<void> _loadData() async {
+    final data = await _profileController.fetchUserData();
+    if (mounted) {
+      setState(() {
+        _profileData = data;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _handleBackNavigation() async {
@@ -146,7 +162,9 @@ class EditProfileState extends State<EditProfilePage> {
                   const SizedBox(height: 30),
 
                   buildTextAtStart("Username"),
-                  const DisabledDisplayField(value: "@somchaitu"),
+                  DisabledDisplayField(
+                    value: "@${_profileData?.username ?? ''}",
+                  ),
                   buildTextAtEnd("Username cannot be changed"),
 
                   const SizedBox(height: 8),
