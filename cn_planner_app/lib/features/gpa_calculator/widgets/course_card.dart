@@ -37,7 +37,6 @@ class CourseCard extends StatelessWidget {
         ],
       ),
       child: Row(
-        // mainAxisAlignment: MainAxisAlignment.spaceBetween, // Remove this since we have Expanded
         children: [
           Expanded(
             child: Column(
