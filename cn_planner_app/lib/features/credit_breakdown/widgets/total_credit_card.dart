@@ -15,18 +15,14 @@ class TotalCreditCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // คำนวณค่า Progress (ป้องกันการหารด้วยศูนย์)
     double progress = totalCredits > 0 ? earnedCredits / totalCredits : 0.0;
-    // คำนวณ %
     int percentage = (progress * 100).toInt();
 
-    // กำหนดขนาดของวงกลมตรงนี้
     const double circleSize = 180.0;
     const double strokeWidth = 14.0;
 
     return Container(
       width: double.infinity,
-      // เพิ่ม padding บนล่างให้ดูโปร่งขึ้น
       padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -42,11 +38,9 @@ class TotalCreditCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // --- ส่วนที่ 1: วงกลมใหญ่และข้อความข้างใน (เปอร์เซ็นต์) ---
           Stack(
             alignment: Alignment.center,
             children: [
-              // ตัววงกลม Progress Indicator
               SizedBox(
                 width: circleSize,
                 height: circleSize,
@@ -60,7 +54,6 @@ class TotalCreditCard extends StatelessWidget {
                   strokeCap: StrokeCap.round,
                 ),
               ),
-              // ข้อความตรงกลางวงกลม (Percent)
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -68,7 +61,7 @@ class TotalCreditCard extends StatelessWidget {
                     "$percentage%",
                     style: const TextStyle(
                       fontSize: 30,
-                      fontWeight: FontWeight.w800, // หนาพิเศษ
+                      fontWeight: FontWeight.w800,
                       color: Colors.black,
                       height: 1.0,
                     ),
@@ -87,22 +80,21 @@ class TotalCreditCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 24), // ระยะห่าง
-          // --- ส่วนที่ 2: ข้อความด้านล่าง (จำนวนหน่วยกิต แยกสี) ---
+          const SizedBox(height: 24),
+
           RichText(
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: "$earnedCredits", // ตัวเลขหน่วยกิตที่ได้ (สีดำ)
+                  text: "$earnedCredits",
                   style: const TextStyle(
                     fontSize: 28,
-                    // fontWeight: FontWeight.bold,
                     fontWeight: FontWeight.w900,
                     color: Colors.black,
                   ),
                 ),
                 TextSpan(
-                  text: " /$totalCredits", // ตัวหารหน่วยกิตทั้งหมด (สีเทา)
+                  text: " /$totalCredits",
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

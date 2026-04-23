@@ -150,7 +150,7 @@ class _RegisterPageState extends State<RegisterPage> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 80,
-        height: 80, // ขนาดเดิม
+        height: 80,
         decoration: BoxDecoration(
           color: isSelected ? AppColors.accentYellow : Colors.white,
           borderRadius: BorderRadius.circular(20),

@@ -76,7 +76,6 @@ class ProfileController {
         }
       }
 
-      // 2. ดึงข้อมูลผลการเรียนจาก Supabase
       try {
         final supabase = Supabase.instance.client;
         final supabaseData = await supabase

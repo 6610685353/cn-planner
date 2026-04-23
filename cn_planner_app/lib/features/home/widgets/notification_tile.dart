@@ -56,7 +56,6 @@ class NotificationTile extends StatelessWidget {
           ),
           const SizedBox(width: 15),
 
-          // --- เนื้อหาข้อความ ---
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

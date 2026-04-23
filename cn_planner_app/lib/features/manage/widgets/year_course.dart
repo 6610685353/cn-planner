@@ -9,14 +9,12 @@ class YearCourseBox extends StatefulWidget {
   final Map<int, String> gradeMap;
   final Map<int, String> sectionMap;
 
-  //for backend
   final Function(int, bool) onCheckChanged;
   final Function(int, String) onGradeChanged;
   final Function(int, String) onSectionChanged;
-  final Map<int, List<String>>
-  sectionOptionsMap; // ✅ เพิ่มแผนที่สำหรับตัวเลือก section
+  final Map<int, List<String>> sectionOptionsMap;
   final Map<int, Map<String, List<Map>>> scheduleMap;
-  final Map<int, List<String>> reasonsMap; // ✅ เพิ่มแผนที่สำหรับเหตุผล
+  final Map<int, List<String>> reasonsMap;
 
   const YearCourseBox({
     super.key,
@@ -32,7 +30,7 @@ class YearCourseBox extends StatefulWidget {
     required this.onSectionChanged,
     required this.sectionOptionsMap,
     required this.scheduleMap,
-    required this.reasonsMap, 
+    required this.reasonsMap,
   });
 
   @override
@@ -47,16 +45,6 @@ class _YearCourseBox extends State<YearCourseBox> {
       widget.checkedMap[key] = value;
     });
   }
-
-  // int get selectedCount {
-  //   return widget.courseSubject.where((subject) {
-  //     final id = subject['subjectId'];
-
-  //     return widget.gradeMap.containsKey(id) &&
-  //         widget.gradeMap[id] != null &&
-  //         widget.gradeMap[id] != "-";
-  //   }).length;
-  // }
 
   bool isConflict(int newSubjectId, String newSection) {
     for (var entry in widget.sectionMap.entries) {
@@ -104,9 +92,7 @@ class _YearCourseBox extends State<YearCourseBox> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       color: Colors.white,
       margin: const EdgeInsets.all(10),
       child: Padding(
@@ -118,7 +104,6 @@ class _YearCourseBox extends State<YearCourseBox> {
                 "Year ${widget.year} Semester ${widget.semester}",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              // subtitle: Text('Progress Bar: $selectedCount'),
               trailing: IconButton(
                 icon: Icon(
                   _isExpanded
@@ -153,9 +138,7 @@ class _YearCourseBox extends State<YearCourseBox> {
                       onCheckChanged: widget.onCheckChanged,
                       onGradeChanged: (grade) =>
                           widget.onGradeChanged(subject['subjectId'], grade),
-                      section:
-                          widget.sectionMap[subject['subjectId']] ??
-                          "-", // ✅ ส่ง section
+                      section: widget.sectionMap[subject['subjectId']] ?? "-",
                       onSectionChanged: (sec) =>
                           widget.onSectionChanged(subject['subjectId'], sec),
                       availableSections: getAvailableSections(

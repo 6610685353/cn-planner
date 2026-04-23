@@ -25,7 +25,6 @@ class WelcomeBanner extends StatelessWidget {
 
       title: Row(
         children: [
-          // --- รูปโปรไฟล์วงกลม ---
           Container(
             padding: const EdgeInsets.all(2),
             decoration: const BoxDecoration(

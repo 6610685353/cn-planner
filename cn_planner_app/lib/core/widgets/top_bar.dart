@@ -15,7 +15,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
-      automaticallyImplyLeading: false, // ป้องกันปุ่มซ้อน
+      automaticallyImplyLeading: false,
       leading: IconButton(
         onPressed: () {
           if (route != null) {
