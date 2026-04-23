@@ -25,7 +25,6 @@ class ExpandableElectiveCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // เช็คว่าหน่วยกิตถึงเกณฑ์หรือยัง
     bool isCompleted = earned >= required;
 
     return Card(
@@ -40,7 +39,6 @@ class ExpandableElectiveCard extends StatelessWidget {
         ),
       ),
       child: Theme(
-        // ปิดเส้นขอบเวลาคลิกกาง ExpansionTile
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           iconColor: color,
@@ -76,7 +74,6 @@ class ExpandableElectiveCard extends StatelessWidget {
           ),
           children: [
             const Divider(height: 1),
-            // พื้นที่แสดงรายวิชาที่เพิ่มมา
             if (addedCourses.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(24.0),
@@ -87,7 +84,6 @@ class ExpandableElectiveCard extends StatelessWidget {
                 ),
               ),
 
-            // ลูปสร้างรายการวิชา
             ...addedCourses.map(
               (course) => ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 24),
@@ -104,7 +100,6 @@ class ExpandableElectiveCard extends StatelessWidget {
                     color: Colors.redAccent,
                   ),
                   onPressed: () {
-                    // โชว์ Dialog คอนเฟิร์มก่อนลบ
                     showDialog(
                       context: context,
                       builder: (ctx) => AlertDialog(
@@ -135,7 +130,6 @@ class ExpandableElectiveCard extends StatelessWidget {
               ),
             ),
 
-            // ปุ่ม Add Course สีเหลืองเด่นๆ
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: SizedBox(

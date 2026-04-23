@@ -3,7 +3,7 @@ import '../constants/app_colors.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
-  final Function(int) onTap; // รับฟังก์ชันมาจากตัวแม่
+  final Function(int) onTap;
 
   const BottomNavBar({
     super.key,
