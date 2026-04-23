@@ -28,10 +28,8 @@ class _ScheduleScreenState extends State<SchedulePage> {
 
   Future<void> _loadData() async {
     try {
-      // 👉 1. ดึง UID ของคนที่ล็อกอินอยู่จริงๆ
       String myUid = FirebaseAuth.instance.currentUser?.uid ?? "";
 
-      // ถ้าไม่ได้ล็อกอิน (หรือ Session หลุด) ให้หยุดการทำงาน
       if (myUid.isEmpty) {
         print("❌ ผู้ใช้ยังไม่ได้ล็อกอิน");
         return;
@@ -61,9 +59,7 @@ class _ScheduleScreenState extends State<SchedulePage> {
               stop: slot.endTime,
               section: course.section,
               room: slot.room,
-              color:
-                  cardColors[colorIndex %
-                      cardColors.length], // สีนี้เอาไว้โชว์แค่ใน TimetableGrid
+              color: cardColors[colorIndex % cardColors.length],
             ),
           );
         }
@@ -118,7 +114,6 @@ class _ScheduleScreenState extends State<SchedulePage> {
 
   @override
   Widget build(BuildContext context) {
-    // 🌟 เช็คว่ามีหน้าจออยู่ก่อนหน้านี้ให้สามารถ pop (ย้อนกลับ) ไปได้หรือไม่
     bool canPop = ModalRoute.of(context)?.canPop ?? false;
 
     return Scaffold(
@@ -126,9 +121,8 @@ class _ScheduleScreenState extends State<SchedulePage> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        automaticallyImplyLeading: canPop, // 🌟 เปลี่ยนตามสถานะ canPop
-        leading:
-            canPop // 🌟 โชว์ปุ่มก็ต่อเมื่อย้อนกลับได้เท่านั้น
+        automaticallyImplyLeading: canPop,
+        leading: canPop
             ? IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.black),
                 onPressed: () => Navigator.maybePop(context),
@@ -145,7 +139,6 @@ class _ScheduleScreenState extends State<SchedulePage> {
         actions: [
           TextButton(
             onPressed: () {
-              // 🌟 จุดที่แก้ไข: สร้างลิสต์จำลองที่เปลี่ยนสีเป็น Colors.blue ก่อนส่งไป
               List<ClassSession> safeClasses = myClasses
                   .map(
                     (c) => ClassSession(
@@ -157,8 +150,7 @@ class _ScheduleScreenState extends State<SchedulePage> {
                       stop: c.stop,
                       section: c.section,
                       room: c.room,
-                      color: Colors
-                          .blue, // 🌟 บังคับสีให้เหมือนตอนเข้าจากหน้า Home
+                      color: Colors.blue,
                     ),
                   )
                   .toList();
@@ -166,9 +158,8 @@ class _ScheduleScreenState extends State<SchedulePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => DailySchedulePage(
-                    allClasses: safeClasses,
-                  ), // ส่ง safeClasses ไปแทน
+                  builder: (context) =>
+                      DailySchedulePage(allClasses: safeClasses),
                 ),
               );
             },
@@ -193,11 +184,10 @@ class _ScheduleScreenState extends State<SchedulePage> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               color: AppColors.primaryYellow,
-              onRefresh: _loadData, // 🔥 จุดสำคัญ
+              onRefresh: _loadData,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  // 🌟 ตารางเรียน
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16.0,
@@ -208,7 +198,6 @@ class _ScheduleScreenState extends State<SchedulePage> {
 
                   const SizedBox(height: 10),
 
-                  // 🌟 list container
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -223,7 +212,7 @@ class _ScheduleScreenState extends State<SchedulePage> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: ListView.builder(
-                      shrinkWrap: true, // 🔥 สำคัญ
+                      shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(24),
                       itemCount: uniqueClasses.length,
