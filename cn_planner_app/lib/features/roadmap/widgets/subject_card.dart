@@ -275,6 +275,7 @@ class SubjectCard extends StatelessWidget {
                 "B",
                 "C+",
                 "C",
+                "D+",
                 "D",
                 "F",
                 "W",
