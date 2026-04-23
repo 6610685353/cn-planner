@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cn_planner_app/route.dart';
 import 'package:flutter_svg/svg.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/widgets/loading_overlay.dart'; // Import Loading กลาง
+import '../../../core/widgets/loading_overlay.dart';
 import '../controllers/login_controller.dart';
 import '../widgets/login_text_field.dart';
 
@@ -20,7 +20,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _controller.init(); // เรียกตอนเปิดหน้าเพื่อดึงข้อมูล Remember Me
+    _controller.init();
   }
 
   @override
@@ -80,10 +80,10 @@ class _LoginPageState extends State<LoginPage> {
                       LoginTextField(
                         controller: _controller.passwordController,
                         hintText: "Enter your password",
-                        obscureText: true,
+                        isPassword: true,
                       ),
 
-                      // --- ส่วน Remember Me & Forgot Password ---
+                      // Remember Me & Forgot Password
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -135,7 +135,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Widget สำหรับ Remember Me
   Widget _buildRememberMe() {
     return ValueListenableBuilder<bool>(
       valueListenable: _controller.rememberMe,
