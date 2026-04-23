@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class SwipeToReveal extends StatefulWidget {
   final Widget child;
   final Widget action;
@@ -41,29 +40,23 @@ class _SwipeToRevealState extends State<SwipeToReveal>
   void _handleDragUpdate(DragUpdateDetails details) {
     setState(() {
       _dragExtent += details.primaryDelta!;
-      if (_dragExtent > 0) _dragExtent = 0; // Prevent swipe right
+      if (_dragExtent > 0) _dragExtent = 0;
       if (_dragExtent < -widget.actionWidth * 1.5) {
-        _dragExtent = -widget.actionWidth * 1.5; // Limit overscroll
+        _dragExtent = -widget.actionWidth * 1.5;
       }
     });
   }
 
   void _handleDragEnd(DragEndDetails details) {
     if (_dragExtent < -widget.actionWidth / 2) {
-      // Snap open
       _animateTo(-widget.actionWidth);
     } else {
-      // Snap close
       _animateTo(0.0);
     }
   }
 
   void _animateTo(double target) {
     final start = _dragExtent;
-    // Simple animation loop using controller value as a progress ticker
-    // Actually, let's just use a Tweener or simple setState for simplicity in this context
-    // or use the controller to drive value.
-    // For simplicity in a single-file widget without external deps:
 
     Animation<double> animation = Tween<double>(
       begin: start,
@@ -83,14 +76,12 @@ class _SwipeToRevealState extends State<SwipeToReveal>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Background (Action)
         Positioned.fill(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               GestureDetector(
                 onTap: () {
-                  // Close then act
                   _animateTo(0.0);
                   widget.onAction();
                 },
@@ -102,16 +93,14 @@ class _SwipeToRevealState extends State<SwipeToReveal>
                     borderRadius: BorderRadius.circular(20),
                   ),
                   alignment: Alignment.center,
-                  margin: const EdgeInsets.only(
-                    bottom: 12,
-                  ), // Same margin as card
+                  margin: const EdgeInsets.only(bottom: 12),
                   child: widget.action,
                 ),
               ),
             ],
           ),
         ),
-        // Foreground (Child)
+
         GestureDetector(
           onHorizontalDragUpdate: _handleDragUpdate,
           onHorizontalDragEnd: _handleDragEnd,

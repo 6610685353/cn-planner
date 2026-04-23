@@ -5,7 +5,7 @@ class SettingTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  final Color? textColor; // เผื่อใช้สีแดงสำหรับปุ่ม Logout
+  final Color? textColor;
 
   const SettingTile({
     super.key,
@@ -21,7 +21,7 @@ class SettingTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20), // คุม Theme เดิม
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),

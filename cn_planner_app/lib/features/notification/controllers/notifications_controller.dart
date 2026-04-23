@@ -6,7 +6,6 @@ import 'package:cn_planner_app/features/schedule/services/schedule_service.dart'
 class NotificationController {
   static List<NotificationsModel> notifications = [];
 
-  // 👉 1. โหลดแจ้งเตือนจากตารางเรียนจริง (Today/Tomorrow)
   static Future<void> loadNotifications() async {
     try {
       String myUid = FirebaseAuth.instance.currentUser?.uid ?? "";
@@ -57,7 +56,6 @@ class NotificationController {
         }
       }
 
-      // Sort by timestamp (closest first)
       fetchedNoti.sort((a, b) => b.timestamp!.compareTo(a.timestamp!));
 
       notifications = fetchedNoti;
@@ -77,12 +75,10 @@ class NotificationController {
     );
   }
 
-  // 👉 2. สร้างฟังก์ชันสำหรับรับแจ้งเตือนใหม่ (ดันไว้บนสุดของลิสต์)
   static void addNotification(NotificationsModel newNoti) {
     notifications.insert(0, newNoti);
   }
 
-  // ฟังก์ชันช่วยเลือก Icon ตามหมวดหมู่
   IconData getCategoryIcon(String category) {
     switch (category) {
       case "ACADEMIC ALERT":
@@ -98,7 +94,6 @@ class NotificationController {
     }
   }
 
-  // ฟังก์ชัน Mark all as read
   static void markAllAsRead() {
     for (var noti in notifications) {
       noti.isRead = true;

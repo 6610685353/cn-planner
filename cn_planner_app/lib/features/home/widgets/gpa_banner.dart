@@ -55,7 +55,6 @@ class GpaBanner extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: const BoxDecoration(
               color: Color(0xFFFED14F),
-              // สีเหลืองเข้มกว่านิดหน่อย
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.emoji_events_outlined, size: 45),

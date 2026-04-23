@@ -14,7 +14,6 @@ class _AddElectiveDialogState extends State<AddElectiveDialog> {
   final _creditController = TextEditingController();
   String _selectedGrade = 'A';
 
-  // รายการเกรดที่สามารถเลือกได้
   final List<String> _grades = ['A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F'];
 
   @override
@@ -36,7 +35,6 @@ class _AddElectiveDialogState extends State<AddElectiveDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ช่องกรอกรหัสวิชา
           TextField(
             controller: _codeController,
             textCapitalization: TextCapitalization.characters,
@@ -53,7 +51,6 @@ class _AddElectiveDialogState extends State<AddElectiveDialog> {
           ),
           const SizedBox(height: 15),
 
-          // ช่องกรอกหน่วยกิต
           TextField(
             controller: _creditController,
             keyboardType: TextInputType.number,
@@ -70,7 +67,6 @@ class _AddElectiveDialogState extends State<AddElectiveDialog> {
           ),
           const SizedBox(height: 15),
 
-          // Dropdown เลือกเกรด
           DropdownButtonFormField<String>(
             value: _selectedGrade,
             decoration: InputDecoration(
@@ -103,13 +99,11 @@ class _AddElectiveDialogState extends State<AddElectiveDialog> {
             ),
           ),
           onPressed: () {
-            // เช็คว่ากรอกข้อมูลครบไหม
             if (_codeController.text.trim().isEmpty ||
                 _creditController.text.trim().isEmpty) {
-              return; // ถ้าไม่ครบไม่ให้ไปต่อ
+              return;
             }
 
-            // ส่งข้อมูลกลับไปให้หน้า CreditBreakdownPage
             Navigator.pop(context, {
               'subject_code': _codeController.text.trim().toUpperCase(),
               'credits': int.tryParse(_creditController.text.trim()) ?? 3,

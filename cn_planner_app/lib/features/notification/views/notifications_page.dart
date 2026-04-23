@@ -30,7 +30,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
-  // ✅ MARK ALL AS READ + REFRESH UI
   void _markAllAsReadAndRefresh() {
     setState(() {
       NotificationController.markAllAsRead();

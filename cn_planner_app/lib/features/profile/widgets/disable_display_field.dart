@@ -21,23 +21,21 @@ class DisabledDisplayField extends StatelessWidget {
         ],
       ),
       child: TextField(
-        // ใช้ TextEditingController เพื่อใส่ค่าเริ่มต้น
         controller: TextEditingController(text: value),
-        enabled: false, // ล็อกไม่ให้แก้ไข และไม่ให้คีย์บอร์ดเด้ง
+        enabled: false,
         style: const TextStyle(
-          color:
-              Colors.black54, // สีตัวอักษรให้ออกเทานิดๆ เพื่อให้รู้ว่าแก้ไม่ได้
+          color: Colors.black54,
           fontSize: 15,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           filled: true,
-          fillColor: AppColors.textGrey, // ถมสีเทาอ่อน (Light Grey)
+          fillColor: AppColors.textGrey,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
             vertical: 16,
           ),
-          // ตั้งค่า Border ตอนที่มัน Disabled ให้เหมือนเดิม
+
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20),
             borderSide: const BorderSide(
