@@ -38,6 +38,9 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
     "-": 0.0,
   };
 
+  final Map<String, double> gradePointsSU = {"S": 4.0, "U": 0.0, "-": 0.0};
+
+  // Accumulated data from past semesters
   double pastTotalPoints = 0.0;
   double pastTotalCredits = 0.0;
 
@@ -212,7 +215,9 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                   name: course['subjectName'],
                   credit: course['credits'],
                   grade: course['grade'],
-                  gradeOptions: gradePoints.keys.toList(),
+                  gradeOptions: course['su_grade'] == true
+                      ? gradePointsSU.keys.toList()
+                      : gradePoints.keys.toList(),
                   onGradeChanged: (newGrade) {
                     if (newGrade != null) {
                       _updateCourseGrade(index, newGrade);
