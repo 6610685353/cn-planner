@@ -50,7 +50,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
     final activeBannerClass = ongoingClass ?? nextClass;
     final isOngoing = ongoingClass != null;
 
-    // --- LOGIC CHANGE: กำหนดคำที่ใช้แสดงแทน Today's Schedule ---
     String scheduleTitle = "Today's Schedule";
     if (!isToday) {
       DateTime tomorrow = DateTime.now().add(const Duration(days: 1));
@@ -75,16 +74,13 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
       appBar: TopBar(header: "Day Schedule"),
       body: Column(
         children: [
-          // --- Date Selector ---
           SizedBox(
             height: 90,
             child: Row(
-              // --- FIX: ใช้ Expanded เพื่อให้พื้นที่กดกระจายเต็มช่อง และกดง่ายขึ้น ---
               children: nextDays.map((date) {
                 bool isSelected = _isSameDate(date, _selectedDate);
                 return Expanded(
                   child: GestureDetector(
-                    // --- FIX: บังคับให้รับการกดทั่วทั้งพื้นที่แม้จะเป็นที่ว่าง ---
                     behavior: HitTestBehavior.opaque,
                     onTap: () => setState(() => _selectedDate = date),
                     child: Container(
@@ -128,14 +124,12 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
           ),
           const Divider(height: 1),
 
-          // --- เนื้อหาหลัก ---
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Banner Logic ---
                   if (activeBannerClass != null) ...[
                     Text(
                       isOngoing ? "Happening Now" : "Next Class",
@@ -149,7 +143,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
                     const SizedBox(height: 30),
                   ],
 
-                  // --- FIX: นำตัวแปร scheduleTitle มาแสดงแทนการ Fix คำว่า Today ---
                   Text(
                     scheduleTitle,
                     style: const TextStyle(
@@ -164,7 +157,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
                       padding: const EdgeInsets.only(top: 20),
                       child: Center(
                         child: Text(
-                          // เพิ่มเติมความสมูท: ปรับคำเตือนให้สอดคล้องกับวัน
                           isToday
                               ? "No more classes today! 🎉"
                               : "No classes for this day! 🎉",
@@ -190,7 +182,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
     );
   }
 
-  // --- Widget: แถวของ Break Time ---
   Widget _buildBreakRow(String start, String end) {
     return IntrinsicHeight(
       child: Row(
@@ -275,7 +266,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
     );
   }
 
-  // --- Widget: Banner ด้านบน ---
   Widget _buildTopBanner(ClassSession session, {required bool isOngoing}) {
     final badgeColor = isOngoing ? Colors.green.shade50 : Colors.blue.shade50;
     final badgeTextColor = isOngoing
@@ -376,7 +366,6 @@ class _DailyScheduleScreenState extends State<DailySchedulePage> {
     );
   }
 
-  // --- LOGIC FUNCTIONS ---
   ClassSession? _findOngoingClass(List<ClassSession> classes) {
     final now = DateTime.now();
     final timeNow = now.hour * 60 + now.minute;

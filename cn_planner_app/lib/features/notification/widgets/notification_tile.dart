@@ -21,7 +21,6 @@ class NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // กำหนดสีตามสถานะการอ่าน
     final Color bgColor = isRead
         ? const Color(0xFFF5F5F5)
         : const Color(0xFFFFFBEB);
@@ -34,7 +33,7 @@ class NotificationTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         border: Border(
-          left: BorderSide(color: sideColor, width: 5), // เส้นสีแดงด้านข้าง
+          left: BorderSide(color: sideColor, width: 5),
           bottom: const BorderSide(color: AppColors.borderGrey, width: 0.5),
         ),
       ),
@@ -42,7 +41,6 @@ class NotificationTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- Icon ในวงกลม ---
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -58,7 +56,6 @@ class NotificationTile extends StatelessWidget {
           ),
           const SizedBox(width: 15),
 
-          // --- เนื้อหาข้อความ ---
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +99,6 @@ class NotificationTile extends StatelessWidget {
             ),
           ),
 
-          // --- จุดสีแดง (กรณีที่ยังไม่อ่าน) ---
           if (!isRead)
             Container(
               margin: const EdgeInsets.only(left: 10, top: 25),

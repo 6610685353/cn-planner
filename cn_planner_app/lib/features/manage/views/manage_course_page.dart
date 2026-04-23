@@ -153,7 +153,6 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
       reasons.add("Not offered in Term ${widget.targetTerm}");
     }
 
-    // ❌ prerequisite
     if (subject.require != null) {
       final missing = subject.require!
           .where((r) => !widget.passedSubjects.contains(r))
@@ -164,7 +163,6 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
       }
     }
 
-    // ❌ corequisite
     if (subject.corequisite != null) {
       final missingCoreq = subject.corequisite!
           .where(
@@ -211,8 +209,8 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
         gradeMap[subjectId] = "-";
         sectionMap[subjectId] = "-";
       } else {
-        gradeMap.putIfAbsent(subjectId, () => "-"); // default grade
-        sectionMap.putIfAbsent(subjectId, () => "-"); // default section
+        gradeMap.putIfAbsent(subjectId, () => "-");
+        sectionMap.putIfAbsent(subjectId, () => "-");
       }
     });
   }
@@ -246,11 +244,11 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
       return {
         "subject": subject,
         "grade": gradeMap[id] ?? "-",
-        "section": sectionMap[id] ?? "-", // ✅ default = "-"
+        "section": sectionMap[id] ?? "-",
       };
     }).toList();
 
-    Navigator.pop(context, result); // 🔥 ส่ง list + grade
+    Navigator.pop(context, result);
   }
 
   @override
@@ -279,7 +277,7 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
                   final String year = parts[0];
                   final String sem = parts[1];
                   final List<dynamic> subjects = entry.value;
-                  
+
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -293,15 +291,9 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
                         onCheckChanged: updateCheck,
                         onGradeChanged: updateGrade,
                         onSectionChanged: updateSection,
-                        sectionOptionsMap: sectionOptionsMap, // ✅
-                        scheduleMap: scheduleMap, // ✅
-                        reasonsMap: {
-                          // ✅
-                          // for (var c in subjects)
-                          //   c['subjectId']: getReasons(
-                          //     subjectMap[c['subjectId']]?
-                          //   ),
-                        },
+                        sectionOptionsMap: sectionOptionsMap,
+                        scheduleMap: scheduleMap,
+                        reasonsMap: {},
                       ),
                     ],
                   );

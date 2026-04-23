@@ -10,7 +10,7 @@ class CourseCard extends StatelessWidget {
   final VoidCallback onDelete;
 
   const CourseCard({
-    super.key, 
+    super.key,
     required this.name,
     required this.credit,
     required this.grade,
@@ -57,14 +57,14 @@ class CourseCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD), // Light Blue
+                    color: const Color(0xFFE3F2FD),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    "${credit.toStringAsFixed(0)} Credits", // e.g. "3 Credits"
+                    "${credit.toStringAsFixed(0)} Credits",
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF1976D2), // Blue
+                      color: Color(0xFF1976D2),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -73,12 +73,10 @@ class CourseCard extends StatelessWidget {
             ),
           ),
 
-          // Grade Column (Centered)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.center, // Centered alignment
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const Text(
                   "GRADE",
@@ -94,7 +92,7 @@ class CourseCard extends StatelessWidget {
                     Icons.keyboard_arrow_down_rounded,
                     color: Colors.black54,
                   ),
-                  underline: const SizedBox(), // Remove underline
+                  underline: const SizedBox(),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
@@ -108,8 +106,6 @@ class CourseCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // Removed standard Delete Button
         ],
       ),
     );

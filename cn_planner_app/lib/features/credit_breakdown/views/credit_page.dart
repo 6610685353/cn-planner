@@ -5,9 +5,7 @@ import 'package:cn_planner_app/services/profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'package:cn_planner_app/services/send_grade.dart';
-
 import '../widgets/total_credit_card.dart';
 import '../widgets/credit_category_item.dart';
 import '../widgets/expandable_elective_card.dart';
@@ -31,7 +29,6 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
   List<dynamic> _genEdCourses = [];
   List<dynamic> _freeElectiveCourses = [];
 
-  // 🌟 ตัวแปรใหม่สำหรับเก็บหน่วยกิตวิชาหลัก (Major)
   int _majorEarnedCredits = 0;
 
   final Map<String, double> gradeScheme = {
@@ -57,7 +54,6 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
     final data = await _profileController.fetchUserData();
 
     if (user != null) {
-      // 1. ดึงวิชา Gen Ed และ Free Elective (ที่ User กรอกเอง)
       final response = await _supabase
           .from('UserElectives')
           .select()
@@ -68,7 +64,6 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
           .where((c) => c['category'] == 'free_elective')
           .toList();
 
-      // 🌟 2. ดึงวิชาหลัก (Major) มาคำนวณ
       try {
         final subjectService = SubjectService();
         final roadmapService = RoadmapService();
@@ -80,7 +75,6 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
         for (var item in history) {
           String grade = item['grade'] ?? '-';
 
-          // ถ้านับเฉพาะวิชาที่ผ่าน (ไม่เป็น '-', 'F', 'W')
           if (grade != '-' && grade != 'F' && grade != 'W') {
             final subject = allSubjects.firstWhere(
               (s) => s.subjectCode == item['subject_code'],
@@ -91,10 +85,10 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
                 subjectId: 0,
               ),
             );
-            majorEarned += subject.credits.toInt(); // นำหน่วยกิตมาบวกสะสม
+            majorEarned += subject.credits.toInt();
           }
         }
-        _majorEarnedCredits = majorEarned; // อัปเดตตัวแปร
+        _majorEarnedCredits = majorEarned;
       } catch (e) {
         print("❌ Error คำนวณหน่วยกิต Major: $e");
       }
@@ -126,7 +120,7 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
           .eq('user_id', user.uid);
 
       double totalGradePoints = 0;
-      double totalCreditsForGPA = 0; // เครดิตสำหรับหารเกรด (รวม F ด้วย)
+      double totalCreditsForGPA = 0;
 
       for (var item in history) {
         String grade = item['grade'] ?? '-';
@@ -211,7 +205,6 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
   }
 
   int _calculateEarned(List<dynamic> courses) {
-    // นับเฉพาะวิชาที่เกรดผ่าน (ป้องกัน User กรอกเกรด F เล่นๆ ในวิชาเลือก)
     return courses.fold(0, (sum, item) {
       String grade = item['grade'] ?? '-';
       if (grade != 'F' && grade != 'W' && grade != '-') {
@@ -275,7 +268,6 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
                     onDeletePressed: _handleDeleteCourse,
                   ),
 
-                  // 🌟 อัปเดตส่วนนี้: โยนค่าตัวแปร _majorEarnedCredits เข้ามาแสดงผล
                   CreditCategoryItem(
                     part: 'Part II',
                     categoryName: 'Major Courses',
