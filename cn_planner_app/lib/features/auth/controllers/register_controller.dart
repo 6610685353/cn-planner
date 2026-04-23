@@ -40,6 +40,42 @@ class RegisterController {
       return;
     }
 
+    if (username.length < 5) {
+      _showPopup(
+        context,
+        "Invalid Username",
+        "Username must be at least 5 characters long.",
+      );
+      return;
+    }
+    if (username.contains(' ') || username.contains('@')) {
+      _showPopup(
+        context,
+        "Invalid Username",
+        "Username cannot contain spaces or the '@' symbol.",
+      );
+      return;
+    }
+
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(email)) {
+      _showPopup(
+        context,
+        "Invalid Email",
+        "Please enter a valid email address.",
+      );
+      return;
+    }
+
+    if (password.length < 6) {
+      _showPopup(
+        context,
+        "Weak Password",
+        "Password must be at least 6 characters long.",
+      );
+      return;
+    }
+
     if (password != confirmPass) {
       _showPopup(context, "Password Mismatch", "Passwords do not match.");
       return;
@@ -78,11 +114,17 @@ class RegisterController {
       }
     } catch (e) {
       String errorMessage = "Something went wrong. Please try again.";
+      final errorString = e.toString().toLowerCase();
 
-      if (e.toString().contains('username-already-in-use')) {
-        errorMessage = "This username is already taken.";
-      } else if (e.toString().contains('email-already-in-use')) {
-        errorMessage = "This email is already in use.";
+      if (errorString.contains('username-already-in-use')) {
+        errorMessage =
+            "This username is already taken. Please choose another one.";
+      } else if (errorString.contains('email-already-in-use')) {
+        errorMessage = "This email is already registered. Try logging in.";
+      } else if (errorString.contains('weak-password')) {
+        errorMessage = "The password provided is too weak.";
+      } else if (errorString.contains('invalid-email')) {
+        errorMessage = "The email address is badly formatted.";
       }
 
       if (context.mounted) {

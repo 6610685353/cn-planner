@@ -9,24 +9,21 @@ class LoginController {
   final passwordController = TextEditingController();
   final _authService = AuthService();
 
-  // สร้าง Notifier เพื่อให้ UI คอยฟังการเปลี่ยนแปลง
   final ValueNotifier<bool> isLoading = ValueNotifier(false);
   final ValueNotifier<bool> rememberMe = ValueNotifier(false);
 
-  // โหลดข้อมูลที่เคยบันทึกไว้ตอนเปิดหน้าแอป
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
+
     final isRemembered = prefs.getBool('remember_me') ?? false;
     rememberMe.value = isRemembered;
 
-    passwordController.clear();
-
     if (isRemembered) {
       identifierController.text = prefs.getString('saved_identifier') ?? '';
-      // ❌ ลบบรรทัดที่ดึง password ออก
-      // passwordController.text = prefs.getString('saved_password') ?? '';
+      passwordController.text = prefs.getString('saved_password') ?? '';
     } else {
       identifierController.clear();
+      passwordController.clear();
     }
   }
 
@@ -54,20 +51,20 @@ class LoginController {
       return;
     }
 
-    // เริ่มโหลด (วงกลมหมุนๆ จะโผล่ขึ้นมา)
     isLoading.value = true;
 
     try {
       await _authService.login(identifier, password);
 
-      // จัดการระบบ Remember Me เมื่อล็อคอินสำเร็จ
       final prefs = await SharedPreferences.getInstance();
       if (rememberMe.value) {
         await prefs.setBool('remember_me', true);
         await prefs.setString('saved_identifier', identifier);
+        await prefs.setString('saved_password', password);
       } else {
         await prefs.remove('remember_me');
         await prefs.remove('saved_identifier');
+        await prefs.remove('saved_password');
       }
 
       if (context.mounted) {
