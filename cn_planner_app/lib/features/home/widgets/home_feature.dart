@@ -5,14 +5,14 @@ class HomeFeature extends StatelessWidget {
   final IconData icon;
   final String name;
   final String route;
-  final bool isLeft; // เปลี่ยนจาก String? left เป็น bool isLeft
+  final bool isLeft;
 
   const HomeFeature({
     super.key,
     required this.icon,
     required this.name,
     required this.route,
-    this.isLeft = true, // กำหนดค่าเริ่มต้นเป็นฝั่งซ้าย (สีเหลือง)
+    this.isLeft = true,
   });
 
   @override

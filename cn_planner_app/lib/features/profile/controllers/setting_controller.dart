@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cn_planner_app/route.dart';
-import '../../../services/auth_service.dart'; // ตรวจสอบ path ให้ถูกต้อง
+import '../../../services/auth_service.dart';
 
 class SettingController {
-  // --- เพิ่มบรรทัดนี้ เพื่อเรียกใช้งาน AuthService ---
   final AuthService _authService = AuthService();
 
   bool isNotificationEnabled = true;
@@ -19,7 +18,6 @@ class SettingController {
     update();
   }
 
-  // แก้ไขให้เป็น Future เพื่อรองรับ await
   Future<void> handleSignOut(BuildContext context) async {
     try {
       await _authService.logout();
