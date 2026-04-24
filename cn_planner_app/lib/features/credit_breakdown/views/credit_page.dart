@@ -83,6 +83,7 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
                 subjectName: '',
                 credits: 0,
                 subjectId: 0,
+                su_grade: false,
               ),
             );
             majorEarned += subject.credits.toInt();
@@ -133,6 +134,7 @@ class _CreditBreakdownPageState extends State<CreditBreakdownPage> {
             subjectName: '',
             credits: 0,
             subjectId: 0,
+            su_grade: false,
           ),
         );
 

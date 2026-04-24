@@ -294,6 +294,7 @@ class _ManageCoursePageState extends State<ManageCoursePage> {
                         sectionOptionsMap: sectionOptionsMap,
                         scheduleMap: scheduleMap,
                         reasonsMap: {},
+                        isSUGrade: false,
                       ),
                     ],
                   );

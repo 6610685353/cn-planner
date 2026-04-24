@@ -67,6 +67,7 @@ class ValidationService {
           subjectName: '',
           credits: 0,
           subjectId: 0,
+          su_grade: false,
         ),
       );
       total += subject.credits;

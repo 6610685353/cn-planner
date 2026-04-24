@@ -7,6 +7,8 @@ class SubjectModel {
   final List<String>? corequisite;
   final List<int>? offeredSemester; // สำหรับ int4[]
   final int subjectId;
+  final bool
+  su_grade; // 🔥 เพิ่มฟิลด์นี้เพื่อเก็บข้อมูลว่าเป็น SU grade หรือไม่
 
   SubjectModel({
     required this.subjectCode,
@@ -17,6 +19,7 @@ class SubjectModel {
     this.corequisite,
     this.offeredSemester,
     required this.subjectId,
+    required this.su_grade,
   });
 
   // ฟังก์ชันแปลง JSON จาก Supabase มาเป็น Object
@@ -38,6 +41,7 @@ class SubjectModel {
           ? List<int>.from(json['offeredSemester'])
           : null,
       subjectId: json['subjectId'] ?? 0,
+      su_grade: json['su_grade'] ?? false, // 🔥 ดึงข้อมูล SU grade จาก JSON
     );
   }
 }
