@@ -9,13 +9,12 @@ import '../services/profile_service.dart';
 import '../services/roadmap_service.dart';
 import 'academic_history_page.dart';
 import '../../simulator/screens/simulator_screen.dart';
-import '../../manage/views/manage_course_page.dart';
 import 'package:cn_planner_app/services/send_grade.dart';
 import '../data/static_roamap_data.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../simulator/services/simulator_service.dart';
 
-enum RoadmapMode { view, edit, simulate }
+enum RoadmapMode { view, edit, simulate, history }
 
 class RoadmapPage extends StatefulWidget {
   final RoadmapMode mode;
@@ -36,6 +35,7 @@ class _RoadmapPageState extends State<RoadmapPage>
   bool _isAlreadyNoti = false;
 
   late TabController _tabController;
+  final ScrollController _horizontalScrollController = ScrollController();
   String selectedPlanType = RoadmapTemplate.PLAN_INTERNSHIP;
 
   int? selectedYear;
@@ -65,7 +65,6 @@ class _RoadmapPageState extends State<RoadmapPage>
   List<Map<String, dynamic>> editedHistory = [];
   List<Map<String, dynamic>> roadmapPlan = [];
   List<Map<String, dynamic>> simulatedPlan = [];
-  Set<String> _failedCodesForRoadmap = {};
   List<String> getPassedSubjects(List<Map<String, dynamic>> plan) {
     return plan
         .where(
@@ -92,6 +91,7 @@ class _RoadmapPageState extends State<RoadmapPage>
           subjectName: '',
           credits: 0,
           subjectId: 0,
+          su_grade: false,
         ),
       );
       total += subject.credits;
@@ -111,10 +111,13 @@ class _RoadmapPageState extends State<RoadmapPage>
   void dispose() {
     _tabController.removeListener(_handleTabSelection);
     _tabController.dispose();
+    _horizontalScrollController.dispose();
     super.dispose();
   }
 
   void _handleTabSelection() {
+    if (!_tabController.indexIsChanging) return;
+
     String newPlan;
     switch (_tabController.index) {
       case 1:
@@ -130,8 +133,11 @@ class _RoadmapPageState extends State<RoadmapPage>
 
     setState(() {
       selectedPlanType = newPlan;
+      simulatedPlan = [];
       _buildRoadmapData();
     });
+
+    _loadSimulatorPlan();
   }
 
   void _buildRoadmapData() {
@@ -199,8 +205,9 @@ class _RoadmapPageState extends State<RoadmapPage>
               profile?['plan_type'] ?? RoadmapTemplate.PLAN_INTERNSHIP;
           selectedPlanType = userPlan;
           if (userPlan == RoadmapTemplate.PLAN_COOP) _tabController.index = 1;
-          if (userPlan == RoadmapTemplate.PLAN_RESEARCH)
+          if (userPlan == RoadmapTemplate.PLAN_RESEARCH) {
             _tabController.index = 2;
+          }
 
           _buildRoadmapData();
 
@@ -213,12 +220,48 @@ class _RoadmapPageState extends State<RoadmapPage>
         });
 
         await _loadSimulatorPlan();
+        _scrollToCurrentTerm();
       }
     } catch (e) {
-      // Error loading data
     } finally {
       setState(() => isLoading = false);
     }
+  }
+
+  void _scrollToCurrentTerm() {
+    if (selectedYear == null || selectedTerm == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_horizontalScrollController.hasClients) return;
+
+      const double termWidth = 300.0;
+      const double padding = 16.0;
+
+      final List<Map<String, int>> terms = [];
+      for (int y = 1; y <= maxYear; y++) {
+        terms.add({"year": y, "term": 1});
+        terms.add({"year": y, "term": 2});
+        final roadmapSource = simulatedPlan.isNotEmpty
+            ? simulatedPlan
+            : roadmapPlan;
+        if (roadmapSource.any((e) => e['year'] == y && e['semester'] == 3)) {
+          terms.add({"year": y, "term": 3});
+        }
+      }
+
+      final idx = terms.indexWhere(
+        (t) => t['year'] == selectedYear && t['term'] == selectedTerm,
+      );
+      if (idx < 0) return;
+
+      final targetOffset = (idx * termWidth) + padding;
+      final maxOffset = _horizontalScrollController.position.maxScrollExtent;
+
+      _horizontalScrollController.animateTo(
+        targetOffset.clamp(0.0, maxOffset),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    });
   }
 
   Future<void> _loadSimulatorPlan() async {
@@ -327,7 +370,6 @@ class _RoadmapPageState extends State<RoadmapPage>
 
       setState(() {
         simulatedPlan = finalPlan;
-        _failedCodesForRoadmap = expandedFailed;
       });
     } catch (e) {
       setState(() {
@@ -552,6 +594,7 @@ class _RoadmapPageState extends State<RoadmapPage>
         ProgressHeader(currentCredits: allCredits),
         Expanded(
           child: SingleChildScrollView(
+            controller: _horizontalScrollController,
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -630,6 +673,7 @@ class _RoadmapPageState extends State<RoadmapPage>
                             subjectName: '',
                             credits: 0,
                             subjectId: 0,
+                            su_grade: false,
                           ),
                         );
                         return sum + subject.credits;
@@ -724,7 +768,7 @@ class _RoadmapPageState extends State<RoadmapPage>
                       });
                     },
                   );
-                }).toList(),
+                }),
                 if (!isStatic && widget.mode != RoadmapMode.view)
                   _buildAddYearButton(),
               ],
@@ -751,7 +795,7 @@ class _RoadmapPageState extends State<RoadmapPage>
           border: Border.all(color: Colors.grey.shade300),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),
@@ -860,7 +904,7 @@ class _RoadmapPageState extends State<RoadmapPage>
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -911,6 +955,7 @@ class _RoadmapPageState extends State<RoadmapPage>
                 subjectName: '',
                 credits: 0,
                 subjectId: 0,
+                su_grade: false,
               ),
             );
 

@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cn_planner_app/features/roadmap/models/subject_model.dart';
 import 'package:cn_planner_app/features/roadmap/widgets/subject_card.dart';
 import 'package:cn_planner_app/features/roadmap/services/roadmap_service.dart';
-import 'package:cn_planner_app/features/roadmap/services/validation_service.dart'; // 🔥 เพิ่ม
+import 'package:cn_planner_app/features/roadmap/services/validation_service.dart';
 import '../views/roadmap_page.dart';
 import 'package:cn_planner_app/features/manage/views/manage_course_page.dart';
 
@@ -13,9 +13,8 @@ class TermColumn extends StatefulWidget {
   final List<SubjectModel> allSubjects;
   final RoadmapMode mode;
   final Map<String, dynamic>? userProfile;
-  final List<Map<String, dynamic>> initialCourses; // วิชาในเทอมนี้
-  final List<Map<String, dynamic>>
-  allPlanCourses; // 🔥 เพิ่ม: วิชาทั้งหมดในแผน (เพื่อเช็คตัวต่อข้ามเทอม)
+  final List<Map<String, dynamic>> initialCourses;
+  final List<Map<String, dynamic>> allPlanCourses;
   final VoidCallback onRefresh;
   final bool isSelected;
   final VoidCallback onSelect;
@@ -33,7 +32,7 @@ class TermColumn extends StatefulWidget {
     required this.mode,
     this.userProfile,
     required this.initialCourses,
-    required this.allPlanCourses, // 🔥 ต้องส่งมาจากหน้า RoadmapPage
+    required this.allPlanCourses,
     required this.onRefresh,
     required this.isSelected,
     required this.onSelect,
@@ -109,7 +108,6 @@ class _TermColumnState extends State<TermColumn> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header ส่วนหัว
           GestureDetector(
             onTap: widget.onSelect,
             child: Row(
@@ -178,43 +176,33 @@ class _TermColumnState extends State<TermColumn> {
           ),
           const SizedBox(height: 16),
 
-          // รายการวิชา (Scrollable)
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
                 ...widget.initialCourses.map((data) {
-                  // ค้นหาใน DB
                   final subject = widget.allSubjects.firstWhere(
                     (s) => s.subjectCode == data['subject_code'],
                     orElse: () => SubjectModel(
                       subjectCode: data['subject_code'],
-                      subjectName:
-                          data['subject_name'] ??
-                          "Unknown", // ✨ ใช้ชื่อจาก Template ถ้าหาใน DB ไม่เจอ
-                      credits: (data['credit'] ?? 0)
-                          .toDouble(), // ✨ ใช้หน่วยกิตจาก Template
+                      subjectName: data['subject_name'] ?? "Unknown",
+                      credits: (data['credit'] ?? 0).toDouble(),
                       subjectId: 0,
-                      su_grade:
-                          false, // 🔥 ถ้าไม่เจอใน DB ถือว่าไม่ใช่ SU grade
+                      su_grade: false,
                     ),
                   );
 
-                  // 🔥 ตรวจสอบเงื่อนไขตัวต่อข้ามเทอม (ใช้ ValidationService)
                   final validation = ValidationService.validateCourse(
                     targetSubject: subject,
                     targetYear: data['year'],
                     targetSemester: data['semester'],
-                    currentPlan: widget.allPlanCourses, // 🔥 เช็คกับทั้งแผน
+                    currentPlan: widget.allPlanCourses,
                     allSubjects: widget.allSubjects,
                   );
 
-                  // [#2] เช็ค sim_status จาก simulatedPlan ก่อน
                   final simStatus = data['sim_status'] as String?;
                   final isBlockedByFail = data['is_blocked_by_fail'] == true;
-                  // ถ้ามี sim_status → ใช้ state จาก simulator
-                  // ถ้า fail/blocked → "failed", ถ้า pass → "passed"
-                  // ถ้าไม่มี sim_status → ใช้ validation เหมือนเดิม
+
                   final String cardState;
                   if (simStatus == 'fail') {
                     cardState = 'failed';
@@ -232,7 +220,7 @@ class _TermColumnState extends State<TermColumn> {
                     isBlockedByFail: isBlockedByFail,
                     mode: widget.mode,
                     grade: data['grade'],
-                    isSU_grade: subject.su_grade, // 🔥 เพิ่ม isSU_grade
+                    isSuGrade: subject.su_grade,
                     onGradeChanged: (newGrade) {
                       if (widget.mode == RoadmapMode.simulate ||
                           widget.mode == RoadmapMode.edit) {
@@ -242,7 +230,7 @@ class _TermColumnState extends State<TermColumn> {
                         );
                       }
                     },
-                    section: data['section'], // ✅ เพิ่ม section
+                    section: data['section'],
                     onDelete: () {
                       if (widget.mode == RoadmapMode.simulate ||
                           widget.mode == RoadmapMode.edit) {
@@ -273,8 +261,7 @@ class _TermColumnState extends State<TermColumn> {
                                       e['grade'] != null &&
                                       e['grade'] != 'F' &&
                                       e['grade'] != 'W' &&
-                                      e['grade'] !=
-                                          'U', // 🔥 เพิ่ม U ในเงื่อนไขผ่าน-ไม่ผ่า น
+                                      e['grade'] != 'U',
                                 )
                                 .map((e) => e['subject_code'] as String)
                                 .toList(),
