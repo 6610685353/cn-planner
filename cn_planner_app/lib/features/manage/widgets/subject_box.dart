@@ -10,6 +10,7 @@ class SubjectBox extends StatefulWidget {
   final List<String> availableSections;
   final int subjectId;
   final bool isChecked;
+  final bool isSUGrade;
 
   final Function(int, bool) onChanged;
   final Function(int, bool) onCheckChanged;
@@ -32,6 +33,7 @@ class SubjectBox extends StatefulWidget {
     required this.onGradeChanged,
     required this.onSectionChanged,
     required this.reasons,
+    required this.isSUGrade,
   });
 
   @override
@@ -241,15 +243,21 @@ class _SubjectBoxState extends State<SubjectBox> {
                 },
                 itemBuilder: (BuildContext context) => [
                   const PopupMenuItem(value: "-", child: Text("-")),
-                  const PopupMenuItem(value: "A", child: Text("A")),
-                  const PopupMenuItem(value: "B+", child: Text("B+")),
-                  const PopupMenuItem(value: "B", child: Text("B")),
-                  const PopupMenuItem(value: "C+", child: Text("C+")),
-                  const PopupMenuItem(value: "C", child: Text("C")),
-                  const PopupMenuItem(value: "D+", child: Text("D+")),
-                  const PopupMenuItem(value: "D", child: Text("D")),
-                  const PopupMenuItem(value: "F", child: Text("F")),
-                  const PopupMenuItem(value: "W", child: Text("W")),
+
+                  if (widget.isSUGrade) ...[
+                    const PopupMenuItem(value: "S", child: Text("S")),
+                    const PopupMenuItem(value: "U", child: Text("U")),
+                  ] else ...[
+                    const PopupMenuItem(value: "A", child: Text("A")),
+                    const PopupMenuItem(value: "B+", child: Text("B+")),
+                    const PopupMenuItem(value: "B", child: Text("B")),
+                    const PopupMenuItem(value: "C+", child: Text("C+")),
+                    const PopupMenuItem(value: "C", child: Text("C")),
+                    const PopupMenuItem(value: "D+", child: Text("D+")),
+                    const PopupMenuItem(value: "D", child: Text("D")),
+                    const PopupMenuItem(value: "F", child: Text("F")),
+                    const PopupMenuItem(value: "W", child: Text("W")),
+                  ],
                 ],
               ),
             ],

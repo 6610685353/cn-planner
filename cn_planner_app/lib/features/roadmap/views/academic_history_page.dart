@@ -63,6 +63,7 @@ class _AcademicHistoryPageState extends State<AcademicHistoryPage> {
           subjectName: '',
           credits: 0,
           subjectId: 0,
+          su_grade: false,
         ),
       );
       total += subject.credits;
@@ -168,7 +169,7 @@ class _AcademicHistoryPageState extends State<AcademicHistoryPage> {
                         return TermColumn(
                           title: "Year $year / Term $term",
                           allSubjects: allSubjects,
-                          mode: RoadmapMode.view, // View Mode แก้ไขไม่ได้
+                          mode: RoadmapMode.history, // View Mode แก้ไขไม่ได้
                           userProfile: userProfile,
                           initialCourses: termCourses,
                           allPlanCourses:
