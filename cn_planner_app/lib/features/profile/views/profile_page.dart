@@ -138,26 +138,34 @@ class _ProfilePageState extends State<ProfilePage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                QuickStats(
-                                  title: "Earned",
-                                  mainText:
-                                      _profileData?.earned_credits.toString() ??
-                                      "0",
-                                  footer: "Credits",
+                                Expanded(child:
+                                  QuickStats(
+                                    title: "Earned",
+                                    mainText:
+                                        _profileData?.earned_credits.toString() ??
+                                        "0",
+                                    footer: "Credits",
+                                  ),
                                 ),
-                                QuickStats(
-                                  title: "Remaining",
-                                  mainText:
-                                      _profileData?.remaining_credits
-                                          .toString() ??
-                                      "0",
-                                  footer: "Credits",
+                                SizedBox(width: 5),
+                                Expanded(child:
+                                  QuickStats(
+                                    title: "Remaining",
+                                    mainText:
+                                        _profileData?.remaining_credits
+                                            .toString() ??
+                                        "0",
+                                    footer: "Credits",
+                                  ),
                                 ),
-                                QuickStats(
-                                  title: "Standing",
-                                  mainText:
-                                      _profileData?.academicStanding ?? "-",
-                                  footer: "Academic",
+                                SizedBox(width: 5),
+                                Expanded(child:
+                                  QuickStats(
+                                    title: "Standing",
+                                    mainText:
+                                        _profileData?.academicStanding ?? "-",
+                                    footer: "Academic",
+                                  ),
                                 ),
                               ],
                             ),
