@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class ProfileService {
   final _supabase = Supabase.instance.client;
 
-  Future<void> checkOrCreateProfile(String uid, int initialYear) async {
+  Future<void> checkOrCreateProfile(String uid, int initialYear, int initialSem) async {
     try {
       final profile = await _supabase
           .from('profiles')
@@ -15,7 +15,7 @@ class ProfileService {
         await _supabase.from('profiles').insert({
           'user_id': uid,
           'current_year': initialYear,
-          'current_semester': 1,
+          'current_semester': initialSem,
         });
       }
     } catch (e) {
