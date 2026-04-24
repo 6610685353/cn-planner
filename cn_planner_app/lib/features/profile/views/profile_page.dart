@@ -179,8 +179,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               icon: buildIcon(Icons.emoji_events_outlined),
                               title: "Credit Breakdown",
                               subtitle: "View your progress",
-                              route: AppRoutes
-                                  .creditBreakdown, // ปล่อยไว้เฉยๆ ก็ได้ถ้าใช้ onTap ทับ
+                              route: AppRoutes.creditBreakdown,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -189,7 +188,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                         const CreditBreakdownPage(),
                                   ),
                                 ).then((_) {
-                                  // 🌟 พอกดกลับมาจากหน้า Credit Breakdown ให้โหลดข้อมูล Profile ใหม่!
                                   _loadData();
                                 });
                               },

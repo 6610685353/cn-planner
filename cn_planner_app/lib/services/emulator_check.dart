@@ -13,7 +13,6 @@ Future<String> getHost() async {
   if (Platform.isAndroid) {
     final android = await deviceInfo.androidInfo;
 
-    // Android Emulator
     final isEmulator = !android.isPhysicalDevice;
 
     if (isEmulator) {

@@ -6,16 +6,17 @@ class SubjectBox extends StatefulWidget {
   final String subtitle;
   final double credits;
   final String? grade;
-  final String? section; // ✅ เพิ่ม section
-  final List<String> availableSections; // ✅ รายการ section ที่ให้เลือก
+  final String? section;
+  final List<String> availableSections;
   final int subjectId;
   final bool isChecked;
+  final bool isSUGrade;
 
   final Function(int, bool) onChanged;
   final Function(int, bool) onCheckChanged;
   final Function(String) onGradeChanged;
-  final Function(String) onSectionChanged; // ✅ callback สำหรับ section
-  final List<String> reasons; // ✅ เพิ่มรายการเหตุผลสำหรับแต่ละวิชา
+  final Function(String) onSectionChanged;
+  final List<String> reasons;
 
   const SubjectBox({
     super.key,
@@ -23,15 +24,16 @@ class SubjectBox extends StatefulWidget {
     required this.subtitle,
     required this.credits,
     required this.grade,
-    this.section, // ✅ allow null
-    this.availableSections = const ["1", "2", "3"], // ✅ default sections
+    this.section,
+    this.availableSections = const ["1", "2", "3"],
     required this.subjectId,
     required this.isChecked,
     required this.onChanged,
     required this.onCheckChanged,
     required this.onGradeChanged,
-    required this.onSectionChanged, // ✅ เพิ่ม
-    required this.reasons, // ✅ เพิ่ม
+    required this.onSectionChanged,
+    required this.reasons,
+    required this.isSUGrade,
   });
 
   @override
@@ -74,7 +76,6 @@ class _SubjectBoxState extends State<SubjectBox> {
       ),
       child: Row(
         children: [
-          // --- Checkbox ---
           Transform.scale(
             scale: 1.5,
             child: Checkbox(
@@ -100,14 +101,12 @@ class _SubjectBoxState extends State<SubjectBox> {
                   });
                 } else {
                   widget.onGradeChanged("-");
-                  // ไม่รีเซ็ต section ถ้าติ๊กถูก (หรือจะรีเซ็ตก็ได้แล้วแต่ logic)
                 }
               },
             ),
           ),
           const SizedBox(width: 5),
 
-          // --- Subject Info ---
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,7 +163,6 @@ class _SubjectBoxState extends State<SubjectBox> {
             ),
           ),
 
-          // --- Section Selector ---
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -210,7 +208,6 @@ class _SubjectBoxState extends State<SubjectBox> {
 
           const SizedBox(width: 12),
 
-          // --- Grade Selector ---
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -246,15 +243,21 @@ class _SubjectBoxState extends State<SubjectBox> {
                 },
                 itemBuilder: (BuildContext context) => [
                   const PopupMenuItem(value: "-", child: Text("-")),
-                  const PopupMenuItem(value: "A", child: Text("A")),
-                  const PopupMenuItem(value: "B+", child: Text("B+")),
-                  const PopupMenuItem(value: "B", child: Text("B")),
-                  const PopupMenuItem(value: "C+", child: Text("C+")),
-                  const PopupMenuItem(value: "C", child: Text("C")),
-                  const PopupMenuItem(value: "D+", child: Text("D+")),
-                  const PopupMenuItem(value: "D", child: Text("D")),
-                  const PopupMenuItem(value: "F", child: Text("F")),
-                  const PopupMenuItem(value: "W", child: Text("W")),
+
+                  if (widget.isSUGrade) ...[
+                    const PopupMenuItem(value: "S", child: Text("S")),
+                    const PopupMenuItem(value: "U", child: Text("U")),
+                  ] else ...[
+                    const PopupMenuItem(value: "A", child: Text("A")),
+                    const PopupMenuItem(value: "B+", child: Text("B+")),
+                    const PopupMenuItem(value: "B", child: Text("B")),
+                    const PopupMenuItem(value: "C+", child: Text("C+")),
+                    const PopupMenuItem(value: "C", child: Text("C")),
+                    const PopupMenuItem(value: "D+", child: Text("D+")),
+                    const PopupMenuItem(value: "D", child: Text("D")),
+                    const PopupMenuItem(value: "F", child: Text("F")),
+                    const PopupMenuItem(value: "W", child: Text("W")),
+                  ],
                 ],
               ),
             ],

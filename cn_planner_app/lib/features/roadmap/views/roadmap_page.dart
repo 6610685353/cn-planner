@@ -15,7 +15,7 @@ import '../data/static_roamap_data.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../simulator/services/simulator_service.dart';
 
-enum RoadmapMode { view, edit, simulate }
+enum RoadmapMode { view, edit, simulate, history }
 
 class RoadmapPage extends StatefulWidget {
   final RoadmapMode mode;
@@ -46,6 +46,7 @@ class _RoadmapPageState extends State<RoadmapPage>
   Map<String, dynamic>? userProfile;
 
   Map<String, double> gradeScheme = {
+    'S': 4.0,
     'A': 4.0,
     'B+': 3.5,
     'B': 3.0,
@@ -54,6 +55,7 @@ class _RoadmapPageState extends State<RoadmapPage>
     'D+': 1.5,
     'D': 1.0,
     'F': 0.0,
+    'U': 0.0,
   };
 
   double totalGradePoints = 0;
@@ -93,6 +95,7 @@ class _RoadmapPageState extends State<RoadmapPage>
           subjectName: '',
           credits: 0,
           subjectId: 0,
+          su_grade: false,
         ),
       );
       total += subject.credits;
@@ -427,9 +430,41 @@ class _RoadmapPageState extends State<RoadmapPage>
         if (didPop) return;
         if (await _onWillPop() && context.mounted) Navigator.pop(context);
       },
-      child: widget.mode == RoadmapMode.edit
+      child:
+          widget.mode == RoadmapMode.edit || widget.mode == RoadmapMode.history
           ? _buildEditHistoryLayout()
           : _buildViewRoadmapLayout(),
+    );
+  }
+
+  Widget _buildSelectionHint() {
+    if (widget.mode != RoadmapMode.edit) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.shade100),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              "Tip: Tap on a Year/Semester title to set it as your current term.",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -556,6 +591,9 @@ class _RoadmapPageState extends State<RoadmapPage>
     return Column(
       children: [
         ProgressHeader(currentCredits: allCredits),
+
+        _buildSelectionHint(),
+
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -640,6 +678,7 @@ class _RoadmapPageState extends State<RoadmapPage>
                             subjectName: '',
                             credits: 0,
                             subjectId: 0,
+                            su_grade: false,
                           ),
                         );
                         return sum + subject.credits;
@@ -909,6 +948,7 @@ class _RoadmapPageState extends State<RoadmapPage>
                 subjectName: '',
                 credits: 0,
                 subjectId: 0,
+                su_grade: false,
               ),
             );
 

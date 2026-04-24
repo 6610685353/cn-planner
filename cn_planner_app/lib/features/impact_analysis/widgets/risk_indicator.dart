@@ -10,7 +10,6 @@ class RiskIndicator extends StatelessWidget {
     required this.withdrawCount,
   });
 
-  // 🧠 Logic ดึงข้อมูลแบบข้างล่าง: คำนวณ Risk Level
   _RiskLevel get _level {
     final total = failCount + withdrawCount;
     if (failCount >= 3 || total >= 5) return _RiskLevel.critical;
@@ -26,7 +25,6 @@ class RiskIndicator extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ✨ UI Layout แบบข้างบน: Row แสดง Label และ Status
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -38,9 +36,9 @@ class RiskIndicator extends StatelessWidget {
               ),
             ),
             Text(
-              level.label, // ดึง Label ตาม Logic
+              level.label,
               style: TextStyle(
-                color: level.color, // ดึงสีตาม Logic
+                color: level.color,
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
@@ -49,7 +47,6 @@ class RiskIndicator extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // 📊 UI Bar แบบข้างบน: แต่เพิ่มเงื่อนไข 'filled' จากข้อมูลจริง
         Row(
           children: [
             _bar(
@@ -77,12 +74,10 @@ class RiskIndicator extends StatelessWidget {
     );
   }
 
-  // 🎨 UI Widget แบบข้างบน: ตกแต่ง Bar ให้สวยงาม
   Widget _bar(Color color, {required bool filled}) => Expanded(
     child: Container(
       height: 6,
       decoration: BoxDecoration(
-        // ถ้า filled เป็น false ให้ใช้สีจางๆ (Opacity 0.2) ตาม Logic ข้างล่าง
         color: filled ? color : color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(2),
       ),
@@ -90,7 +85,6 @@ class RiskIndicator extends StatelessWidget {
   );
 }
 
-// 📋 Data Structure & Enum จากโค้ดข้างล่าง
 enum _RiskLevel { low, medium, high, critical }
 
 extension _RiskLevelExt on _RiskLevel {

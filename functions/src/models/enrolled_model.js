@@ -1,36 +1,41 @@
-const getSupabase = require('../config/supabase');
+const getSupabase = require("../config/supabase");
 
 async function getUserData(uid) {
   const supabase = getSupabase();
-  const { data, error } = await supabase.from('UserEnrolled').select('subjectId, grade').eq("uid", uid);
+  const { data, error } = await supabase
+    .from("UserEnrolled")
+    .select("subjectId, grade")
+    .eq("uid", uid);
 
-  if(error) throw error;
+  if (error) throw error;
 
   return data;
 }
 
 async function getPageData() {
   const supabase = getSupabase();
-  const { data , error } = await supabase
-    .from('YearCourses')
-    .select(`*, Subjects (subjectCode, subjectName, require, credits, corequisite, offeredSemester)`);
+  const { data, error } = await supabase
+    .from("YearCourses")
+    .select(
+      `*, Subjects (subjectCode, subjectName, require, credits, corequisite, offeredSemester, su_grade)`,
+    );
 
   if (error) throw error;
-  
+
   return data;
 }
 
 async function getCurSemData(uid) {
   const supabase = getSupabase();
-  const { data , error } = await supabase
-    .from('UserEnrolled')
-    .select('grade, Subjects(subjectName, credits, subjectCode)')
+  const { data, error } = await supabase
+    .from("UserEnrolled")
+    .select("grade, Subjects(subjectName, credits, subjectCode)")
     .eq("uid", uid)
     .eq("grade", "-");
-  
-  if(error) throw error;
-  
-  return data.map(item => ({
+
+  if (error) throw error;
+
+  return data.map((item) => ({
     subjectName: item.Subjects?.subjectName,
     subjectCode: item.Subjects?.subjectCode,
     grade: item.grade,
@@ -39,7 +44,7 @@ async function getCurSemData(uid) {
 }
 
 module.exports = {
-   getUserData,
-   getPageData,
-   getCurSemData,
-   };
+  getUserData,
+  getPageData,
+  getCurSemData,
+};

@@ -43,7 +43,6 @@ class CreditCategoryItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- ส่วนซ้าย: ข้อมูลหมวดวิชา (ปรับขนาดพอดีคำ) ---
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,7 +52,7 @@ class CreditCategoryItem extends StatelessWidget {
                       style: const TextStyle(
                         color: AppColors.errorRed,
                         fontWeight: FontWeight.bold,
-                        fontSize: 10, // เล็กลงหน่อย
+                        fontSize: 10,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -62,7 +61,7 @@ class CreditCategoryItem extends StatelessWidget {
                       categoryName,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 14, // ขนาดมาตรฐาน 16
+                        fontSize: 14,
                         color: Colors.black,
                       ),
                     ),
@@ -72,7 +71,7 @@ class CreditCategoryItem extends StatelessWidget {
                           ? 'Completed'
                           : '${required - earned} credits left',
                       style: TextStyle(
-                        fontSize: 12, // ขนาดมาตรฐาน 12
+                        fontSize: 12,
                         color: isCompleted ? Colors.green : AppColors.textGrey,
                         fontWeight: isCompleted
                             ? FontWeight.w600
@@ -85,7 +84,6 @@ class CreditCategoryItem extends StatelessWidget {
 
               const SizedBox(width: 12),
 
-              // --- ส่วนขวา: วงรีแสดงหน่วยกิต (ขนาดพอดี) ---
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -102,7 +100,7 @@ class CreditCategoryItem extends StatelessWidget {
                         text: '$earned',
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
-                          fontSize: 12, // ตัวเลขไม่ใหญ่เกินไป
+                          fontSize: 12,
                           color: Colors.black,
                         ),
                       ),
@@ -130,7 +128,7 @@ class CreditCategoryItem extends StatelessWidget {
           ),
 
           const SizedBox(height: 16),
-          // --- เส้นแถบ Progress Bar (ความหนามาตรฐาน) ---
+
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
