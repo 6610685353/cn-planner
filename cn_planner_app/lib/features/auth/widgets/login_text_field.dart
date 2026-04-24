@@ -1,17 +1,30 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
-class LoginTextField extends StatelessWidget {
+class LoginTextField extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
-  final bool obscureText;
+  final bool isPassword;
 
   const LoginTextField({
     super.key,
     required this.controller,
     required this.hintText,
-    this.obscureText = false,
+    this.isPassword = false,
   });
+
+  @override
+  State<LoginTextField> createState() => _LoginTextFieldState();
+}
+
+class _LoginTextFieldState extends State<LoginTextField> {
+  late bool _obscureText;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = widget.isPassword;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +40,10 @@ class LoginTextField extends StatelessWidget {
         ],
       ),
       child: TextField(
-        controller: controller,
-        obscureText: obscureText,
+        controller: widget.controller,
+        obscureText: _obscureText,
         decoration: InputDecoration(
-          hintText: hintText,
+          hintText: widget.hintText,
           hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
           filled: true,
           fillColor: Colors.white,
@@ -38,6 +51,21 @@ class LoginTextField extends StatelessWidget {
             horizontal: 20,
             vertical: 16,
           ),
+
+          suffixIcon: widget.isPassword
+              ? IconButton(
+                  icon: Icon(
+                    _obscureText ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscureText = !_obscureText;
+                    });
+                  },
+                )
+              : null,
+
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20),
             borderSide: const BorderSide(color: AppColors.borderGrey, width: 2),

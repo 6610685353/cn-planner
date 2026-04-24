@@ -63,6 +63,7 @@ class _TermColumnState extends State<TermColumn> {
           subjectName: '',
           credits: 0,
           subjectId: 0,
+          su_grade: false,
         ),
       );
       total += subject.credits;
@@ -194,6 +195,8 @@ class _TermColumnState extends State<TermColumn> {
                       credits: (data['credit'] ?? 0)
                           .toDouble(), // ✨ ใช้หน่วยกิตจาก Template
                       subjectId: 0,
+                      su_grade:
+                          false, // 🔥 ถ้าไม่เจอใน DB ถือว่าไม่ใช่ SU grade
                     ),
                   );
 
@@ -229,6 +232,7 @@ class _TermColumnState extends State<TermColumn> {
                     isBlockedByFail: isBlockedByFail,
                     mode: widget.mode,
                     grade: data['grade'],
+                    isSU_grade: subject.su_grade, // 🔥 เพิ่ม isSU_grade
                     onGradeChanged: (newGrade) {
                       if (widget.mode == RoadmapMode.simulate ||
                           widget.mode == RoadmapMode.edit) {
@@ -268,7 +272,9 @@ class _TermColumnState extends State<TermColumn> {
                                   (e) =>
                                       e['grade'] != null &&
                                       e['grade'] != 'F' &&
-                                      e['grade'] != 'W',
+                                      e['grade'] != 'W' &&
+                                      e['grade'] !=
+                                          'U', // 🔥 เพิ่ม U ในเงื่อนไขผ่าน-ไม่ผ่า น
                                 )
                                 .map((e) => e['subject_code'] as String)
                                 .toList(),

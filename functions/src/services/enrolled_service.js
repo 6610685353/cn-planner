@@ -65,7 +65,6 @@ async function getCurSemData(uid) {
 const updateGrade = async (uid, gradeList) => {
   // for debug
   console.log("Calling submit Service")
-  console.log(gradeList);
   
   const submittedSubjects = gradeList.map(item => item.subjectId);
 

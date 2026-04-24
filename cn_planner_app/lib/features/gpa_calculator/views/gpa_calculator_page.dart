@@ -23,7 +23,6 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
 
   List<dynamic> currentSemCourses = [];
   List<dynamic> thisSemSubject = [];
-  // List<dynamic> gradeCred = [];
   Map<String, dynamic> gradeCred = {};
   String userID = "";
 
@@ -39,7 +38,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
     "-": 0.0,
   };
 
-  // List<Map<String, dynamic>> currentSemesterCourses = [];
+  final Map<String, double> gradePointsSU = {"S": 4.0, "U": 0.0, "-": 0.0};
 
   // Accumulated data from past semesters
   double pastTotalPoints = 0.0;
@@ -56,18 +55,21 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
   }
 
   Future<void> _loadData({bool useCache = true}) async {
-    try {  
-      final gradeCredF = await DataFetch().fetchGPAcred(userID, isUseCache: useCache);
-      final thisSemSubjectF = await DataFetch().fetchThisSem(userID, isUseCache: useCache);
+    try {
+      final gradeCredF = await DataFetch().fetchGPAcred(
+        userID,
+        isUseCache: useCache,
+      );
+      final thisSemSubjectF = await DataFetch().fetchThisSem(
+        userID,
+        isUseCache: useCache,
+      );
 
       setState(() {
         thisSemSubject = thisSemSubjectF;
 
         currentSemCourses = thisSemSubject.map((item) {
-          return {
-            ...item,
-            'grade': "-"
-          };
+          return {...item, 'grade': "-"};
         }).toList();
 
         gradeCred = gradeCredF[0] as Map<String, dynamic>;
@@ -100,16 +102,22 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
       currentSemCourses[index]['grade'] = newGrade;
       double totalGradePoints = 0;
       double totalCredits = 0;
-      
-      currentSemCourses.forEach((item)  {
+
+      currentSemCourses.forEach((item) {
         totalCredits += item['grade'] != "-" ? item['credits'] : 0;
         var credits = item['grade'] != "-" ? item['credits'] : 0;
-        var gradePoint = gradePoints[item['grade']] ?? 0.0; 
+        var gradePoint = gradePoints[item['grade']] ?? 0.0;
         totalGradePoints += credits * gradePoint;
       });
 
-      predictedGPA = totalCredits > 0 ? ((totalGradePoints + (currentGPA * creditsGPA)) / (totalCredits + creditsGPA)) : currentGPA;
-      predictedGPAX = totalCredits > 0 ? ((totalGradePoints + (currentGPAX * creditsGPAX)) / (totalCredits + creditsGPAX)) : currentGPAX;
+      predictedGPA = totalCredits > 0
+          ? ((totalGradePoints + (currentGPA * creditsGPA)) /
+                (totalCredits + creditsGPA))
+          : currentGPA;
+      predictedGPAX = totalCredits > 0
+          ? ((totalGradePoints + (currentGPAX * creditsGPAX)) /
+                (totalCredits + creditsGPAX))
+          : currentGPAX;
     });
   }
 
@@ -122,7 +130,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, 
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           "GPA Calculator",
@@ -146,16 +154,15 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                 StatCard(
                   title: "Pred GPA",
                   value: predictedGPA.toStringAsFixed(2),
-                  textColor: const Color(0xffB71C1C), 
+                  textColor: const Color(0xffB71C1C),
                   iconData: Icons.stars_rounded,
                   iconColor: const Color(0xffB71C1C),
                 ),
                 const SizedBox(width: 16),
                 StatCard(
-                  title:
-                      "Pred GPAX",
-                  value: predictedGPAX.toStringAsFixed(2), 
-                  textColor: const Color(0xffFFC107), 
+                  title: "Pred GPAX",
+                  value: predictedGPAX.toStringAsFixed(2),
+                  textColor: const Color(0xffFFC107),
                   iconData: Icons.bar_chart_rounded,
                   iconColor: const Color(0xffFFC107),
                 ),
@@ -163,7 +170,6 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
             ),
           ),
 
-          // 2. Section Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -183,13 +189,13 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD), 
+                    color: const Color(0xFFE3F2FD),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     "${currentSemCourses.length} courses",
                     style: const TextStyle(
-                      color: Color(0xFF1976D2), 
+                      color: Color(0xFF1976D2),
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -199,7 +205,6 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
             ),
           ),
 
-          // Course List
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -210,7 +215,9 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                   name: course['subjectName'],
                   credit: course['credits'],
                   grade: course['grade'],
-                  gradeOptions: gradePoints.keys.toList(),
+                  gradeOptions: course['su_grade'] == true
+                      ? gradePointsSU.keys.toList()
+                      : gradePoints.keys.toList(),
                   onGradeChanged: (newGrade) {
                     if (newGrade != null) {
                       _updateCourseGrade(index, newGrade);
@@ -224,7 +231,6 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
             ),
           ),
 
-          // Edit Acadedmic Button
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: SizedBox(
@@ -252,13 +258,11 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                         color: Colors.grey,
                         width: 1,
                         style: BorderStyle.none,
-                        ),
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      backgroundColor: const Color(
-                        0xFFF5F5F5,
-                      ), // Light background
+                      backgroundColor: const Color(0xFFF5F5F5),
                     ).copyWith(
                       side: WidgetStateProperty.all(
                         const BorderSide(color: Colors.grey, width: 1),
@@ -268,7 +272,6 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
             ),
           ),
 
-          // Bottom Result Bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             decoration: const BoxDecoration(
@@ -299,7 +302,7 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
                     Text(
                       currentGPA.toStringAsFixed(2),
                       style: const TextStyle(
-                        color: Color(0xffB71C1C), // Deep Red
+                        color: Color(0xffB71C1C),
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                       ),
@@ -335,4 +338,3 @@ class _GPACalculatorPageState extends State<GPACalculatorPage> {
     );
   }
 }
-

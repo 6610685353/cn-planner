@@ -71,6 +71,7 @@ class _RegisterPageState extends State<RegisterPage> {
               controller: _controller.passwordController,
               hintText: "Enter your password",
               obscureText: true,
+              isPassword: true,
             ),
 
             _buildLabel("Confirm password"),
@@ -78,6 +79,7 @@ class _RegisterPageState extends State<RegisterPage> {
               controller: _controller.confirmPasswordController,
               hintText: "Confirm your password",
               obscureText: true,
+              isPassword: true,
             ),
 
             _buildLabel("Academic Year"),
@@ -148,7 +150,7 @@ class _RegisterPageState extends State<RegisterPage> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 80,
-        height: 80, // ขนาดเดิม
+        height: 80,
         decoration: BoxDecoration(
           color: isSelected ? AppColors.accentYellow : Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -200,7 +202,6 @@ class _RegisterPageState extends State<RegisterPage> {
         ],
       ),
       child: ElevatedButton(
-        // แก้ไขบรรทัดนี้: ใช้ arrow function เพื่อส่ง context เข้าไปใน Controller
         onPressed: () => _controller.handleRegister(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.accentYellow,

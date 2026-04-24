@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import '../../simulator/models/term_model.dart';
 import '../../simulator/services/simulator_service.dart';
 import '../../simulator/services/simulation_result_model.dart';
-import '../../roadmap/views/roadmap_page.dart'; // ✅ [#7]
+import '../../roadmap/views/roadmap_page.dart';
 import '../widgets/risk_indicator.dart';
 import '../widgets/year_path_visualizer.dart';
 
 class ImpactAnalysisPage extends StatefulWidget {
   final List<TermModel> terms;
   final SimulationResult result;
-  final String planType; // ✅ [#6]
+  final String planType;
 
   const ImpactAnalysisPage({
     super.key,
@@ -29,7 +29,6 @@ class _ImpactAnalysisPageState extends State<ImpactAnalysisPage> {
   Future<void> _onSave() async {
     setState(() => _isSaving = true);
     try {
-      // ✅ [#6] ส่ง planType ไปบันทึกด้วย
       await SimulatorService.saveSimulation(
         terms: widget.terms,
         planType: widget.planType,
@@ -54,19 +53,7 @@ class _ImpactAnalysisPageState extends State<ImpactAnalysisPage> {
       await Future.delayed(const Duration(milliseconds: 800));
       if (!mounted) return;
 
-      // ✅ [#7] หลัง save → navigate ไป roadmap แทน Navigator.pop
-      // Navigator.pushAndRemoveUntil(
-      //   context,
-      //   MaterialPageRoute(
-      //     builder: (_) => const RoadmapPage(mode: RoadmapMode.view),
-      //   ),
-      //   (route) => false,
-      // );
-
-      // ถอยหลังก้าวที่ 1: ปิดหน้า Impact Analysis
       Navigator.pop(context);
-
-      // ถอยหลังก้าวที่ 2: ปิดหน้า Simulator (กลับไปเจอ Roadmap พอดี!)
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;

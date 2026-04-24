@@ -1,7 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-// 👉 1. Import ตัวนี้เพิ่ม เพื่อให้ใช้ kIsWeb ได้
 import 'package:flutter/foundation.dart';
 
 class NotificationService {
@@ -9,7 +8,6 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   static Future<void> init() async {
-    // 👉 2. ถ้าเป็นเว็บ ให้หยุดการทำงานฟังก์ชันนี้ไปเลย
     if (kIsWeb) {
       print("🌐 ระบบรันบน Web: ข้ามการตั้งค่า Notification");
       return;
@@ -35,16 +33,14 @@ class NotificationService {
   }
 
   static Future<void> requestPermission() async {
-    if (kIsWeb) return; // กันพังบนเว็บ
+    if (kIsWeb) return;
     final androidImplementation = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
 
-    // 🌟 ขอสิทธิ์แจ้งเตือนแบบชัดเจนสำหรับ Android 13+
     await androidImplementation?.requestNotificationsPermission();
 
-    // 🌟 ขอสิทธิ์เพื่อตั้งเวลาล่วงหน้าแบบเป๊ะๆ (Exact Alarm)
     await androidImplementation?.requestExactAlarmsPermission();
   }
 
@@ -54,7 +50,7 @@ class NotificationService {
     required String body,
     required DateTime classStartTime,
   }) async {
-    if (kIsWeb) return; // กันพังบนเว็บ
+    if (kIsWeb) return;
 
     final scheduledTime = classStartTime.subtract(const Duration(minutes: 15));
     await _notificationsPlugin.zonedSchedule(
@@ -130,10 +126,8 @@ class NotificationService {
   static Future<void> autoScheduleAllClasses(
     List<dynamic> classSessions,
   ) async {
-    // 🌐 ถ้าเผลอรันบน Web ให้หยุดทำงานไปเลยแบบเงียบๆ (ไม่ปริ้นต์อะไรแล้ว)
     if (kIsWeb) return;
 
-    // 📱 รันบน Mobile: ตั้งเวลาแจ้งเตือนของจริง
     await _notificationsPlugin.cancelAll();
     int notiId = 0;
     for (var session in classSessions) {
@@ -161,7 +155,6 @@ class NotificationService {
 
   static Future<void> checkPendingNotifications() async {
     if (kIsWeb) {
-      // print("🌐 รันบน Web: ไม่สามารถเช็คคิวแจ้งเตือนของมือถือได้");
       return;
     }
 
