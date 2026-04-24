@@ -206,34 +206,39 @@ class _HomePageState extends State<HomePage> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  GestureDetector(
-                                    onTap: () async {
-                                      await Navigator.pushNamed(
-                                        context,
-                                        AppRoutes.main,
-                                      );
-                                      if (mounted) _loadData();
-                                    },
-                                    child: HomeFeature(
-                                      icon: Icons.edit_square,
-                                      name: "Edit Academic",
-                                      route: AppRoutes.academicHistory,
-                                      isLeft: true,
+                                  Expanded(child:
+                                    GestureDetector(
+                                      onTap: () async {
+                                        await Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.main,
+                                        );
+                                        if (mounted) _loadData();
+                                      },
+                                      child: HomeFeature(
+                                        icon: Icons.edit_square,
+                                        name: "Edit Academic",
+                                        route: AppRoutes.academicHistory,
+                                        isLeft: true,
+                                      ),
                                     ),
                                   ),
-                                  GestureDetector(
-                                    onTap: () async {
-                                      await Navigator.pushNamed(
-                                        context,
-                                        AppRoutes.gpa,
-                                      );
-                                      if (mounted) _loadData();
-                                    },
-                                    child: HomeFeature(
-                                      icon: Icons.calculate,
-                                      name: "GPA Calculator",
-                                      route: AppRoutes.gpa,
-                                      isLeft: false,
+                                  SizedBox(width: 10),
+                                  Expanded(child:
+                                    GestureDetector(
+                                      onTap: () async {
+                                        await Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.gpa,
+                                        );
+                                        if (mounted) _loadData();
+                                      },
+                                      child: HomeFeature(
+                                        icon: Icons.calculate,
+                                        name: "GPA Calculator",
+                                        route: AppRoutes.gpa,
+                                        isLeft: false,
+                                      ),
                                     ),
                                   ),
                                 ],

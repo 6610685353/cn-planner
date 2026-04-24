@@ -54,12 +54,12 @@ class TodayScheduleSection extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_right_alt,
-                  size: 20,
-                  color: AppColors.primaryYellow,
-                ),
+                // SizedBox(width: 8),
+                // Icon(
+                //   Icons.arrow_right_alt,
+                //   size: 20,
+                //   color: AppColors.primaryYellow,
+                // ),
               ],
             ),
           ),
