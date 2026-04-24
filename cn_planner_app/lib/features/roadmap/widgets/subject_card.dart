@@ -1,4 +1,3 @@
-import 'package:cn_planner_app/features/roadmap/models/subject_model.dart';
 import 'package:flutter/material.dart';
 import '../views/roadmap_page.dart';
 
@@ -6,14 +5,13 @@ class SubjectCard extends StatelessWidget {
   final String code;
   final String name;
   final int credits;
-  final String state; // "passed", "planned", "failed", "missing_prereq"
+  final String state;
   final RoadmapMode mode;
   final String? grade;
   final Function(String)? onGradeChanged;
   final VoidCallback? onDelete;
   final String? section;
-  final bool isSU_grade;
-  // [#2] true = วิชานี้ fail เพราะ prereq ของมัน fail (ตัวต่อ)
+  final bool isSuGrade;
   final bool isBlockedByFail;
 
   const SubjectCard({
@@ -28,17 +26,16 @@ class SubjectCard extends StatelessWidget {
     this.onDelete,
     this.section,
     this.isBlockedByFail = false,
-    required this.isSU_grade,
+    required this.isSuGrade,
   });
 
   @override
   Widget build(BuildContext context) {
     bool isMissingPrereq = state == "missing_prereq";
-    // [#2] "failed" = วิชาที่ user กด fail ใน simulator
+
     bool isFailed = state == "failed";
     bool isViewMode = mode == RoadmapMode.view;
 
-    // [#2] กำหนดสีพื้นหลังและขอบตามสถานะ
     Color cardColor;
     Border cardBorder;
 
@@ -61,7 +58,7 @@ class SubjectCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isFailed ? 0.08 : 0.05),
+            color: Colors.black.withValues(alpha: isFailed ? 0.08 : 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -72,9 +69,8 @@ class SubjectCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start, // ⭐ สำคัญ
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// 🔹 LEFT SIDE
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,9 +160,8 @@ class SubjectCard extends StatelessWidget {
                 ),
               ),
 
-              /// 🔹 RIGHT SIDE
               Column(
-                crossAxisAlignment: CrossAxisAlignment.end, // ⭐ ชิดขวา
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -268,7 +263,6 @@ class SubjectCard extends StatelessWidget {
     );
   }
 
-  // [#2] badge: "F/W" สำหรับวิชาที่ fail เอง, "BLOCKED" สำหรับตัวต่อ
   Widget _buildFailedBadge() {
     final label = isBlockedByFail ? "BLOCKED" : "F/W";
     final bg = isBlockedByFail ? Colors.orange.shade100 : Colors.red.shade100;
@@ -320,7 +314,7 @@ class SubjectCard extends StatelessWidget {
               ),
               underline: const SizedBox(),
               items:
-                  (isSU_grade
+                  (isSuGrade
                           ? ['-', 'S', 'U']
                           : [
                               "-",
@@ -399,7 +393,7 @@ class AddCourseButton extends StatelessWidget {
         height: 80,
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100.withOpacity(0.5),
+          color: Colors.grey.shade100.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey.shade300),
         ),
