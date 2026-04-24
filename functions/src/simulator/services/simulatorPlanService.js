@@ -3,39 +3,53 @@
  * บันทึก / ดึง simulator plan ลง Supabase ตาราง simulatorplan
  *
  * Schema:
- *   id          bigint (auto)
- *   user_id     text
- *   year        integer
- *   semester    integer
- *   subject_id  bigint
+ *   id           bigint (auto)
+ *   user_id      text
+ *   year         integer
+ *   semester     integer
+ *   subject_id   bigint
  *   subject_code text
- *   status      text  ('pass' | 'fail')
- *   updated_at  timestamptz
+ *   subject_name text
+ *   credits      integer
+ *   status       text  ('pass' | 'fail' | 'enrolled')
+ *   plan_type    text  ('Internship' | 'Coop' | 'Research')
+ *   updated_at   timestamptz
  */
 
 const getSupabase = require('../../config/supabase');
 
+const VALID_PLAN_TYPES = ['Internship', 'Coop', 'Research'];
+
 /**
- * บันทึกแผนการเรียนทั้งหมดของ user ลง simulatorplan
- * ลบข้อมูลเก่าของ user ก่อน แล้ว insert ใหม่ทั้งหมด
+ * บันทึกแผนการเรียนของ user ลง simulatorplan เฉพาะ plan_type ที่ระบุ
+ * ลบข้อมูลเก่าเฉพาะ plan_type นั้นก่อน แล้ว insert ใหม่
+ * ไม่กระทบ plan_type อื่น
  *
  * @param {string} uid
  * @param {Array<{
  *   year: number,
  *   semester: number,
- *   subject_id: number,
+ *   subject_id: number|null,
  *   subject_code: string,
- *   status: 'pass' | 'fail'
+ *   subject_name: string,
+ *   credits: number,
+ *   status: 'pass' | 'fail' | 'enrolled'
  * }>} planRows
+ * @param {string} planType - 'Internship' | 'Coop' | 'Research'
  */
-const savePlan = async (uid, planRows) => {
+const savePlan = async (uid, planRows, planType) => {
   const supabase = getSupabase();
 
-  // 1. ลบแผนเก่าทั้งหมดของ user
+  if (!VALID_PLAN_TYPES.includes(planType)) {
+    throw new Error(`Invalid plan_type: "${planType}". Must be one of: ${VALID_PLAN_TYPES.join(', ')}`);
+  }
+
+  // 1. ลบแผนเก่าเฉพาะ plan_type นี้เท่านั้น — ไม่แตะแผนอื่น
   const { error: deleteError } = await supabase
     .from('simulatorplan')
     .delete()
-    .eq('user_id', uid);
+    .eq('user_id', uid)
+    .eq('plan_type', planType);
 
   if (deleteError) {
     console.error('simulatorPlanService delete error:', deleteError.message);
@@ -51,9 +65,12 @@ const savePlan = async (uid, planRows) => {
     user_id: uid,
     year: row.year,
     semester: row.semester,
-    subject_id: row.subject_id,
+    subject_id: row.subject_id ?? null,
     subject_code: row.subject_code,
-    status: row.status, // 'pass' | 'fail'
+    subject_name: row.subject_name ?? '',
+    credits: row.credits ?? 0,
+    status: row.status,
+    plan_type: planType,
     updated_at: new Date().toISOString(),
   }));
 
@@ -72,19 +89,26 @@ const savePlan = async (uid, planRows) => {
 };
 
 /**
- * ดึงแผนการเรียนของ user ทั้งหมด
+ * ดึงแผนการเรียนของ user กรองตาม plan_type (optional)
  * @param {string} uid
+ * @param {string|null} planType - ถ้าระบุจะดึงเฉพาะ plan นั้น
  * @returns {Promise<Array>}
  */
-const getPlan = async (uid) => {
+const getPlan = async (uid, planType = null) => {
   const supabase = getSupabase();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('simulatorplan')
     .select('*')
     .eq('user_id', uid)
     .order('year', { ascending: true })
     .order('semester', { ascending: true });
+
+  if (planType) {
+    query = query.eq('plan_type', planType);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('simulatorPlanService getPlan error:', error.message);
@@ -95,16 +119,27 @@ const getPlan = async (uid) => {
 };
 
 /**
- * ลบแผนการเรียนของ user ทั้งหมด
+ * ลบแผนการเรียนของ user เฉพาะ plan_type ที่ระบุ
+ * ถ้าไม่ระบุ plan_type จะลบทั้งหมด (ใช้สำหรับ admin/reset เท่านั้น)
  * @param {string} uid
+ * @param {string|null} planType
  */
-const deletePlan = async (uid) => {
+const deletePlan = async (uid, planType = null) => {
   const supabase = getSupabase();
 
-  const { error } = await supabase
+  let query = supabase
     .from('simulatorplan')
     .delete()
     .eq('user_id', uid);
+
+  if (planType) {
+    if (!VALID_PLAN_TYPES.includes(planType)) {
+      throw new Error(`Invalid plan_type: "${planType}"`);
+    }
+    query = query.eq('plan_type', planType);
+  }
+
+  const { error } = await query;
 
   if (error) {
     console.error('simulatorPlanService deletePlan error:', error.message);
