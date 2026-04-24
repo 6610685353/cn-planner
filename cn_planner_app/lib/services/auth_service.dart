@@ -16,6 +16,7 @@ class AuthService {
     required String firstName,
     required String lastName,
     required int year,
+    required int sem,
   }) async {
     try {
       final usernameCheck = await _firestore
@@ -42,11 +43,12 @@ class AuthService {
           'lastName': lastName,
           'email': email.trim(),
           'year': year,
+          'sem' : sem,
           'profileImageUrl': "",
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        await ProfileService().checkOrCreateProfile(user.uid, year);
+        await ProfileService().checkOrCreateProfile(user.uid, year, sem);
       }
       return user;
     } catch (e) {

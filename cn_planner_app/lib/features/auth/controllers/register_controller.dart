@@ -12,6 +12,7 @@ class RegisterController {
   final confirmPasswordController = TextEditingController();
 
   int? selectedYear;
+  int? selectedSem;
   final _authService = AuthService();
 
   void dispose() {
@@ -86,6 +87,11 @@ class RegisterController {
       return;
     }
 
+    if (selectedSem == null) {
+      _showPopup(context, "Semester", "Please select your semester.");
+      return;
+    }
+
     try {
       await _authService.register(
         email: email,
@@ -94,6 +100,7 @@ class RegisterController {
         firstName: firstName,
         lastName: lastName,
         year: selectedYear!,
+        sem: selectedSem!,
       );
 
       if (context.mounted) {
