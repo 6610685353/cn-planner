@@ -14,7 +14,12 @@ import '../../roadmap/views/roadmap_page.dart';
 
 class SimulatorPage extends StatefulWidget {
   final String? initialPlanType;
-  const SimulatorPage({super.key, this.initialPlanType});
+  final List<Map<String, dynamic>>? initialRoadmapData;
+  const SimulatorPage({
+    super.key,
+    this.initialPlanType,
+    this.initialRoadmapData,
+  });
 
   @override
   State<SimulatorPage> createState() => _SimulatorScreenState();
@@ -49,101 +54,104 @@ class _SimulatorScreenState extends State<SimulatorPage> {
     super.dispose();
   }
 
-  // ─── Load Data ────────────────────────────────────────────────────────────
-  // [#1 FIX] เช็ค saved plan เฉพาะ plan_type ที่ตรงกับที่เลือก
-  //          ถ้า plan_type นี้ยังไม่มีใน DB → โหลด static template ของ plan นั้น
-  //          ถ้ามีแล้ว → โหลด template ของ plan นั้น แล้ว override outcomes จาก DB
-
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
       final planType = widget.initialPlanType ?? 'Internship';
       _currentPlanType = planType;
 
-      // [#1 FIX] เช็ค saved plan เฉพาะ plan_type นี้
-      final hasSaved = await SimulatorService.hasSavedPlanForType(planType);
-
-      // โหลด static template ของ plan นี้เสมอ
       final loaded = await CurriculumData.loadFromStaticData(
         planType: planType,
+      );
+
+      int totalCourses = loaded.terms.fold(
+        0,
+        (sum, term) => sum + term.courses.length,
       );
 
       setState(() {
         _terms = loaded.terms;
         _catalogByCode = loaded.catalogByCode;
-        _hasSavedPlan = hasSaved;
         _refreshTermStatuses();
       });
 
-      // ถ้ามี saved plan → restore วิชาที่ add เพิ่ม + override outcomes
-      if (hasSaved) {
-        final saved = await SimulatorService.loadSimulationPlanWithType(
-          planType,
-        );
-        // [#1 FIX] ดึง full row list เพื่อ restore วิชาที่ add เพิ่มไม่อยู่ใน template
-        final simRows = await SimulatorService.loadAsRoadmapPlan(planType);
-
+      if (widget.initialRoadmapData != null &&
+          widget.initialRoadmapData!.isNotEmpty) {
+        _applyRoadmapDataAsOutcomes(widget.initialRoadmapData!);
         setState(() {
-          // 1) Override outcomes สำหรับวิชาที่มีอยู่ใน template (current/upcoming เท่านั้น)
-          for (final term in _terms) {
-            if (term.status == TermStatus.passed) continue;
-            for (var i = 0; i < term.courses.length; i++) {
-              final course = term.courses[i];
-              final savedOutcome = saved.outcomes[course.code];
-              if (savedOutcome != null) {
-                term.courses[i] = course.copyWith(outcome: savedOutcome);
+          _hasSavedPlan = false;
+          _selectedTermIndex = _indexOfCurrentTerm();
+          _isLoading = false;
+        });
+      } else {
+        final hasSaved = await SimulatorService.hasSavedPlanForType(planType);
+        setState(() => _hasSavedPlan = hasSaved);
+
+        if (hasSaved) {
+          final saved = await SimulatorService.loadSimulationPlanWithType(
+            planType,
+          );
+          final simRows = await SimulatorService.loadAsRoadmapPlan(planType);
+
+          setState(() {
+            for (final term in _terms) {
+              if (term.status == TermStatus.passed) continue;
+              for (var i = 0; i < term.courses.length; i++) {
+                final course = term.courses[i];
+                final savedOutcome = saved.outcomes[course.code];
+                if (savedOutcome != null) {
+                  term.courses[i] = course.copyWith(outcome: savedOutcome);
+                }
               }
             }
-          }
 
-          // 2) [Fix #1 & #3] Restore วิชาที่ add เพิ่มมา (ทั้ง current และ upcoming)
-          // key ด้วย code+year+semester รองรับวิชาซ้ำต่างเทอม
-          final existingKeys = _terms
-              .expand(
-                (t) => t.courses.map((c) => '${c.code}|${t.year}|${t.term}'),
-              )
-              .toSet();
+            final existingKeys = _terms
+                .expand(
+                  (t) => t.courses.map((c) => '${c.code}|${t.year}|${t.term}'),
+                )
+                .toSet();
 
-          for (final row in simRows) {
-            final code = row['subject_code'] as String? ?? '';
-            final rowYear = row['year'] as int? ?? 1;
-            final rowSem = row['semester'] as int? ?? 1;
-            final rowKey = '$code|$rowYear|$rowSem';
-            if (code.isEmpty || existingKeys.contains(rowKey)) continue;
+            for (final row in simRows) {
+              final code = row['subject_code'] as String? ?? '';
+              final rowYear = row['year'] as int? ?? 1;
+              final rowSem = row['semester'] as int? ?? 1;
+              final rowKey = '$code|$rowYear|$rowSem';
+              if (code.isEmpty || existingKeys.contains(rowKey)) continue;
 
-            final termIdx = _terms.indexWhere(
-              (t) => t.year == rowYear && t.term == rowSem,
-            );
-            if (termIdx == -1) continue;
+              final termIdx = _terms.indexWhere(
+                (t) => t.year == rowYear && t.term == rowSem,
+              );
+              if (termIdx == -1) continue;
 
-            final term = _terms[termIdx];
-            final simStatus = row['sim_status'] as String?;
-            final CourseOutcome outcome;
-            if (simStatus == null) {
-              outcome = CourseOutcome.notSet;
-            } else {
-              outcome = saved.outcomes[code] ?? CourseOutcome.notSet;
+              final term = _terms[termIdx];
+              final simStatus = row['sim_status'] as String?;
+              final CourseOutcome outcome;
+              if (simStatus == null) {
+                outcome = CourseOutcome.notSet;
+              } else {
+                outcome = saved.outcomes[code] ?? CourseOutcome.notSet;
+              }
+
+              term.courses.add(
+                CourseModel(
+                  code: code,
+                  name: row['subject_name'] as String? ?? code,
+                  credits: (row['credit'] as int?) ?? 0,
+                  status: _courseStatusForTerm(term.status),
+                  outcome: outcome,
+                  subjectId: null,
+                ),
+              );
+              existingKeys.add(rowKey);
             }
+          });
+        }
 
-            term.courses.add(
-              CourseModel(
-                code: code,
-                name: row['subject_name'] as String? ?? code,
-                credits: (row['credit'] as int?) ?? 0,
-                status: _courseStatusForTerm(term.status),
-                outcome: outcome,
-                subjectId: null,
-              ),
-            );
-            existingKeys.add(rowKey);
-          }
+        setState(() {
+          _selectedTermIndex = _indexOfCurrentTerm();
+          _isLoading = false;
         });
       }
-
-      setState(() {
-        _selectedTermIndex = _indexOfCurrentTerm();
-        _isLoading = false;
-      });
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_pageController.hasClients) {
@@ -158,7 +166,31 @@ class _SimulatorScreenState extends State<SimulatorPage> {
     }
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
+  void _applyRoadmapDataAsOutcomes(List<Map<String, dynamic>> roadmapData) {
+    final outcomeMap = <String, CourseOutcome>{};
+    for (final item in roadmapData) {
+      final code = item['subject_code'] as String? ?? '';
+      final status = item['status'] as String? ?? '';
+      if (code.isEmpty) continue;
+
+      if (status == 'failed' || status == 'not_pass') {
+        outcomeMap[code] = CourseOutcome.fail;
+      } else if (status == 'passed') {
+        outcomeMap[code] = CourseOutcome.pass;
+      }
+    }
+
+    for (final term in _terms) {
+      if (term.status == TermStatus.passed) continue;
+      for (var i = 0; i < term.courses.length; i++) {
+        final course = term.courses[i];
+        final newOutcome = outcomeMap[course.code];
+        if (newOutcome != null) {
+          term.courses[i] = course.copyWith(outcome: newOutcome);
+        }
+      }
+    }
+  }
 
   int get _totalEarnedCredits => _terms.fold(
     0,
@@ -279,8 +311,6 @@ class _SimulatorScreenState extends State<SimulatorPage> {
     );
   }
 
-  // ─── Year 4 track rules ───────────────────────────────────────────────────
-
   void _enforceYear4TrackRules() {
     final y4t1Index = _findTermIndex(4, 1);
     final y4t2Index = _findTermIndex(4, 2);
@@ -378,7 +408,6 @@ class _SimulatorScreenState extends State<SimulatorPage> {
     final term = _terms[termIdx];
     final course = term.courses[courseIdx];
 
-    // เทอม passed → ไม่ให้เปลี่ยน
     if (term.status == TermStatus.passed) return;
 
     if (outcome == CourseOutcome.pass) {
@@ -398,14 +427,14 @@ class _SimulatorScreenState extends State<SimulatorPage> {
     });
   }
 
-  // ─── Save Plan ────────────────────────────────────────────────────────────
-
   Future<void> _onSavePlan() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Confirm Save'),
-        content: const Text('Save this simulation plan?'),
+        content: Text(
+          'Save this simulation plan? (Plan Type: $_currentPlanType)',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -422,6 +451,11 @@ class _SimulatorScreenState extends State<SimulatorPage> {
 
     setState(() => _isSaving = true);
     try {
+      int totalCourses = _terms.fold(
+        0,
+        (sum, term) => sum + term.courses.length,
+      );
+
       await SimulatorService.saveSimulation(
         terms: _terms,
         planType: _currentPlanType,
@@ -433,32 +467,23 @@ class _SimulatorScreenState extends State<SimulatorPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Plan saved successfully!'),
-          backgroundColor: Color(0xFF2E7D32),
+        SnackBar(
+          content: Text('✅ Plan saved successfully! ($_currentPlanType)'),
+          backgroundColor: const Color(0xFF2E7D32),
           behavior: SnackBarBehavior.floating,
         ),
       );
 
       await Future.delayed(const Duration(milliseconds: 600));
       if (!mounted) return;
-      // Navigator.pushAndRemoveUntil(
-      //   context,
-      //   MaterialPageRoute(
-      //     builder: (_) => const RoadmapPage(mode: RoadmapMode.view),
-      //   ),
-      //   (route) => false,
-      // );
       Navigator.pop(context);
     } catch (e) {
       setState(() => _isSaving = false);
       if (mounted) {
-        _showInfo('Error saving: $e', backgroundColor: Colors.red);
+        _showInfo('Error saving plan: $e', backgroundColor: Colors.red);
       }
     }
   }
-
-  // ─── Simulate ─────────────────────────────────────────────────────────────
 
   Future<void> _onSimulate() async {
     HapticFeedback.mediumImpact();
@@ -495,8 +520,6 @@ class _SimulatorScreenState extends State<SimulatorPage> {
     final term = _terms[termIndex];
     return term.term == 2 && termIndex == _terms.length - 1 && term.year >= 5;
   }
-
-  // ─── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -665,7 +688,6 @@ class _SimulatorScreenState extends State<SimulatorPage> {
           );
         }),
         const SizedBox(height: 8),
-        // Add/Drop: เปิดทั้ง current และ upcoming (upcoming แสดง Pending Enrollment)
         if (term.status == TermStatus.current ||
             term.status == TermStatus.upcoming)
           AddDropCourseWidget(
