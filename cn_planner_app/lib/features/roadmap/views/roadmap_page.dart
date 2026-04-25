@@ -540,7 +540,7 @@ class _RoadmapPageState extends State<RoadmapPage>
           unselectedLabelColor: Colors.grey,
           indicatorColor: AppColors.primaryBlue,
           tabs: const [
-            Tab(text: "Internship"),
+            Tab(text: "Project"),
             Tab(text: "Coop"),
             Tab(text: "Research"),
           ],

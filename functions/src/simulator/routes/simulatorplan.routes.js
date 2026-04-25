@@ -13,7 +13,6 @@ const VALID_PLAN_TYPES = ['Internship', 'Coop', 'Research'];
 const VALID_STATUSES = ['pass', 'fail', 'enrolled'];
 
 // ── POST /api/simulatorplan/:uid ─────────────────────────────────────────────
-// Body: { plan_type: 'Internship'|'Coop'|'Research', plan: [{ year, semester, subject_id, subject_code, subject_name, credits, status }] }
 router.post('/:uid', async (req, res) => {
   const { uid } = req.params;
   const { plan, plan_type } = req.body;
@@ -51,7 +50,6 @@ router.post('/:uid', async (req, res) => {
 });
 
 // ── GET /api/simulatorplan/:uid ──────────────────────────────────────────────
-// Query: ?plan_type=Internship (optional — ถ้าไม่ระบุจะดึงทุก plan_type)
 router.get('/:uid', async (req, res) => {
   const { uid } = req.params;
   const { plan_type } = req.query;
@@ -76,7 +74,6 @@ router.get('/:uid', async (req, res) => {
 });
 
 // ── DELETE /api/simulatorplan/:uid ───────────────────────────────────────────
-// Query: ?plan_type=Internship (optional — ถ้าไม่ระบุจะลบทั้งหมด)
 router.delete('/:uid', async (req, res) => {
   const { uid } = req.params;
   const { plan_type } = req.query;

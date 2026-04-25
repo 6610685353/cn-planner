@@ -35,7 +35,7 @@ const VALID_PLAN_TYPES = ['Internship', 'Coop', 'Research'];
  *   credits: number,
  *   status: 'pass' | 'fail' | 'enrolled'
  * }>} planRows
- * @param {string} planType - 'Internship' | 'Coop' | 'Research'
+ * @param {string} planType
  */
 const savePlan = async (uid, planRows, planType) => {
   const supabase = getSupabase();
