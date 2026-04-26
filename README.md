@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="cn_planner_logo.png" alt="CN Planner Logo" width="150"/>
+  <img src="cn_planner_app/assets/images/cn_planner_logo.png" alt="CN Planner Logo" width="150"/>
 
   # CN Planner
 
