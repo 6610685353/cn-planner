@@ -163,6 +163,8 @@ class CurriculumData {
             subjectCode: s['subjectCode'] as String? ?? '',
             subjectName: s['subjectName'] as String? ?? '',
             credits: ((s['credits'] ?? 0) as num).toDouble(),
+            require: (s['require'] as List?)?.map((e) => e.toString()).toList(),
+            su_grade: s['su_grade'] as bool? ?? false,
           ),
         )
         .toList();

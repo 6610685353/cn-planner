@@ -8,12 +8,9 @@ import 'package:cn_planner_app/route.dart';
 import 'package:cn_planner_app/features/schedule/views/daily_schedule_page.dart';
 import 'package:cn_planner_app/features/profile/controllers/profile_controller.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cn_planner_app/features/schedule/services/schedule_service.dart';
 import 'package:cn_planner_app/core/models/class_session.dart';
-
-// 🌟 Import ไฟล์ Section ที่เราเพิ่งสร้าง
 import 'package:cn_planner_app/features/home/widgets/today_schedule_section.dart';
 
 class HomePage extends StatefulWidget {
@@ -108,7 +105,6 @@ class _HomePageState extends State<HomePage> {
     return int.parse(parts[0]) * 60 + int.parse(parts[1]);
   }
 
-  // 🌟 Logic การกดปุ่มไปหน้า Daily Schedule ถูกเก็บไว้ที่นี่แทน
   Future<void> _handleViewDaySchedule() async {
     showDialog(
       context: context,
@@ -142,7 +138,7 @@ class _HomePageState extends State<HomePage> {
       }
 
       if (mounted) {
-        Navigator.pop(context); // ปิด Loading
+        Navigator.pop(context);
         await Navigator.push(
           context,
           MaterialPageRoute(
@@ -150,7 +146,7 @@ class _HomePageState extends State<HomePage> {
                 DailySchedulePage(allClasses: convertedClasses),
           ),
         );
-        _loadData(); // รีเฟรชข้อมูลเมื่อกลับมา
+        _loadData();
       }
     } catch (e) {
       if (mounted) {
@@ -210,34 +206,39 @@ class _HomePageState extends State<HomePage> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  GestureDetector(
-                                    onTap: () async {
-                                      await Navigator.pushNamed(
-                                        context,
-                                        AppRoutes.main,
-                                      );
-                                      if (mounted) _loadData();
-                                    },
-                                    child: HomeFeature(
-                                      icon: Icons.edit_square,
-                                      name: "Edit Academic",
-                                      route: AppRoutes.academicHistory,
-                                      isLeft: true,
+                                  Expanded(child:
+                                    GestureDetector(
+                                      onTap: () async {
+                                        await Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.main,
+                                        );
+                                        if (mounted) _loadData();
+                                      },
+                                      child: HomeFeature(
+                                        icon: Icons.edit_square,
+                                        name: "Edit Academic",
+                                        route: AppRoutes.academicHistory,
+                                        isLeft: true,
+                                      ),
                                     ),
                                   ),
-                                  GestureDetector(
-                                    onTap: () async {
-                                      await Navigator.pushNamed(
-                                        context,
-                                        AppRoutes.gpa,
-                                      );
-                                      if (mounted) _loadData();
-                                    },
-                                    child: HomeFeature(
-                                      icon: Icons.calculate,
-                                      name: "GPA Calculator",
-                                      route: AppRoutes.gpa,
-                                      isLeft: false,
+                                  SizedBox(width: 10),
+                                  Expanded(child:
+                                    GestureDetector(
+                                      onTap: () async {
+                                        await Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.gpa,
+                                        );
+                                        if (mounted) _loadData();
+                                      },
+                                      child: HomeFeature(
+                                        icon: Icons.calculate,
+                                        name: "GPA Calculator",
+                                        route: AppRoutes.gpa,
+                                        isLeft: false,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -245,7 +246,6 @@ class _HomePageState extends State<HomePage> {
                             ),
                             const SizedBox(height: 12),
 
-                            // 🌟 เรียกใช้ Widget ที่เราแยกส่วนไว้ โค้ดดูสะอาดตาขึ้นมาก!
                             TodayScheduleSection(
                               todayClasses: _todayClasses,
                               onViewDaySchedule: _handleViewDaySchedule,

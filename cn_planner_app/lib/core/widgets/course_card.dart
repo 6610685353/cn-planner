@@ -37,12 +37,10 @@ class CourseCard extends StatelessWidget {
           ),
           const SizedBox(width: 16),
 
-          // --- ข้อมูลรายวิชา ---
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. รหัสวิชา + Section
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -64,7 +62,6 @@ class CourseCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
 
-                // 2. ชื่อวิชา
                 Text(
                   session.name,
                   style: const TextStyle(fontSize: 14),
@@ -72,7 +69,6 @@ class CourseCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
 
-                // 3. ชื่ออาจารย์
                 Text(
                   session.instructor,
                   style: const TextStyle(
@@ -83,19 +79,15 @@ class CourseCard extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // 4. บรรทัดล่างสุด: วันเวลา (ซ้าย) vs สถานที่ (ขวา)
                 Row(
                   children: [
-                    // --- ส่วนซ้าย: วันและเวลา (Scroll ได้ถ้าเยอะ) ---
                     Expanded(
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: days.map((day) {
                             return Padding(
-                              padding: const EdgeInsets.only(
-                                right: 12.0,
-                              ), // เว้นระยะห่างแต่ละวัน
+                              padding: const EdgeInsets.only(right: 12.0),
                               child: Row(
                                 children: [
                                   Text(
@@ -107,7 +99,7 @@ class CourseCard extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    "${session.start}-${session.stop}", // เวลา (8:00-9:30)
+                                    "${session.start}-${session.stop}",
                                     style: const TextStyle(fontSize: 12),
                                   ),
                                 ],
@@ -118,8 +110,6 @@ class CourseCard extends StatelessWidget {
                       ),
                     ),
 
-                    // --- ส่วนขวา: สถานที่ (ชิดขวาสุด) ---
-                    // ไม่ต้อง Scroll ตามวัน
                     Padding(
                       padding: const EdgeInsets.only(left: 8.0),
                       child: Text(

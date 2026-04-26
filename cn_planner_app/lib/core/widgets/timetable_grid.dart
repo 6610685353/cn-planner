@@ -6,7 +6,6 @@ class TimetableGrid extends StatelessWidget {
 
   const TimetableGrid({super.key, required this.classes});
 
-  // --- Configuration ---
   final double startHour = 8.0;
   final double endHour = 20.0;
   final double timeStep = 1.5;
@@ -25,7 +24,6 @@ class TimetableGrid extends StatelessWidget {
 
         return Column(
           children: [
-            // --- Header เวลา ---
             SizedBox(
               height: headerHeight,
               child: Row(
@@ -38,23 +36,15 @@ class TimetableGrid extends StatelessWidget {
                         double timeVal = startHour + (index * timeStep);
                         double leftPx = index * slotWidth;
 
-                        // --- Logic การจัดตำแหน่ง (Fine-tune) ---
-                        // Default: กึ่งกลาง (-0.5)
                         Offset translation = const Offset(-0.5, 0);
 
                         if (index == 0) {
-                          // 08:00 -> ชิดซ้าย
                           translation = const Offset(0, 0);
                         } else if (index == totalSlots) {
-                          // 20:00 -> ชิดขวา
                           translation = const Offset(-1.0, 0);
                         } else if (index == 1) {
-                          // 09:30 -> ขยับขวา (หนี 08:00)
-                          // ยิ่งค่าลบน้อย ยิ่งไปขวา (จาก -0.5 เป็น -0.2)
                           translation = const Offset(-0.2, 0);
                         } else if (index == totalSlots - 1) {
-                          // 18:30 -> ขยับซ้าย (หนี 20:00)
-                          // ยิ่งค่าลบมาก ยิ่งไปซ้าย (จาก -0.5 เป็น -0.8)
                           translation = const Offset(-0.8, 0);
                         }
 
@@ -81,7 +71,6 @@ class TimetableGrid extends StatelessWidget {
               ),
             ),
 
-            // --- Body ตาราง (เหมือนเดิม) ---
             Container(
               decoration: BoxDecoration(
                 border: Border(

@@ -9,14 +9,13 @@ class YearCourseBox extends StatefulWidget {
   final Map<int, String> gradeMap;
   final Map<int, String> sectionMap;
 
-  //for backend
   final Function(int, bool) onCheckChanged;
   final Function(int, String) onGradeChanged;
   final Function(int, String) onSectionChanged;
-  final Map<int, List<String>>
-  sectionOptionsMap; // ✅ เพิ่มแผนที่สำหรับตัวเลือก section
+  final Map<int, List<String>> sectionOptionsMap;
   final Map<int, Map<String, List<Map>>> scheduleMap;
-  final Map<int, List<String>> reasonsMap; // ✅ เพิ่มแผนที่สำหรับเหตุผล
+  final Map<int, List<String>> reasonsMap;
+  final bool isSUGrade;
 
   const YearCourseBox({
     super.key,
@@ -26,13 +25,13 @@ class YearCourseBox extends StatefulWidget {
     required this.checkedMap,
     required this.gradeMap,
     required this.sectionMap,
-
     required this.onCheckChanged,
     required this.onGradeChanged,
     required this.onSectionChanged,
     required this.sectionOptionsMap,
     required this.scheduleMap,
-    required this.reasonsMap, 
+    required this.reasonsMap,
+    required this.isSUGrade,
   });
 
   @override
@@ -48,15 +47,45 @@ class _YearCourseBox extends State<YearCourseBox> {
     });
   }
 
-  // int get selectedCount {
-  //   return widget.courseSubject.where((subject) {
-  //     final id = subject['subjectId'];
+  // ── Select All helpers ────────────────────────────────────────────────────
 
-  //     return widget.gradeMap.containsKey(id) &&
-  //         widget.gradeMap[id] != null &&
-  //         widget.gradeMap[id] != "-";
-  //   }).length;
-  // }
+  List<int> get _subjectIds =>
+      widget.courseSubject.map<int>((s) => s['subjectId'] as int).toList();
+
+  bool get _allChecked =>
+      _subjectIds.isNotEmpty &&
+      _subjectIds.every((id) => widget.checkedMap[id] == true);
+
+  bool get _someChecked =>
+      _subjectIds.any((id) => widget.checkedMap[id] == true);
+
+  /// Tap → if all checked, uncheck all; otherwise check all.
+  void _toggleSelectAll() {
+    final newValue = !_allChecked;
+    for (final id in _subjectIds) {
+      widget.onCheckChanged(id, newValue);
+    }
+    // Force local rebuild so the checkbox header updates immediately.
+    setState(() {});
+  }
+
+  Widget _buildSelectAllCheckbox() {
+    return Transform.scale(
+      scale: 1.3,
+      child: Checkbox(
+        tristate: true, // allows indeterminate (null) state
+        value: _allChecked
+            ? true
+            : _someChecked
+            ? null // indeterminate
+            : false,
+        checkColor: Colors.white,
+        onChanged: (_) => _toggleSelectAll(),
+      ),
+    );
+  }
+
+  // ── Schedule conflict helpers ─────────────────────────────────────────────
 
   bool isConflict(int newSubjectId, String newSection) {
     for (var entry in widget.sectionMap.entries) {
@@ -95,18 +124,15 @@ class _YearCourseBox extends State<YearCourseBox> {
 
   List<String> getAvailableSections(int subjectId) {
     final all = widget.sectionOptionsMap[subjectId] ?? [];
-
-    return all.where((sec) {
-      return !isConflict(subjectId, sec);
-    }).toList();
+    return all.where((sec) => !isConflict(subjectId, sec)).toList();
   }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       color: Colors.white,
       margin: const EdgeInsets.all(10),
       child: Padding(
@@ -114,22 +140,19 @@ class _YearCourseBox extends State<YearCourseBox> {
         child: Column(
           children: [
             ListTile(
+              // Select All checkbox on the left
+              leading: _buildSelectAllCheckbox(),
               title: Text(
                 "Year ${widget.year} Semester ${widget.semester}",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              // subtitle: Text('Progress Bar: $selectedCount'),
               trailing: IconButton(
                 icon: Icon(
                   _isExpanded
                       ? Icons.keyboard_arrow_up
                       : Icons.keyboard_arrow_down,
                 ),
-                onPressed: () {
-                  setState(() {
-                    _isExpanded = !_isExpanded;
-                  });
-                },
+                onPressed: () => setState(() => _isExpanded = !_isExpanded),
               ),
             ),
             if (_isExpanded)
@@ -153,15 +176,14 @@ class _YearCourseBox extends State<YearCourseBox> {
                       onCheckChanged: widget.onCheckChanged,
                       onGradeChanged: (grade) =>
                           widget.onGradeChanged(subject['subjectId'], grade),
-                      section:
-                          widget.sectionMap[subject['subjectId']] ??
-                          "-", // ✅ ส่ง section
+                      section: widget.sectionMap[subject['subjectId']] ?? "-",
                       onSectionChanged: (sec) =>
                           widget.onSectionChanged(subject['subjectId'], sec),
                       availableSections: getAvailableSections(
                         subject['subjectId'],
                       ),
                       reasons: widget.reasonsMap[subject['subjectId']] ?? [],
+                      isSUGrade: subject['su_grade'] ?? false,
                     );
                   }).toList(),
                 ),

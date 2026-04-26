@@ -86,7 +86,7 @@ class AcademicProgresss extends StatelessWidget {
                   ),
                 ],
               ),
-              // --- วงกลมเปอร์เซ็นต์ ---
+
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -122,7 +122,6 @@ class AcademicProgresss extends StatelessWidget {
           const Divider(height: 1, color: AppColors.borderGrey),
           const Spacer(),
 
-          // --- ส่วนล่าง: ข้อความตัวเอียง และ ปุ่ม View Breakdown สีเหลือง ---
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -132,12 +131,12 @@ class AcademicProgresss extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.w600, // ตัวเอียงตามรูป
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textGrey,
                   ),
                 ),
               ),
-              // --- ปุ่มสีเหลืองตามดีไซน์ ---
+
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(context, route);
@@ -149,7 +148,7 @@ class AcademicProgresss extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.accentYellow,
-                    borderRadius: BorderRadius.circular(30), // มนแบบเม็ดยา
+                    borderRadius: BorderRadius.circular(30),
                   ),
                   child: Row(
                     children: const [

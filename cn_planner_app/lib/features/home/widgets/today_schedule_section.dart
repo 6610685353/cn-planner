@@ -13,7 +13,6 @@ class TodayScheduleSection extends StatelessWidget {
     required this.onViewDaySchedule,
   });
 
-  // ตัวช่วยคำนวณเวลา (เอาไว้เช็คสถานะ Ongoing)
   int _timeToMinutes(String time) {
     final parts = time.split(':');
     if (parts.length != 2) return 0;
@@ -32,7 +31,6 @@ class TodayScheduleSection extends StatelessWidget {
     );
   }
 
-  // 1. ส่วนหัวข้อและปุ่มกด
   Widget _buildHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -42,8 +40,7 @@ class TodayScheduleSection extends StatelessWidget {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         InkWell(
-          onTap:
-              onViewDaySchedule, // 👈 เรียกใช้งานฟังก์ชันที่ส่งมาจากหน้า Home
+          onTap: onViewDaySchedule,
           borderRadius: BorderRadius.circular(8),
           child: const Padding(
             padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -57,12 +54,12 @@ class TodayScheduleSection extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_right_alt,
-                  size: 20,
-                  color: AppColors.primaryYellow,
-                ),
+                // SizedBox(width: 8),
+                // Icon(
+                //   Icons.arrow_right_alt,
+                //   size: 20,
+                //   color: AppColors.primaryYellow,
+                // ),
               ],
             ),
           ),
@@ -71,7 +68,6 @@ class TodayScheduleSection extends StatelessWidget {
     );
   }
 
-  // 2. ส่วนแสดงการ์ดตารางเรียนแนวนอน
   Widget _buildScheduleList() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -95,7 +91,6 @@ class TodayScheduleSection extends StatelessWidget {
     );
   }
 
-  // 3. ส่วนแสดงเมื่อไม่มีเรียน
   Widget _buildNoClassToday() {
     return Container(
       width: double.infinity,

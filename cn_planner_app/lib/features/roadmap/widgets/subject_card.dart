@@ -1,4 +1,3 @@
-import 'package:cn_planner_app/features/roadmap/views/course_selection_page.dart';
 import 'package:cn_planner_app/features/roadmap/models/subject_model.dart';
 import 'package:flutter/material.dart';
 import '../views/roadmap_page.dart';
@@ -7,13 +6,13 @@ class SubjectCard extends StatelessWidget {
   final String code;
   final String name;
   final int credits;
-  final String state; // "passed", "planned", "failed", "missing_prereq"
+  final String state;
   final RoadmapMode mode;
   final String? grade;
   final Function(String)? onGradeChanged;
   final VoidCallback? onDelete;
   final String? section;
-  // [#2] true = วิชานี้ fail เพราะ prereq ของมัน fail (ตัวต่อ)
+  final bool isSuGrade;
   final bool isBlockedByFail;
 
   const SubjectCard({
@@ -28,16 +27,16 @@ class SubjectCard extends StatelessWidget {
     this.onDelete,
     this.section,
     this.isBlockedByFail = false,
+    required this.isSuGrade,
   });
 
   @override
   Widget build(BuildContext context) {
     bool isMissingPrereq = state == "missing_prereq";
-    // [#2] "failed" = วิชาที่ user กด fail ใน simulator
+
     bool isFailed = state == "failed";
     bool isViewMode = mode == RoadmapMode.view;
 
-    // [#2] กำหนดสีพื้นหลังและขอบตามสถานะ
     Color cardColor;
     Border cardBorder;
 
@@ -60,7 +59,7 @@ class SubjectCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isFailed ? 0.08 : 0.05),
+            color: Colors.black.withValues(alpha: isFailed ? 0.08 : 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -71,126 +70,175 @@ class SubjectCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              /// 🔹 LEFT SIDE
               Expanded(
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        Text(
+                          code,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: isFailed
+                                ? Colors.red.shade700
+                                : Colors.black,
+                          ),
+                        ),
+
+                        if (section != null &&
+                            section!.isNotEmpty &&
+                            section != "-") ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              "SEC $section",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue.shade700,
+                              ),
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(width: 8),
+
+                        if (mode == RoadmapMode.simulate)
+                          _buildStatusBadge(isMissingPrereq),
+
+                        if (isViewMode && isFailed) _buildFailedBadge(),
+                      ],
+                    ),
+
+                    const SizedBox(height: 4),
+
                     Text(
-                      code,
+                      name,
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        // [#2] ชื่อวิชาที่ fail → สีแดง
-                        color: isFailed ? Colors.red.shade700 : Colors.black,
+                        color: isFailed
+                            ? Colors.red.shade400
+                            : Colors.grey.shade600,
+                        fontSize: 13,
                       ),
                     ),
-                    if (section != null &&
-                        (section!.isNotEmpty && section != "-")) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
+
+                    if (!isViewMode && isMissingPrereq && !isFailed)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
                         child: Text(
-                          "SEC $section",
+                          "Missing Prerequisite",
+                          style: TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      ),
+
+                    if (isFailed && isViewMode)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          isBlockedByFail
+                              ? "Prerequisite received F/W — blocked"
+                              : "Received F/W in simulation — needs retake",
                           style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue.shade700,
+                            color: Colors.red.shade400,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                    ],
-                    const SizedBox(width: 8),
-                    if (mode == RoadmapMode.simulate)
-                      _buildStatusBadge(isMissingPrereq),
-                    // [#2] badge สำหรับวิชาที่ fail ใน view mode
-                    if (isViewMode && isFailed) _buildFailedBadge(),
                   ],
                 ),
               ),
-              Row(
+
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    "$credits Cr.",
-                    style: TextStyle(
-                      color: isFailed
-                          ? Colors.red.shade600
-                          : (!isViewMode && isMissingPrereq)
-                          ? Colors.red
-                          : Colors.green,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  if (state == "passed" || state == "Passed")
-                    const Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: 14,
-                    ),
-                  // [#2] icon X สำหรับวิชาที่ fail
-                  if (isFailed)
-                    Icon(Icons.cancel, color: Colors.red.shade400, size: 14),
-                  if (!isViewMode && isMissingPrereq && !isFailed)
-                    const Icon(Icons.lock, color: Colors.red, size: 14),
-                  if (mode != RoadmapMode.view)
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: Icon(
-                        Icons.delete_outline,
-                        color: Colors.red.shade300,
-                        size: 22,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "$credits Cr.",
+                        style: TextStyle(
+                          color: isFailed
+                              ? Colors.red.shade600
+                              : (!isViewMode && isMissingPrereq)
+                              ? Colors.red
+                              : Colors.green,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      onPressed: onDelete,
+                      const SizedBox(width: 4),
+
+                      if (state.toLowerCase() == "passed")
+                        const Icon(
+                          Icons.check_circle,
+                          color: Colors.green,
+                          size: 14,
+                        ),
+
+                      if (isFailed)
+                        Icon(
+                          Icons.cancel,
+                          color: Colors.red.shade400,
+                          size: 14,
+                        ),
+
+                      if (!isViewMode && isMissingPrereq && !isFailed)
+                        const Icon(Icons.lock, color: Colors.red, size: 14),
+
+                      if (mode != RoadmapMode.view)
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: Icon(
+                            Icons.delete_outline,
+                            color: Colors.red.shade300,
+                            size: 20,
+                          ),
+                          onPressed: onDelete,
+                        ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  if (mode == RoadmapMode.history)
+                    const Text(
+                      "GRADE",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  if (mode == RoadmapMode.history)
+                    Text(
+                      grade ?? "-",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            name,
-            style: TextStyle(
-              color: isFailed ? Colors.red.shade400 : Colors.grey.shade600,
-              fontSize: 13,
-            ),
-          ),
 
-          if (!isViewMode && isMissingPrereq && !isFailed)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                "Missing Prerequisite",
-                style: TextStyle(color: Colors.red, fontSize: 12),
-              ),
-            ),
-
-          // [#2] label ใต้ชื่อวิชา — แยก F/W เอง vs ตัวต่อถูกบล็อก
-          if (isFailed && isViewMode)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                isBlockedByFail
-                    ? "Prerequisite received F/W — blocked"
-                    : "Received F/W in simulation — needs retake",
-                style: TextStyle(
-                  color: Colors.red.shade400,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-
-          if (mode != RoadmapMode.view && mode != RoadmapMode.simulate)
+          if (mode != RoadmapMode.view &&
+              mode != RoadmapMode.simulate &&
+              mode != RoadmapMode.history)
             _buildGradeSection(),
 
           if (mode == RoadmapMode.simulate) _buildSimulateActions(),
@@ -217,7 +265,6 @@ class SubjectCard extends StatelessWidget {
     );
   }
 
-  // [#2] badge: "F/W" สำหรับวิชาที่ fail เอง, "BLOCKED" สำหรับตัวต่อ
   Widget _buildFailedBadge() {
     final label = isBlockedByFail ? "BLOCKED" : "F/W";
     final bg = isBlockedByFail ? Colors.orange.shade100 : Colors.red.shade100;
@@ -268,17 +315,23 @@ class SubjectCard extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               underline: const SizedBox(),
-              items: [
-                "-",
-                "A",
-                "B+",
-                "B",
-                "C+",
-                "C",
-                "D",
-                "F",
-                "W",
-              ].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+              items:
+                  (isSuGrade
+                          ? ['-', 'S', 'U']
+                          : [
+                              "-",
+                              "A",
+                              "B+",
+                              "B",
+                              "C+",
+                              "C",
+                              "D+",
+                              "D",
+                              "F",
+                              "W",
+                            ])
+                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                      .toList(),
               onChanged: (val) =>
                   val != null ? onGradeChanged?.call(val) : null,
             ),
@@ -342,7 +395,7 @@ class AddCourseButton extends StatelessWidget {
         height: 80,
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100.withOpacity(0.5),
+          color: Colors.grey.shade100.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey.shade300),
         ),

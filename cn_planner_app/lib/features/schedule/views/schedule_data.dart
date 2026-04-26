@@ -4,18 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:cn_planner_app/core/models/class_session.dart';
 
 class ScheduleDataService {
-  // ชุดสี
   static final List<Color> _colors = [
-    const Color(0xFFF26665), // แดง
-    const Color(0xFFFFB5B5), // ชมพู
-    const Color(0xFFFFE2AC), // ส้มอ่อน
-    const Color(0xFFFFFFB5), // เหลืองอ่อน
-    const Color(0xFFC8E6B2), // เขียว
-    const Color(0xFFC3EEFA), // ฟ้า
-    const Color(0xFF93B9DD), // คราม
-    const Color(0xFFC8B5FF), // ม่วง
-    const Color(0xFFFF8FAB), // ชมพูเข้ม
-    const Color(0xFFDDB4A5), // น้ำตาล
+    const Color(0xFFF26665),
+    const Color(0xFFFFB5B5),
+    const Color(0xFFFFE2AC),
+    const Color(0xFFFFFFB5),
+    const Color(0xFFC8E6B2),
+    const Color(0xFFC3EEFA),
+    const Color(0xFF93B9DD),
+    const Color(0xFFC8B5FF),
+    const Color(0xFFFF8FAB),
+    const Color(0xFFDDB4A5),
   ];
 
   static Future<List<ClassSession>> getUserClasses(String userId) async {
@@ -37,22 +36,19 @@ class ScheduleDataService {
         final time = data['time_table'][code];
 
         if (subject != null && time != null) {
-          // ดึงข้อมูลวันออกมาเป็น List (เช่น ["tue", "thu"])
           List<dynamic> daysList = time['day'];
 
-          // วนลูปสร้าง Session ตามจำนวนวันที่มีเรียน
           for (var day in daysList) {
             sessions.add(
               ClassSession(
                 code: code,
-                name:
-                    subject['subject name'] ?? "", // แก้ key เป็น subject name
+                name: subject['subject name'] ?? "",
                 instructor: subject['instructor'] ?? "",
-                day: day, // แยกเป็นวันๆ ไป
+                day: day,
                 start: time['start'],
-                stop: time['end'], // แก้ key เป็น end
-                section: time['section'] ?? "", // รับค่า section
-                room: time['room'] ?? "", // รับค่า room
+                stop: time['end'],
+                section: time['section'] ?? "",
+                room: time['room'] ?? "",
                 color: _colors[colorIndex % _colors.length],
               ),
             );

@@ -19,18 +19,16 @@ class MainWrapper extends StatefulWidget {
 class _MainWrapperState extends State<MainWrapper> {
   int _currentIndex = 0;
 
-  // รายการหน้าหลักทั้ง 4 หน้า
   final List<Widget> _pages = const [
     HomePage(),
-    RoadmapPage(mode: RoadmapMode.view), // เปลี่ยนเป็น RoadmapPage()
-    SchedulePage(), // เปลี่ยนเป็น SchedulePage()
+    RoadmapPage(mode: RoadmapMode.view),
+    SchedulePage(),
     ProfilePage(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // IndexedStack จะทำให้ Nav Bar ไม่หายไป และรักษาข้อมูลในหน้าเดิมไว้ (ไม่โหลดใหม่)
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: BottomNavBar(
         currentIndex: _currentIndex,

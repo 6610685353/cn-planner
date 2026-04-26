@@ -9,13 +9,12 @@ import '../services/profile_service.dart';
 import '../services/roadmap_service.dart';
 import 'academic_history_page.dart';
 import '../../simulator/screens/simulator_screen.dart';
-import '../../manage/views/manage_course_page.dart';
 import 'package:cn_planner_app/services/send_grade.dart';
 import '../data/static_roamap_data.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../simulator/services/simulator_service.dart';
 
-enum RoadmapMode { view, edit, simulate }
+enum RoadmapMode { view, edit, simulate, history }
 
 class RoadmapPage extends StatefulWidget {
   final RoadmapMode mode;
@@ -36,6 +35,7 @@ class _RoadmapPageState extends State<RoadmapPage>
   bool _isAlreadyNoti = false;
 
   late TabController _tabController;
+  final ScrollController _horizontalScrollController = ScrollController();
   String selectedPlanType = RoadmapTemplate.PLAN_INTERNSHIP;
 
   int? selectedYear;
@@ -46,6 +46,7 @@ class _RoadmapPageState extends State<RoadmapPage>
   Map<String, dynamic>? userProfile;
 
   Map<String, double> gradeScheme = {
+    'S': 4.0,
     'A': 4.0,
     'B+': 3.5,
     'B': 3.0,
@@ -54,6 +55,7 @@ class _RoadmapPageState extends State<RoadmapPage>
     'D+': 1.5,
     'D': 1.0,
     'F': 0.0,
+    'U': 0.0,
   };
 
   double totalGradePoints = 0;
@@ -65,7 +67,6 @@ class _RoadmapPageState extends State<RoadmapPage>
   List<Map<String, dynamic>> editedHistory = [];
   List<Map<String, dynamic>> roadmapPlan = [];
   List<Map<String, dynamic>> simulatedPlan = [];
-  Set<String> _failedCodesForRoadmap = {};
   List<String> getPassedSubjects(List<Map<String, dynamic>> plan) {
     return plan
         .where(
@@ -85,7 +86,6 @@ class _RoadmapPageState extends State<RoadmapPage>
   double _calculateAllTotalCredits(List<Map<String, dynamic>> roadmapSource) {
     double total = 0;
     for (var item in roadmapSource) {
-      // หาข้อมูลวิชาจาก allSubjects เพื่อดูหน่วยกิต
       final subject = allSubjects.firstWhere(
         (s) => s.subjectCode == item['subject_code'],
         orElse: () => SubjectModel(
@@ -93,6 +93,7 @@ class _RoadmapPageState extends State<RoadmapPage>
           subjectName: '',
           credits: 0,
           subjectId: 0,
+          su_grade: false,
         ),
       );
       total += subject.credits;
@@ -112,19 +113,33 @@ class _RoadmapPageState extends State<RoadmapPage>
   void dispose() {
     _tabController.removeListener(_handleTabSelection);
     _tabController.dispose();
+    _horizontalScrollController.dispose();
     super.dispose();
   }
 
   void _handleTabSelection() {
-    if (_tabController.indexIsChanging) return;
-    String newPlan = RoadmapTemplate.PLAN_INTERNSHIP;
-    if (_tabController.index == 1) newPlan = RoadmapTemplate.PLAN_COOP;
-    if (_tabController.index == 2) newPlan = RoadmapTemplate.PLAN_RESEARCH;
+    if (!_tabController.indexIsChanging) return;
+
+    String newPlan;
+    switch (_tabController.index) {
+      case 1:
+        newPlan = RoadmapTemplate.PLAN_COOP;
+        break;
+      case 2:
+        newPlan = RoadmapTemplate.PLAN_RESEARCH;
+        break;
+      default:
+        newPlan = RoadmapTemplate.PLAN_INTERNSHIP;
+    }
+    if (newPlan == selectedPlanType) return;
 
     setState(() {
       selectedPlanType = newPlan;
+      simulatedPlan = [];
       _buildRoadmapData();
     });
+
+    _loadSimulatorPlan();
   }
 
   void _buildRoadmapData() {
@@ -181,7 +196,7 @@ class _RoadmapPageState extends State<RoadmapPage>
             history.map(
               (e) => {
                 ...Map<String, dynamic>.from(e),
-                'section': e['section'] ?? '-', // ✅ กัน null
+                'section': e['section'] ?? '-',
               },
             ),
           );
@@ -192,12 +207,12 @@ class _RoadmapPageState extends State<RoadmapPage>
               profile?['plan_type'] ?? RoadmapTemplate.PLAN_INTERNSHIP;
           selectedPlanType = userPlan;
           if (userPlan == RoadmapTemplate.PLAN_COOP) _tabController.index = 1;
-          if (userPlan == RoadmapTemplate.PLAN_RESEARCH)
+          if (userPlan == RoadmapTemplate.PLAN_RESEARCH) {
             _tabController.index = 2;
+          }
 
           _buildRoadmapData();
 
-          // 🔥 Mock ข้อมูลแผนจำลอง (หรือดึงจาก DB simulated_plans ถ้ามี)
           simulatedPlan = List<Map<String, dynamic>>.from(history);
 
           selectedYear = profile?['current_year'];
@@ -206,25 +221,57 @@ class _RoadmapPageState extends State<RoadmapPage>
           isLoading = false;
         });
 
-        // [#2] Load simulator plan and merge with roadmap display
         await _loadSimulatorPlan();
+        _scrollToCurrentTerm();
       }
     } catch (e) {
-      debugPrint("Error loading data: $e");
     } finally {
       setState(() => isLoading = false);
     }
   }
 
-  // [#2] โหลด simulatorplan และสร้าง simulatedPlan สำหรับแสดงใน roadmap
-  // วิชาที่ fail → sim_status = 'fail' → SubjectCard แสดงกรอบแดง
+  void _scrollToCurrentTerm() {
+    if (selectedYear == null || selectedTerm == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_horizontalScrollController.hasClients) return;
+
+      const double termWidth = 300.0;
+      const double padding = 16.0;
+
+      final List<Map<String, int>> terms = [];
+      for (int y = 1; y <= maxYear; y++) {
+        terms.add({"year": y, "term": 1});
+        terms.add({"year": y, "term": 2});
+        final roadmapSource = simulatedPlan.isNotEmpty
+            ? simulatedPlan
+            : roadmapPlan;
+        if (roadmapSource.any((e) => e['year'] == y && e['semester'] == 3)) {
+          terms.add({"year": y, "term": 3});
+        }
+      }
+
+      final idx = terms.indexWhere(
+        (t) => t['year'] == selectedYear && t['term'] == selectedTerm,
+      );
+      if (idx < 0) return;
+
+      final targetOffset = (idx * termWidth) + padding;
+      final maxOffset = _horizontalScrollController.position.maxScrollExtent;
+
+      _horizontalScrollController.animateTo(
+        targetOffset.clamp(0.0, maxOffset),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
   Future<void> _loadSimulatorPlan() async {
     try {
       final hasSaved = await SimulatorService.hasSavedPlanForType(
         selectedPlanType,
       );
       if (!hasSaved) {
-        // ไม่มี saved plan → ใช้ roadmapPlan ปกติ
         setState(() {
           simulatedPlan = [];
         });
@@ -241,20 +288,17 @@ class _RoadmapPageState extends State<RoadmapPage>
         return;
       }
 
-      // [Fix #3] key ด้วย code|year|semester รองรับวิชาซ้ำต่างเทอม
       final simByKey = <String, Map<String, dynamic>>{};
       for (final row in simRows) {
         final key = '${row['subject_code']}|${row['year']}|${row['semester']}';
         simByKey[key] = row;
       }
 
-      // หา failed codes เพื่อ mark วิชาตัวต่อด้วย
       final failedCodes = simRows
           .where((r) => r['sim_status'] == 'fail')
           .map((r) => r['subject_code'] as String)
           .toSet();
 
-      // สร้าง merged plan จาก roadmapPlan (match ด้วย code+year+semester)
       final merged = roadmapPlan.map((item) {
         final code = item['subject_code'] as String;
         final year = item['year'];
@@ -268,12 +312,10 @@ class _RoadmapPageState extends State<RoadmapPage>
             'sim_status': simRow['sim_status'],
           };
         }
-        // วิชาที่ไม่อยู่ใน simulatorplan → คงสถานะเดิม
+
         return item;
       }).toList();
 
-      // [Fix #1 & #3] เพิ่มวิชาใน simulatorplan ที่ไม่มีใน roadmapPlan
-      // ตรวจสอบด้วย code+year+semester → รองรับวิชาซ้ำ + upcoming ที่ user add มา
       for (final simRow in simRows) {
         final code = simRow['subject_code'] as String;
         final year = simRow['year'];
@@ -297,7 +339,6 @@ class _RoadmapPageState extends State<RoadmapPage>
         }
       }
 
-      // [Fix #2] Recursive propagation ของ failedCodes ทุกทอด
       final expandedFailed = Set<String>.from(failedCodes);
       bool changed = true;
       while (changed) {
@@ -314,7 +355,6 @@ class _RoadmapPageState extends State<RoadmapPage>
         }
       }
 
-      // Mark วิชาตัวต่อทุกทอดด้วย 'failed' state
       final finalPlan = merged.map((item) {
         final code = item['subject_code'] as String;
         if (item['sim_status'] == 'fail') return item;
@@ -332,10 +372,8 @@ class _RoadmapPageState extends State<RoadmapPage>
 
       setState(() {
         simulatedPlan = finalPlan;
-        _failedCodesForRoadmap = expandedFailed;
       });
     } catch (e) {
-      debugPrint("Error loading simulator plan: \$e");
       setState(() {
         simulatedPlan = [];
       });
@@ -427,9 +465,41 @@ class _RoadmapPageState extends State<RoadmapPage>
         if (didPop) return;
         if (await _onWillPop() && context.mounted) Navigator.pop(context);
       },
-      child: widget.mode == RoadmapMode.edit
+      child:
+          widget.mode == RoadmapMode.edit || widget.mode == RoadmapMode.history
           ? _buildEditHistoryLayout()
           : _buildViewRoadmapLayout(),
+    );
+  }
+
+  Widget _buildSelectionHint() {
+    if (widget.mode != RoadmapMode.edit) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.shade100),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              "Tip: Tap on a Year/Semester title to set it as your current term.",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -556,8 +626,12 @@ class _RoadmapPageState extends State<RoadmapPage>
     return Column(
       children: [
         ProgressHeader(currentCredits: allCredits),
+
+        _buildSelectionHint(),
+
         Expanded(
           child: SingleChildScrollView(
+            controller: _horizontalScrollController,
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -601,14 +675,12 @@ class _RoadmapPageState extends State<RoadmapPage>
                         ? () => _confirmDeleteYear(term['year'] as int)
                         : null,
 
-                    /// 🔥 ADD COURSE (ใช้ Manage ใหม่)
                     onAddPressed: (result, year, termIdx) {
                       _isAlreadyNoti = false;
                       final isCurrentTerm =
                           year == userProfile?['current_year'] &&
                           termIdx == userProfile?['current_semester'];
 
-                      // ✅ 1. snapshot วิชาในเทอมนี้ที่มีอยู่แล้ว (หลังลบแล้ว)
                       final existingInTerm = editedHistory
                           .where(
                             (e) =>
@@ -616,7 +688,6 @@ class _RoadmapPageState extends State<RoadmapPage>
                           )
                           .toList();
 
-                      // ✅ 2. กรองเฉพาะวิชาใน result ที่ยังไม่ซ้ำกับที่มีอยู่
                       final toAdd = result.where((item) {
                         final subject = item['subject'] as SubjectModel;
                         return !existingInTerm.any(
@@ -628,7 +699,6 @@ class _RoadmapPageState extends State<RoadmapPage>
 
                       if (toAdd.isEmpty) return;
 
-                      // ✅ 3. คำนวณ credit รวมครั้งเดียว (existing + toAdd ทั้งก้อน)
                       final existingCredits = existingInTerm.fold<double>(0, (
                         sum,
                         item,
@@ -640,6 +710,7 @@ class _RoadmapPageState extends State<RoadmapPage>
                             subjectName: '',
                             credits: 0,
                             subjectId: 0,
+                            su_grade: false,
                           ),
                         );
                         return sum + subject.credits;
@@ -651,7 +722,6 @@ class _RoadmapPageState extends State<RoadmapPage>
                             sum + (item['subject'] as SubjectModel).credits,
                       );
 
-                      // ✅ 4. เตือนครั้งเดียว แล้ว return เลย
                       if (existingCredits + addingCredits > 22) {
                         if (!_isAlreadyNoti) {
                           _isAlreadyNoti = true;
@@ -667,7 +737,6 @@ class _RoadmapPageState extends State<RoadmapPage>
                         return;
                       }
 
-                      // ✅ 5. เช็ค section ครั้งเดียวก่อน setState
                       if (isCurrentTerm) {
                         final missSection = toAdd.any((item) {
                           final section = item['section'];
@@ -684,7 +753,6 @@ class _RoadmapPageState extends State<RoadmapPage>
                         }
                       }
 
-                      // ✅ 6. ผ่านทุกเช็คแล้ว เพิ่มทั้งก้อนใน setState ครั้งเดียว
                       setState(() {
                         for (var item in toAdd) {
                           final subject = item['subject'] as SubjectModel;
@@ -737,7 +805,7 @@ class _RoadmapPageState extends State<RoadmapPage>
                       });
                     },
                   );
-                }).toList(),
+                }),
                 if (!isStatic && widget.mode != RoadmapMode.view)
                   _buildAddYearButton(),
               ],
@@ -764,7 +832,7 @@ class _RoadmapPageState extends State<RoadmapPage>
           border: Border.all(color: Colors.grey.shade300),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),
@@ -793,7 +861,6 @@ class _RoadmapPageState extends State<RoadmapPage>
     );
   }
 
-  // --- FABs ---
   Widget _buildViewFabs() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -806,10 +873,30 @@ class _RoadmapPageState extends State<RoadmapPage>
           icon: Icons.auto_awesome,
           bgColor: const Color(0xFFF5F9FF),
           fgColor: AppColors.primaryBlue,
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const SimulatorPage()),
-          ).then((_) => loadAllData()),
+          onTap: () {
+            String currentPlan;
+            switch (_tabController.index) {
+              case 1:
+                currentPlan = RoadmapTemplate.PLAN_COOP;
+                break;
+              case 2:
+                currentPlan = RoadmapTemplate.PLAN_RESEARCH;
+                break;
+              default:
+                currentPlan = RoadmapTemplate.PLAN_INTERNSHIP;
+            }
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SimulatorPage(
+                  initialPlanType: currentPlan,
+                  initialRoadmapData: simulatedPlan.isNotEmpty
+                      ? simulatedPlan
+                      : roadmapPlan,
+                ),
+              ),
+            ).then((_) => loadAllData());
+          },
         ),
         const SizedBox(height: 12),
         _buildFab(
@@ -854,7 +941,7 @@ class _RoadmapPageState extends State<RoadmapPage>
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -888,15 +975,11 @@ class _RoadmapPageState extends State<RoadmapPage>
       if (user != null) {
         setState(() => isLoading = true);
         try {
-          print("calculating grade");
-
-          // 🌟 1. รีเซ็ตค่าให้เป็น 0 เสมอก่อนคำนวณ (ป้องกันบั๊กเกรดบวกเบิ้ลเวลากดเซฟซ้ำ)
           totalGradePoints = 0;
           totalCredits = 0;
           thisSemCredits = 0;
           thisSemGradePoints = 0;
 
-          // 🌟 2. คำนวณจากวิชาหลักในแผน (editedHistory)
           for (var item in editedHistory) {
             String grade = item['grade'] ?? '-';
 
@@ -909,13 +992,13 @@ class _RoadmapPageState extends State<RoadmapPage>
                 subjectName: '',
                 credits: 0,
                 subjectId: 0,
+                su_grade: false,
               ),
             );
 
             totalGradePoints += (gradeScheme[grade]! * subject.credits);
             totalCredits += subject.credits;
 
-            // ถ้าเป็นวิชาของเทอมปัจจุบัน ให้บวกเข้า GPA เทอมด้วย
             if (item['year'] == selectedYear &&
                 item['semester'] == selectedTerm) {
               thisSemGradePoints += (gradeScheme[grade]! * subject.credits);
@@ -923,14 +1006,12 @@ class _RoadmapPageState extends State<RoadmapPage>
             }
           }
 
-          // 🌟 3. ดึงวิชาเลือก/Gen Ed ที่กรอกเองจาก Supabase มาร่วมคำนวณ
           final supabase = Supabase.instance.client;
           final electives = await supabase
               .from('UserElectives')
               .select('credits, grade')
               .eq('user_id', user.uid);
 
-          // ลูปบวกคะแนนวิชาเลือกเข้าไปใน GPAX รวม (ไม่ส่งผลกับ GPA เทอมปัจจุบัน เพราะเราไม่ได้บังคับให้ระบุเทอม)
           for (var elective in electives) {
             String grade = elective['grade'] ?? '-';
             if (!gradeScheme.containsKey(grade)) continue;
@@ -940,13 +1021,11 @@ class _RoadmapPageState extends State<RoadmapPage>
             totalCredits += creds;
           }
 
-          // 🌟 4. หารหาค่าเฉลี่ยสุดท้าย
           var gpax = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
           var gpa = thisSemCredits > 0
               ? thisSemGradePoints / thisSemCredits
               : 0.0;
 
-          // 🌟 5. ส่งข้อมูลทั้งหมดขึ้น Database
           await SendGrade.submitGPAX(gpax, totalCredits, gpa, thisSemCredits);
 
           await _profileService.updateStatus(
@@ -963,7 +1042,6 @@ class _RoadmapPageState extends State<RoadmapPage>
           hasChanges = false;
           if (mounted) Navigator.pop(context);
         } catch (e) {
-          debugPrint("Save error: $e");
           setState(() => isLoading = false);
         }
       }

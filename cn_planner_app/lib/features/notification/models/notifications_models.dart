@@ -4,7 +4,7 @@ class NotificationsModel {
   final String title;
   final String subtitle;
   final String time;
-  final DateTime? timestamp; // 👉 เพิ่มฟิลด์นี้มาช่วย Sort
+  final DateTime? timestamp;
   bool isRead;
 
   NotificationsModel({

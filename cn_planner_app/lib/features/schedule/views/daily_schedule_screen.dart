@@ -14,7 +14,6 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ... (ส่วนจัดการ Date List เหมือนเดิม) ...
     final List<DateTime> nextDays = List.generate(
       5,
       (index) => DateTime.now().add(Duration(days: index)),
@@ -34,28 +33,24 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
       (a, b) => _timeToMinutes(a.start).compareTo(_timeToMinutes(b.start)),
     );
 
-    // --- LOGIC CHANGE: ตรวจสอบ Ongoing และ Next Class ---
     bool isToday = _isSameDate(_selectedDate, DateTime.now());
 
     ClassSession? ongoingClass;
     ClassSession? nextClass;
 
     if (isToday) {
-      // หาคลาสที่กำลังเรียนอยู่ (Ongoing)
       ongoingClass = _findOngoingClass(widget.allClasses);
 
-      // ถ้าไม่มีคลาสที่เรียนอยู่ ให้หาคลาสถัดไป (Next)
       if (ongoingClass == null) {
         nextClass = _findNextClass(widget.allClasses);
       }
     }
 
-    // ตัดสินใจว่าจะโชว์ Banner อันไหน (Ongoing สำคัญกว่า)
     final activeBannerClass = ongoingClass ?? nextClass;
     final isOngoing = ongoingClass != null;
 
     return Scaffold(
-      backgroundColor: Colors.white, // พื้นหลังหลัก
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           'Daily Schedule',
@@ -67,7 +62,6 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
       ),
       body: Column(
         children: [
-          // --- Date Selector (โค้ดเดิม) ---
           SizedBox(
             height: 90,
             child: Row(
@@ -111,19 +105,15 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
           ),
           const Divider(height: 1),
 
-          // --- เนื้อหาหลัก ---
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Banner Logic: แสดง Ongoing หรือ Next ---
                   if (activeBannerClass != null) ...[
                     Text(
-                      isOngoing
-                          ? "Happening Now"
-                          : "Next Class", // เปลี่ยนหัวข้อตามสถานะ
+                      isOngoing ? "Happening Now" : "Next Class",
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -168,13 +158,11 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
     );
   }
 
-  // --- Widget: แถวของ Break Time (แก้ใหม่: Text Only, No Border) ---
   Widget _buildBreakRow(String start, String end) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. เวลา Break (ซ้าย) - ทำให้จางลงหน่อย
           SizedBox(
             width: 60,
             child: Column(
@@ -186,7 +174,7 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
-                    color: Colors.grey.shade400, // สีเทาจาง
+                    color: Colors.grey.shade400,
                   ),
                 ),
                 Text(
@@ -194,7 +182,7 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
-                    color: Colors.grey.shade400, // สีเทาจาง
+                    color: Colors.grey.shade400,
                   ),
                 ),
               ],
@@ -203,14 +191,12 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
 
           const SizedBox(width: 10),
 
-          // 2. เส้น Timeline (ยังต้องมีเพื่อให้เส้นเชื่อมต่อกันสวยงาม)
           SizedBox(
             width: 20,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 Container(width: 2, color: Colors.grey.shade200),
-                // จุดเล็กๆ แสดงช่วงพัก (Optional)
                 Container(
                   width: 6,
                   height: 6,
@@ -223,17 +209,13 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
             ),
           ),
 
-          // 3. เนื้อหา Break (ขวา) - ลบ Container/Shadow ออก เหลือแค่ Text
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 10),
               child: Row(
                 children: [
-                  // จัด Icon และ Text ให้ตรงกลางแนวตั้ง
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16.0,
-                    ), // เพิ่ม Padding บนล่างให้เส้น Timeline ยาวพอดี
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: Icon(
                       Icons.coffee_outlined,
                       size: 18,
@@ -250,7 +232,6 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
                     ),
                   ),
                   const Spacer(),
-                  // ระยะเวลา
                   Text(
                     _calculateDuration(start, end),
                     style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
@@ -264,9 +245,7 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
     );
   }
 
-  // --- Widget: Banner ด้านบน (รองรับทั้ง Ongoing และ Next) ---
   Widget _buildTopBanner(ClassSession session, {required bool isOngoing}) {
-    // เลือกสีตามสถานะ: Ongoing = เขียว, Next = ฟ้า/ส้ม
     final badgeColor = isOngoing ? Colors.green.shade50 : Colors.blue.shade50;
     final badgeTextColor = isOngoing
         ? Colors.green.shade700
@@ -290,7 +269,6 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -301,7 +279,6 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (isOngoing) ...[
-                  // จุดกะพริบหรือ Icon เล็กๆ
                   Container(
                     width: 8,
                     height: 8,
@@ -371,9 +348,6 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
     );
   }
 
-  // --- LOGIC FUNCTIONS ---
-
-  // ฟังก์ชันหาคลาสที่ "กำลังเรียนอยู่" (Start <= Now < End)
   ClassSession? _findOngoingClass(List<ClassSession> classes) {
     final now = DateTime.now();
     final timeNow = now.hour * 60 + now.minute;
@@ -388,7 +362,6 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
       final start = _timeToMinutes(session.start);
       final end = _timeToMinutes(session.stop);
 
-      // ถ้าเวลาปัจจุบัน มากกว่าเวลาเริ่ม และ น้อยกว่าเวลาจบ = กำลังเรียน
       if (timeNow >= start && timeNow < end) {
         return session;
       }
@@ -396,7 +369,6 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
     return null;
   }
 
-  // ฟังก์ชันเดิม หาคลาสถัดไป
   ClassSession? _findNextClass(List<ClassSession> classes) {
     final now = DateTime.now();
     final timeNow = now.hour * 60 + now.minute;
@@ -418,9 +390,7 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
     return null;
   }
 
-  // ... Helper functions อื่นๆ (_buildTimelineItem, _buildClassRow, _timeToMinutes, etc.) เหมือนเดิม ...
   Widget _buildTimelineItem(List<ClassSession> classes, int index) {
-    // ... (เหมือนโค้ดก่อนหน้า) ...
     List<Widget> columnChildren = [];
     bool isLastItemOverall = index == classes.length - 1;
 
@@ -452,7 +422,6 @@ class _DailyScheduleScreenState extends State<DailyScheduleScreen> {
     return Column(children: columnChildren);
   }
 
-  // (Helper functions อื่นๆ: _buildTimelineGap, _buildClassRow, _timeToMinutes ฯลฯ ใช้ของเดิมได้เลยครับ)
   Widget _buildTimelineGap({bool hasLine = true}) {
     return IntrinsicHeight(
       child: Row(

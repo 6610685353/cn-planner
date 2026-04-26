@@ -71,6 +71,7 @@ class _RegisterPageState extends State<RegisterPage> {
               controller: _controller.passwordController,
               hintText: "Enter your password",
               obscureText: true,
+              isPassword: true,
             ),
 
             _buildLabel("Confirm password"),
@@ -78,10 +79,14 @@ class _RegisterPageState extends State<RegisterPage> {
               controller: _controller.confirmPasswordController,
               hintText: "Confirm your password",
               obscureText: true,
+              isPassword: true,
             ),
 
             _buildLabel("Academic Year"),
             _buildYearSelector(),
+
+            _buildLabel("Semester"),
+            _buildSemSelector(),
 
             const SizedBox(height: 14),
             _buildSubmitButton(),
@@ -132,10 +137,13 @@ class _RegisterPageState extends State<RegisterPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _yearBtn(1, 'Y1', 'FRESHMAN'),
-        _yearBtn(2, 'Y2', 'SOPHOMORE'),
-        _yearBtn(3, 'Y3', 'JUNIOR'),
-        _yearBtn(4, 'Y4', 'SENIOR'),
+        Expanded(child:_yearBtn(1, 'Y1', 'FRESHMAN')),
+        SizedBox(width: 2),
+        Expanded(child:_yearBtn(2, 'Y2', 'SOPHOMORE')),
+        SizedBox(width: 2),
+        Expanded(child:_yearBtn(3, 'Y3', 'JUNIOR')),
+        SizedBox(width: 2),
+        Expanded(child:_yearBtn(4, 'Y4', 'SENIOR')),
       ],
     );
   }
@@ -147,8 +155,8 @@ class _RegisterPageState extends State<RegisterPage> {
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: 80,
-        height: 80, // ขนาดเดิม
+        // width: 75,
+        height: 80,
         decoration: BoxDecoration(
           color: isSelected ? AppColors.accentYellow : Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -185,6 +193,54 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  Widget _buildSemSelector() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Expanded(child: _semBtn(1, '1')),
+        SizedBox(width: 5),
+        Expanded(child:_semBtn(2, '2')),
+      ],
+    );
+  }
+
+  Widget _semBtn(int sem, String code) {
+    final bool isSelected = _controller.selectedSem == sem;
+    return InkWell(
+      onTap: () => setState(() => _controller.selectedSem = sem),
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 75,
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.accentYellow : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: isSelected ? AppColors.accentYellow : AppColors.borderGrey,
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              code,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 4),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSubmitButton() {
     return Container(
       width: double.infinity,
@@ -200,7 +256,6 @@ class _RegisterPageState extends State<RegisterPage> {
         ],
       ),
       child: ElevatedButton(
-        // แก้ไขบรรทัดนี้: ใช้ arrow function เพื่อส่ง context เข้าไปใน Controller
         onPressed: () => _controller.handleRegister(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.accentYellow,

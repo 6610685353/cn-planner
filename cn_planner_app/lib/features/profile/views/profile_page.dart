@@ -138,26 +138,34 @@ class _ProfilePageState extends State<ProfilePage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                QuickStats(
-                                  title: "Earned",
-                                  mainText:
-                                      _profileData?.earned_credits.toString() ??
-                                      "0",
-                                  footer: "Credits",
+                                Expanded(child:
+                                  QuickStats(
+                                    title: "Earned",
+                                    mainText:
+                                        _profileData?.earned_credits.toString() ??
+                                        "0",
+                                    footer: "Credits",
+                                  ),
                                 ),
-                                QuickStats(
-                                  title: "Remaining",
-                                  mainText:
-                                      _profileData?.remaining_credits
-                                          .toString() ??
-                                      "0",
-                                  footer: "Credits",
+                                SizedBox(width: 5),
+                                Expanded(child:
+                                  QuickStats(
+                                    title: "Remaining",
+                                    mainText:
+                                        _profileData?.remaining_credits
+                                            .toString() ??
+                                        "0",
+                                    footer: "Credits",
+                                  ),
                                 ),
-                                QuickStats(
-                                  title: "Standing",
-                                  mainText:
-                                      _profileData?.academicStanding ?? "-",
-                                  footer: "Academic",
+                                SizedBox(width: 5),
+                                Expanded(child:
+                                  QuickStats(
+                                    title: "Standing",
+                                    mainText:
+                                        _profileData?.academicStanding ?? "-",
+                                    footer: "Academic",
+                                  ),
                                 ),
                               ],
                             ),
@@ -179,8 +187,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               icon: buildIcon(Icons.emoji_events_outlined),
                               title: "Credit Breakdown",
                               subtitle: "View your progress",
-                              route: AppRoutes
-                                  .creditBreakdown, // ปล่อยไว้เฉยๆ ก็ได้ถ้าใช้ onTap ทับ
+                              route: AppRoutes.creditBreakdown,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -189,7 +196,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                         const CreditBreakdownPage(),
                                   ),
                                 ).then((_) {
-                                  // 🌟 พอกดกลับมาจากหน้า Credit Breakdown ให้โหลดข้อมูล Profile ใหม่!
                                   _loadData();
                                 });
                               },

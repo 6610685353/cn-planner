@@ -4,6 +4,7 @@ import 'package:cn_planner_app/services/emulator_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -12,16 +13,12 @@ import 'package:cn_planner_app/core/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Config.init();
 
-  // 1. เปิดระบบ Notification & Timezone
   await NotificationService.init();
   await NotificationService.requestPermission();
 
-  // 2. เปิดระบบ Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // 3. เปิดระบบ Supabase
   await Supabase.initialize(
     url: 'https://razswzgdnxwjqbyebgnj.supabase.co',
     anonKey:
@@ -32,19 +29,26 @@ Future<void> main() async {
     try {
       await dotenv.load(fileName: ".env.local");
       await Config.init();
-      print("Running on Debug Mode");
     } catch (e) {
       print("Config Error: $e");
     }
   }
 
-  runApp(const MyApp());
+  final currentUser = FirebaseAuth.instance.currentUser;
+
+  final String initialRoute = currentUser == null
+      ? AppRoutes.login
+      : AppRoutes.main;
+
+  runApp(MyApp(startRoute: initialRoute));
 }
 
 const Color bg = Color(0xFFF8F9FA);
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String startRoute;
+
+  const MyApp({super.key, required this.startRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +57,6 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: bg,
         fontFamily: 'OpenSans',
-
         appBarTheme: const AppBarTheme(
           backgroundColor: bg,
           titleTextStyle: TextStyle(
@@ -64,7 +67,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: AppRoutes.login,
+      initialRoute: startRoute,
       routes: AppRoutes.routes,
     );
   }

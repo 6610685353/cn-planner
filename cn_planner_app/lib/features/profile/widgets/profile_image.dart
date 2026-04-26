@@ -34,11 +34,9 @@ class ProfileImage extends StatelessWidget {
               child: CircleAvatar(
                 radius: 55,
                 backgroundColor: AppColors.background,
-                // ตรวจสอบว่ามี URL รูปภาพหรือไม่
                 backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
                     ? NetworkImage(imageUrl!)
                     : null,
-                // ถ้าไม่มีรูปภาพ ให้แสดงไอคอนคนแทน
                 child: imageUrl != null && imageUrl!.isNotEmpty
                     ? null
                     : const Icon(

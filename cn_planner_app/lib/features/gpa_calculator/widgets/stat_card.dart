@@ -20,17 +20,11 @@ class StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        height: 120, // Check height usage
+        height: 120,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(
-            0xFFFFFBE6,
-          ), // Light Yellowish bg for both? Or distinct?
-          // The image shows white cards actually. Let's use White with specific styles.
-          // Wait, the design description said "White cards with shadow".
-          gradient: const LinearGradient(
-            colors: [Colors.white, Colors.white], // Just white
-          ),
+          color: const Color(0xFFFFFBE6),
+          gradient: const LinearGradient(colors: [Colors.white, Colors.white]),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(

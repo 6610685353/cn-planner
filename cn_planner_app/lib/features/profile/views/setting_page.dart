@@ -20,15 +20,11 @@ class _SettingsPageState extends State<SettingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const TopBar(
-        header: "Settings",
-        route: "/profile",
-      ), // ใช้ TopBar ที่เคยทำ
+      appBar: const TopBar(header: "Settings", route: "/profile"),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
         child: Column(
           children: [
-            // ส่วนเลือกภาษา
             LanguageSelector(
               selectedLang: _controller.selectedLanguage,
               onLangChange: (code) =>
@@ -37,7 +33,6 @@ class _SettingsPageState extends State<SettingPage> {
 
             const SizedBox(height: 15),
 
-            // ส่วนแจ้งเตือน
             SettingToggleTile(
               icon: Icons.notifications_none,
               title: "Notifications",
@@ -48,7 +43,6 @@ class _SettingsPageState extends State<SettingPage> {
 
             const SizedBox(height: 5),
 
-            // ส่วน Sign out
             SettingActionTile(
               icon: Icons.logout,
               title: "Sign out",
