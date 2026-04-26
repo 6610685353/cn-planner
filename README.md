@@ -1,57 +1,208 @@
-# 📱 CN PLANNER (v1.0.1)
+<div align="center">
+  <img src="cn_planner_logo.png" alt="CN Planner Logo" width="150"/>
 
-**Personalized Study Planning for CN Students** โปรเจกต์นี้เป็นส่วนหนึ่งของรายวิชา MOBILE APPLICATION CN333
+  # CN Planner
 
----
+  **แอปพลิเคชันวางแผนการเรียนสำหรับนักศึกษาวิศวกรรมคอมพิวเตอร์ มหาวิทยาลัยธรรมศาสตร์**
 
-## 👥 สมาชิกผู้จัดทำ
+  ![Flutter](https://img.shields.io/badge/Flutter-3.10.x-02569B?logo=flutter)
+  ![Dart](https://img.shields.io/badge/Dart-3.10.8-0175C2?logo=dart)
+  ![Firebase](https://img.shields.io/badge/Firebase-Auth-FFCA28?logo=firebase)
+  ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)
+  ![Node.js](https://img.shields.io/badge/Node.js-18.x-339933?logo=nodedotjs)
 
-- นางสาวธนวรรณ ผ่องเเผ้ว 6610685171
-- นางสาวเนตรชนก ยินดี 6610685221
-- นายปัณณวัฒน์ น้ำคำ 6610685247
-- นายสิรณัฏฐ์ พิมพิจารณ์ 6610685353
-- นางสาวอันติมาดา แสงรุ่งเรือง 6610685387
+  [📥 ดาวน์โหลด APK](https://drive.google.com/drive/folders/1K38erkCC-FKqNm2170qwGXXnbzYfsPtm)
 
----
-
-## 💡 เกี่ยวกับแอปพลิเคชัน (About)
-
-CN Planner คือแอปพลิเคชันบนมือถือที่ออกแบบมาเพื่อช่วยนักศึกษาวิศวกรรมคอมพิวเตอร์ มหาวิทยาลัยธรรมศาสตร์ ในการวางแผนการเรียนตลอดหลักสูตร แอปพลิเคชันนี้ถูกพัฒนาขึ้นเพื่อแก้ปัญหาความซับซ้อนของการลงทะเบียนเรียน ช่วยตรวจสอบเงื่อนไขวิชาบังคับก่อน (Prerequisite) อัตโนมัติ วางแผนและติดตามหน่วยกิตที่ชัดเจน เพื่อลดความเสี่ยงในการจบล่าช้า
+</div>
 
 ---
 
-## ✨ ฟีเจอร์การใช้งาน (Features)
+## เกี่ยวกับโปรเจ็กต์
 
-### ✅ พัฒนาเสร็จสิ้นแล้ว (Work Done)
+CN Planner เป็นแอปพลิเคชันบนมือถือ (iOS & Android) พัฒนาด้วย Flutter สำหรับช่วยให้นักศึกษาสาขาวิศวกรรมคอมพิวเตอร์ มหาวิทยาลัยธรรมศาสตร์ สามารถ **วางแผนการเรียนตลอดหลักสูตร 4 ปี** ได้อย่างมีประสิทธิภาพ โดยระบบจะช่วยตรวจสอบเงื่อนไขวิชาบังคับก่อน (Prerequisite) คำนวณเกรดเฉลี่ย และวิเคราะห์ความเสี่ยงจากการไม่ผ่านรายวิชา
 
-- **Authentication:** ระบบสมัครสมาชิก เข้าสู่ระบบ และยืนยันตัวตนที่มีความปลอดภัย
-- **Home Dashboard:** หน้าแดชบอร์ดแสดงผลสรุปภาพรวมการเรียน (Academic Progress), เกรดเฉลี่ยปัจจุบัน และตารางเรียนของวันนั้นๆ
-- **Credit Breakdown:** ระบบวิเคราะห์และแยกหมวดหมู่หน่วยกิตที่เรียนแล้วและที่เหลืออยู่ (วิชาเอก, วิชาศึกษาทั่วไป, วิชาเลือกเสรี)
-- **GPA Calculator:** ระบบคำนวณและประเมินเกรดเฉลี่ย (GPA) รายภาค
-- **Course Management:** สามารถค้นหา เพิ่ม ลบ หรือจัดการรายวิชาในภาคการศึกษาปัจจุบันได้
-- **Smart Schedule:** จัดการและแสดงตารางเรียนแบบรายสัปดาห์และรายวัน พร้อมระบุเวลาและห้องเรียน
-
-### 🚧 อยู่ในระหว่างการพัฒนา (Work in Progress)
-
-- **Simulator & Roadmap:** ระบบจำลองผลกระทบของการติด F/W หรือการเลือกลงวิชาในอนาคต พร้อมแสดงแผนการเรียนภาพรวม 4 ปี และตรวจสอบเงื่อนไขวิชาบังคับก่อนแบบอัตโนมัติ
-- **Multi-Language Support:** รองรับการใช้งานทั้งภาษาไทยและภาษาอังกฤษ โดยสามารถสลับเปลี่ยนภาษาได้แบบเรียลไทม์
-- **Real-time Notification:** ระบบแจ้งเตือนตารางเรียนและรายละเอียดของรายวิชาถัดไปก่อนเริ่มเรียนแบบเรียลไทม์
+> จัดทำเป็นส่วนหนึ่งของวิชา **CN333 Mobile Application Developments**  
+> ภาคเรียนที่ 2 ปีการศึกษา 2568 • คณะวิศวกรรมศาสตร์ มหาวิทยาลัยธรรมศาสตร์
 
 ---
 
-## 🛠️ Technology Stack
+## ฟีเจอร์หลัก
 
-- **Frontend:** Flutter & Dart (สำหรับพัฒนา UI รองรับทั้ง iOS และ Android)
-- **Backend:** Node.js (สำหรับพัฒนา API และจัดการตรรกะเบื้องหลัง)
-- **Database:** Supabase (สำหรับจัดเก็บและจัดการฐานข้อมูลโครงสร้างหลัก)
-- **Authentication:** Firebase (สำหรับจัดการระบบล็อกอินและความปลอดภัย)
+| ฟีเจอร์ | รายละเอียด |
+|---|---|
+| 🔐 **Authentication** | Login / Register / Forgot Password พร้อมระบบ Remember Me |
+| 🏠 **Home Dashboard** | สรุป GPAX ความก้าวหน้าหน่วยกิต และตารางเรียนวันนี้ |
+| 📅 **Schedule** | ตารางเรียนแบบรายสัปดาห์ (Timetable Grid) และรายวัน (Daily List) |
+| 🗺️ **Roadmap** | แผนการเรียน 4 ปี แยกตาม Track (Project / Co-op / Research) พร้อมแสดงสถานะ Prerequisite |
+| 📚 **Edit Academic History** | บันทึกและแก้ไขประวัติผลการเรียนแบบ Real-time |
+| 🧮 **GPA Calculator** | จำลองเกรดล่วงหน้าและคำนวณ GPAX ที่คาดว่าจะได้รับ |
+| ⚠️ **F/W Simulator** | จำลองผลกระทบหากติด F หรือถอนวิชา พร้อมวิเคราะห์ผลเชิงลูกโซ่ (Multi-Course Impact) |
+| 📊 **Credit Breakdown** | แสดงความก้าวหน้าหน่วยกิตแยกตามหมวดหมู่ (วิชาเอก / GE / เสรี) |
+| 🔔 **Notifications** | แจ้งเตือนล่วงหน้าก่อนถึงเวลาเรียน |
+| 👤 **User Profile** | แก้ไขข้อมูลส่วนตัวและรูปโปรไฟล์ |
 
 ---
 
-## 🚀 Getting Started (การรันโปรเจกต์เบื้องต้น)
+## เทคโนโลยีที่ใช้
 
-หากต้องการรันโปรเจกต์นี้ในเครื่อง สามารถทำตามขั้นตอนเบื้องต้นของ Flutter ได้ดังนี้:
+```
+Frontend    Flutter (Dart)         Cross-platform iOS & Android
+Backend     Node.js + Express.js   API Layer และ Business Logic
+Auth        Firebase Authentication ระบบยืนยันตัวตน
+Database    Supabase (PostgreSQL)   จัดการข้อมูลและ Prerequisite
+Storage     Firebase Storage        จัดเก็บรูปโปรไฟล์
+Design      Figma                   ออกแบบ UI/UX
+```
 
-1. โคลน (Clone) Repository นี้ลงในเครื่องของคุณ
-2. รันคำสั่ง `flutter pub get` เพื่อติดตั้ง Dependencies ทั้งหมด
-3. รันคำสั่ง `flutter run` เพื่อเปิดแอปพลิเคชันบน Emulator หรืออุปกรณ์จริง
+**สถาปัตยกรรม:** MVC + Feature-based Folder Structure
+
+---
+
+## โครงสร้างโปรเจ็กต์
+
+```
+cn-planner/
+├── cn_planner_app/              # Flutter Frontend
+│   └── lib/
+│       ├── core/
+│       │   ├── constants/       # สี, assets, ค่าคงที่
+│       │   └── widgets/         # Widgets ที่ใช้ร่วมกัน
+│       ├── features/            # แบ่งตาม Feature (MVC)
+│       │   ├── auth/
+│       │   ├── home/
+│       │   ├── schedule/
+│       │   ├── gpa_calculator/
+│       │   ├── roadmap/
+│       │   ├── simulator/
+│       │   ├── impact_analysis/
+│       │   └── profile/
+│       ├── services/            # Firebase & Supabase API
+│       └── main.dart
+└── functions/                   # Node.js Backend
+    └── src/
+        ├── config/              # การตั้งค่าการเชื่อมต่อ Supabase
+        ├── routes/              # API Endpoints
+        ├── controllers/         # Business Logic
+        └── simulator/           # Logic ระบบจำลองแผนการเรียน
+```
+
+---
+
+## วิธีติดตั้งและรันโปรเจ็กต์
+
+### สิ่งที่ต้องติดตั้งก่อน
+
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) เวอร์ชัน 3.x ขึ้นไป
+- [Node.js](https://nodejs.org/) เวอร์ชัน 18.0 ขึ้นไป
+- [Firebase CLI](https://firebase.google.com/docs/cli)
+- IDE: VS Code หรือ Android Studio พร้อม Flutter Extension
+
+---
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/6610685353/cn-planner.git
+cd cn-planner
+```
+
+### 2. ตั้งค่า Environment
+
+ไฟล์ config ที่มี API Keys **ไม่ถูก upload ขึ้น repository** ต้องสร้างเองดังนี้
+
+**Firebase — Android:** วางไฟล์ `google-services.json` ที่:
+```
+cn_planner_app/android/app/
+```
+
+**Firebase — iOS:** วางไฟล์ `GoogleService-Info.plist` ที่:
+```
+cn_planner_app/ios/Runner/
+```
+
+> ดาวน์โหลดไฟล์ทั้งสองได้จาก [Firebase Console](https://console.firebase.google.com/)
+
+**Frontend** — สร้างไฟล์ `.env.local` ในโฟลเดอร์ `cn_planner_app/`:
+
+```env
+EMU_HOST=192.168.x.x
+```
+> กำหนดเป็น IP Address ของเครื่องที่รัน Backend (สำหรับทดสอบผ่าน Emulator)
+
+**Backend** — สร้างไฟล์ `.env.local` ในโฟลเดอร์ `functions/`:
+
+```env
+SUPABASE_URL=https://razswzgdnxwjqbyebgnj.supabase.co/
+SUPABASE_ANON_KEY=<your_supabase_anon_key>
+```
+
+### 3. ติดตั้ง Dependencies และรันแอป
+
+**Frontend (Flutter)**
+```bash
+cd cn_planner_app
+flutter pub get
+flutter run
+```
+
+**Backend (Node.js + Firebase Functions)**
+```bash
+cd functions
+npm install
+firebase login
+firebase deploy --only functions
+```
+
+### 4. Build สำหรับใช้งานจริง
+
+**Android (.apk)**
+```bash
+flutter build apk --release
+# Output: build/app/outputs/flutter-apk/app-release.apk
+```
+
+**iOS (.ipa)**
+```bash
+flutter build ios --release
+# จากนั้นเปิดใน Xcode เพื่อทำ Archive และ Code Signing
+```
+
+---
+
+## ดาวน์โหลด APK
+
+สำหรับผู้ที่ต้องการทดลองใช้งานโดยไม่ต้อง build เอง
+
+**[📥 ดาวน์โหลด CN Planner APK (Google Drive)](https://drive.google.com/drive/folders/1K38erkCC-FKqNm2170qwGXXnbzYfsPtm)**
+
+> รองรับเฉพาะ **Android** เท่านั้น  
+> ก่อนติดตั้งต้องเปิด "ติดตั้งแอปจากแหล่งที่ไม่รู้จัก" ในการตั้งค่าอุปกรณ์ก่อน
+
+---
+
+## ข้อจำกัดของระบบ
+
+- รองรับเฉพาะหลักสูตรวิศวกรรมคอมพิวเตอร์ มหาวิทยาลัยธรรมศาสตร์เท่านั้น
+- ข้อมูลรายวิชาและเกรดขึ้นอยู่กับการกรอกของผู้ใช้ (ไม่ได้เชื่อมต่อระบบทะเบียนจริงของมหาวิทยาลัย)
+- ยังไม่รองรับรายวิชาภาคฤดูร้อน (Summer) ในส่วน Edit Academic History
+- ยังไม่รองรับการแสดงผลหลายภาษา (Multi-language)
+
+---
+
+## ทีมผู้พัฒนา
+
+| ชื่อ | รหัสนักศึกษา |
+|---|---|
+| นางสาวธนวรรณ ผ่องแผ้ว | 6610685171 |
+| นางสาวเนตรชนก ยินดี | 6610685221 |
+| นายปัณณวัฒน์ น้ำคำ | 6610685247 |
+| นายสิรณัฏฐ์ พิมพิจารณ์ | 6610685353 |
+| นางสาวอันติมาดา แสงรุ่งเรือง | 6610685387 |
+
+**อาจารย์ที่ปรึกษา:** ผศ.ดร.ปิยะ เตชะธีราวัฒน์
+
+---
+
+<div align="center">
+  <sub>CN Planner • CN333 Mobile Application Developments • มหาวิทยาลัยธรรมศาสตร์ 2568</sub>
+</div>
